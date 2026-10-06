@@ -1,0 +1,29 @@
+*.iml
+.gradle/
+/local.properties
+/.idea/
+.DS_Store
+/build/
+/captures/
+.externalNativeBuild/
+.cxx/
+
+# Signing keys — NEVER commit these
+*.keystore
+*.jks
+*.p12
+
+# Firebase config — contains project keys
+app/google-services.json
+google-services.json
+
+# Generated files
+/app/build/
+/core/*/build/
+/feature/*/build/
+
+# Android profiling
+*.hprof
+
+# OS files
+Thumbs.db

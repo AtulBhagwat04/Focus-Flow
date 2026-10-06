@@ -1,0 +1,26 @@
+<resources>
+    <!-- App name — placeholder until final branding is decided (see PROJECT_BRIEF.md §16.1) -->
+    <string name="app_name">FocusFlow</string>
+
+    <!-- Bottom navigation labels -->
+    <string name="nav_home">Home</string>
+    <string name="nav_focus">Focus</string>
+    <string name="nav_stats">Stats</string>
+    <string name="nav_rooms">Rooms</string>
+    <string name="nav_profile">Profile</string>
+
+    <!-- Accessibility content descriptions — all interactive elements need labels -->
+    <string name="cd_home_tab">Home tab</string>
+    <string name="cd_focus_tab">Focus timer tab</string>
+    <string name="cd_stats_tab">Statistics tab</string>
+    <string name="cd_rooms_tab">Focus rooms tab</string>
+    <string name="cd_profile_tab">Profile and rewards tab</string>
+
+    <!-- Generic UI strings -->
+    <string name="action_retry">Retry</string>
+    <string name="action_skip">Skip for now</string>
+    <string name="action_back_to_focus">Back to focus</string>
+    <string name="label_loading">Loading…</string>
+    <string name="label_error_generic">Something went wrong. Please try again.</string>
+    <string name="label_offline">You\'re offline. Showing cached data.</string>
+</resources>

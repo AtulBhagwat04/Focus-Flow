@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Network security config — inherits platform defaults.
+  TLS is enforced; no cleartext traffic allowed.
+  Per SECURITY_PRIVACY.md §4: "All network traffic over TLS."
+  No custom CA pins in M1; add if needed when backend is hardened.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

@@ -1,0 +1,96 @@
+build:
+  maxIssues: 0        # CI fails on any new detekt finding
+  excludeCorrectable: false
+
+config:
+  validation: true
+  warningsAsErrors: false
+
+processors:
+  active: true
+
+console-reports:
+  active: true
+
+output-reports:
+  active: true
+
+comments:
+  active: true
+  CommentOverPrivateFunction:
+    active: false
+  CommentOverPrivateProperty:
+    active: false
+  UndocumentedPublicClass:
+    active: false
+  UndocumentedPublicFunction:
+    active: false
+
+complexity:
+  active: true
+  LongMethod:
+    threshold: 60
+  LongParameterList:
+    functionThreshold: 8
+    constructorThreshold: 8
+  TooManyFunctions:
+    thresholdInFiles: 20
+    thresholdInClasses: 15
+
+coroutines:
+  active: true
+  GlobalCoroutineUsage:
+    active: true      # No GlobalScope — per ARCHITECTURE.md §6
+  RedundantSuspendModifier:
+    active: true
+  SuspendFunWithFlowReturnType:
+    active: true
+
+empty-blocks:
+  active: true
+
+exceptions:
+  active: true
+  TooGenericExceptionCaught:
+    active: true
+  TooGenericExceptionThrown:
+    active: true
+  SwallowedException:
+    active: true
+
+naming:
+  active: true
+  FunctionNaming:
+    active: true
+    functionPattern: '[a-z][a-zA-Z0-9]*'
+    # Allow uppercase Composable function names
+    excludes: ['**/ui/**', '**/screen/**', '**/component/**', '**/designsystem/**', '**/preview/**']
+
+performance:
+  active: true
+
+potential-bugs:
+  active: true
+  AvoidReferenceToMutableStateFlowExposedAsStateFlow:
+    active: true
+
+style:
+  active: true
+  ForbiddenImport:
+    active: true
+    imports:
+      # Domain layer must never import Android or Firebase — enforce it
+      - value: 'android.*'
+        reason: 'Domain layer must be pure Kotlin. Use interfaces from core:common.'
+        allowedPatterns: ''  # Applied only to core:domain source sets via excludes below
+      - value: 'com.google.firebase.*'
+        reason: 'Domain layer must not depend on Firebase.'
+    excludes: ['**/core/common/**', '**/core/designsystem/**', '**/feature/**', '**/app/**', '**/data/**', '**/system/**']
+  MagicNumber:
+    active: true
+    excludes: ['**/test/**', '**/androidTest/**', '**/theme/**', '**/designsystem/**']
+  MaxLineLength:
+    maxLineLength: 120
+  WildcardImport:
+    active: true
+    excludeImports: ['kotlinx.coroutines.*', 'androidx.compose.*']
