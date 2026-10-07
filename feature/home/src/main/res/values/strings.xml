@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_brand_focus">Focus</string>
+    <string name="home_brand_flow">Flow</string>
+    <string name="home_tagline">Less distractions. More you.</string>
+    <string name="home_cd_settings">Settings</string>
+    <string name="home_headline_stay_focused">Stay Focused,\nBuild a </string>
+    <string name="home_headline_better_you">Better You</string>
+    <string name="home_headline_subtitle">Block distracting apps and\nmake progress on what\nmatters.</string>
+    <string name="home_action_start_focus">Start Focus Session</string>
+    <string name="home_cd_start_focus">Start focus session</string>
+    <string name="home_section_focus_mode">Focus Mode</string>
+    <string name="home_section_choose_mode">Choose what you\'re working on</string>
+    <string name="home_mode_work_title">Work</string>
+    <string name="home_mode_work_subtitle">Block distracting\napps</string>
+    <string name="home_mode_study_title">Study</string>
+    <string name="home_mode_study_subtitle">Stay in the zone</string>
+    <string name="home_mode_personal_title">Personal</string>
+    <string name="home_mode_personal_subtitle">Focus on what\nmatters</string>
+    <string name="home_nav_home">Home</string>
+    <string name="home_nav_insights">Insights</string>
+    <string name="home_nav_profile">Profile</string>
+</resources>

@@ -8,6 +8,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 
+enum class FocusMode {
+    WORK,
+    STUDY,
+    PERSONAL
+}
+
 /**
  * UI state for the Home screen.
  *
@@ -19,6 +25,9 @@ data class HomeUiState(
     val title: String = "FocusFlow",
     val subtitle: String = "M1 Foundation ✓",
     val initializedAtEpochMs: Long = 0L,
+    val selectedMode: FocusMode = FocusMode.WORK,
+    val todayFocusTimeMinutes: Int = 0,
+    val currentStreakDays: Int = 0,
 )
 
 /**
@@ -36,4 +45,8 @@ class HomeViewModel @Inject constructor(
         HomeUiState(initializedAtEpochMs = clock.now())
     )
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
+
+    fun selectMode(mode: FocusMode) {
+        _uiState.value = _uiState.value.copy(selectedMode = mode)
+    }
 }

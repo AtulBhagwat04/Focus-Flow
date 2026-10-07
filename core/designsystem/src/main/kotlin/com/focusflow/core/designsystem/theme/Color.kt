@@ -35,3 +35,18 @@ val BlockNeutralDark   = Color(0xFF9AA3C2)
 // Error — reserved for real system errors only
 val FocusError         = Color(0xFFBA1A1A)
 val FocusErrorDark     = Color(0xFFFFB4AB)
+
+// ─── Nature & Forest Green palette (FocusFlow Brand UI) ──────────────────────
+val FocusForestGreen         = Color(0xFF286D4D)
+val FocusForestGreenDark     = Color(0xFF52B788)
+val FocusForestGreenLight    = Color(0xFF388E65)
+val FocusForestGreenDeep     = Color(0xFF1B4E36)
+val FocusForestMintBg        = Color(0xFFEBF6F0)
+val FocusForestMintBorder    = Color(0xFF6CBD92)
+val FocusForestMintBadge     = Color(0xFFD6EFE1)
+val FocusForestAccentWave    = Color(0xFF78B999)
+val FocusDarkText            = Color(0xFF14221B)
+val FocusMutedText           = Color(0xFF5A6E65)
+val FocusCardBorder          = Color(0xFFEDF2EF)
+val FocusInactiveIcon        = Color(0xFF64748B)
+val FocusNavInactive         = Color(0xFF8B9D95)
