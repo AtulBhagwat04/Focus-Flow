@@ -34,6 +34,15 @@ dependencies {
     // DataStore
     implementation(libs.androidx.datastore.preferences)
 
+    // WorkManager
+    implementation(libs.androidx.work.runtime.ktx)
+
+    // Firebase (BoM managed)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.firestore)
+    implementation(libs.firebase.database)
+
     // Hilt
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)

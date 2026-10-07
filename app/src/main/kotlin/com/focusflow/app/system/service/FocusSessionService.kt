@@ -39,6 +39,7 @@ class FocusSessionService : Service() {
     @Inject lateinit var clock: Clock
     @Inject lateinit var notificationManager: FocusNotificationManager
     @Inject lateinit var ambientAudioPlayer: AmbientAudioPlayer
+    @Inject lateinit var foregroundAppDetector: com.focusflow.app.system.blocking.ForegroundAppDetector
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var tickerJob: Job? = null
@@ -95,15 +96,18 @@ class FocusSessionService : Service() {
 
         if (session.state == SessionState.RUNNING) {
             startTicker(session)
+            foregroundAppDetector.startMonitoring()
         } else {
             stopTicker()
             ambientAudioPlayer.pause()
+            foregroundAppDetector.stopMonitoring()
         }
     }
 
     private fun handleNoActiveSession() {
         stopTicker()
         ambientAudioPlayer.stop()
+        foregroundAppDetector.stopMonitoring()
         if (isForegroundActive) {
             ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
             isForegroundActive = false

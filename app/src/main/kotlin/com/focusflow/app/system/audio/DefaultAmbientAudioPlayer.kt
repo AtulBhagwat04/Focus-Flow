@@ -82,7 +82,7 @@ class DefaultAmbientAudioPlayer @Inject constructor(
                 }
                 true
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             false
         }
     }

@@ -26,7 +26,10 @@ detekt {
             "core/domain/src/main/kotlin",
             "core/data/src/main/kotlin",
             "feature/home/src/main/kotlin",
-            "feature/timer/src/main/kotlin"
+            "feature/timer/src/main/kotlin",
+            "feature/stats/src/main/kotlin",
+            "feature/limits/src/main/kotlin",
+            "feature/profile/src/main/kotlin"
         )
     )
 }

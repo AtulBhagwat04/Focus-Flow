@@ -3,6 +3,7 @@ package com.focusflow.feature.timer
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -28,9 +29,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.focusflow.core.designsystem.theme.FocusFlowTheme
-import com.focusflow.core.domain.model.AmbientSound
-import com.focusflow.core.domain.model.SessionMode
-import com.focusflow.core.domain.model.SubjectTag
 import com.focusflow.feature.timer.components.AmbientSoundSelector
 import com.focusflow.feature.timer.components.CompletionDialog
 import com.focusflow.feature.timer.components.ModeSelectorRow
@@ -159,7 +157,7 @@ private fun StartButton(onClick: () -> Unit) {
 }
 
 @Composable
-private fun RunningButtons(onPause: () -> Unit, onComplete: () -> Unit) {
+private fun RowScope.RunningButtons(onPause: () -> Unit, onComplete: () -> Unit) {
     OutlinedButton(
         onClick = onPause,
         modifier = Modifier.weight(1f).height(BUTTON_HEIGHT_SECONDARY),
@@ -181,7 +179,7 @@ private fun RunningButtons(onPause: () -> Unit, onComplete: () -> Unit) {
 }
 
 @Composable
-private fun PausedButtons(onResume: () -> Unit, onComplete: () -> Unit) {
+private fun RowScope.PausedButtons(onResume: () -> Unit, onComplete: () -> Unit) {
     Button(
         onClick = onResume,
         modifier = Modifier.weight(1f).height(BUTTON_HEIGHT_SECONDARY),

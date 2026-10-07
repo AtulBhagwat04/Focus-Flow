@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Timer
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -36,10 +37,14 @@ import com.focusflow.core.designsystem.theme.FocusFlowTheme
 fun HomeScreen(
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = hiltViewModel(),
+    onNavigateToFocus: () -> Unit = {},
+    onNavigateToLimits: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     HomeScreenContent(
-        uiState  = uiState,
+        uiState = uiState,
+        onNavigateToFocus = onNavigateToFocus,
+        onNavigateToLimits = onNavigateToLimits,
         modifier = modifier,
     )
 }
@@ -52,6 +57,8 @@ fun HomeScreen(
 fun HomeScreenContent(
     uiState: HomeUiState,
     modifier: Modifier = Modifier,
+    onNavigateToFocus: () -> Unit = {},
+    onNavigateToLimits: () -> Unit = {},
 ) {
     Column(
         modifier            = modifier
@@ -85,6 +92,22 @@ fun HomeScreenContent(
             color     = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
         )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Button(
+            onClick = onNavigateToFocus,
+        ) {
+            Text(text = "Start Focus")
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        androidx.compose.material3.OutlinedButton(
+            onClick = onNavigateToLimits,
+        ) {
+            Text(text = "App Limits & Blocking")
+        }
     }
 }
 

@@ -36,6 +36,17 @@ interface FocusSessionDao {
     @Query("SELECT * FROM focus_sessions WHERE id = :id")
     suspend fun getSessionById(id: String): FocusSessionEntity?
 
+    @Query(
+        """
+        SELECT COALESCE(SUM(completedAtEpochMs - startedAtEpochMs - totalPausedDurationMs), 0)
+        FROM focus_sessions
+        WHERE state = 'COMPLETED'
+          AND startedAtEpochMs >= :startEpochMs
+          AND startedAtEpochMs < :endEpochMs
+        """
+    )
+    fun observeFocusDurationBetween(startEpochMs: Long, endEpochMs: Long): Flow<Long>
+
     @Query("DELETE FROM focus_sessions WHERE id = :id")
     suspend fun deleteSession(id: String)
 }

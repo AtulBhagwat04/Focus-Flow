@@ -82,6 +82,10 @@ dependencies {
     implementation(project(":core:data"))
     implementation(project(":feature:home"))
     implementation(project(":feature:timer"))
+    implementation(project(":feature:stats"))
+    implementation(project(":feature:limits"))
+    implementation(project(":feature:profile"))
+    implementation(project(":feature:rooms"))
 
     // Core desugar — required for java.time on API 26+
     coreLibraryDesugaring(libs.android.desugar)

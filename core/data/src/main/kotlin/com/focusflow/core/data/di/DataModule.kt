@@ -40,6 +40,84 @@ abstract class DataModule {
         impl: OfflineSubjectTagRepository,
     ): SubjectTagRepository
 
+    @Binds
+    @Singleton
+    abstract fun bindUsageStatsRepository(
+        impl: com.focusflow.core.data.repository.OfflineUsageStatsRepository,
+    ): com.focusflow.core.domain.usage.repository.UsageStatsRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAppListRepository(
+        impl: com.focusflow.core.data.repository.AndroidAppListRepository,
+    ): com.focusflow.core.domain.usage.repository.AppListRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindBlockRuleRepository(
+        impl: com.focusflow.core.data.repository.OfflineBlockRuleRepository,
+    ): com.focusflow.core.domain.blocking.repository.BlockRuleRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAppLimitRepository(
+        impl: com.focusflow.core.data.repository.OfflineAppLimitRepository,
+    ): com.focusflow.core.domain.blocking.repository.AppLimitRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindEmergencyPassRepository(
+        impl: com.focusflow.core.data.repository.OfflineEmergencyPassRepository,
+    ): com.focusflow.core.domain.blocking.repository.EmergencyPassRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAuthRepository(
+        impl: com.focusflow.core.data.auth.FirebaseAuthRepository,
+    ): com.focusflow.core.domain.auth.repository.AuthRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindSyncRepository(
+        impl: com.focusflow.core.data.sync.FirestoreSyncRepository,
+    ): com.focusflow.core.domain.sync.repository.SyncRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindPresenceRepository(
+        impl: com.focusflow.core.data.social.FirebasePresenceRepository,
+    ): com.focusflow.core.domain.social.repository.PresenceRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindFocusRoomRepository(
+        impl: com.focusflow.core.data.social.FirestoreFocusRoomRepository,
+    ): com.focusflow.core.domain.social.repository.FocusRoomRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindFriendsRepository(
+        impl: com.focusflow.core.data.social.FirestoreFriendsRepository,
+    ): com.focusflow.core.domain.social.repository.FriendsRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindLeaderboardRepository(
+        impl: com.focusflow.core.data.social.FirestoreLeaderboardRepository,
+    ): com.focusflow.core.domain.social.repository.LeaderboardRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindStudyModeRepository(
+        impl: com.focusflow.core.data.repository.OfflineStudyModeRepository,
+    ): com.focusflow.core.domain.blocking.repository.StudyModeRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAdvancedBlockingRepository(
+        impl: com.focusflow.core.data.repository.OfflineAdvancedBlockingRepository,
+    ): com.focusflow.core.domain.blocking.repository.AdvancedBlockingRepository
+
     companion object {
 
         @Provides
@@ -53,6 +131,7 @@ abstract class DataModule {
                 FocusFlowDatabase::class.java,
                 "focusflow.db",
             )
+            .fallbackToDestructiveMigration()
             .addCallback(object : RoomDatabase.Callback() {
                 override fun onCreate(db: SupportSQLiteDatabase) {
                     super.onCreate(db)
@@ -103,5 +182,29 @@ abstract class DataModule {
         @Provides
         fun provideSubjectTagDao(database: FocusFlowDatabase): SubjectTagDao =
             database.subjectTagDao()
+
+        @Provides
+        fun provideUsageDao(
+            database: FocusFlowDatabase,
+        ): com.focusflow.core.data.local.dao.UsageDao =
+            database.usageDao()
+
+        @Provides
+        fun provideBlockingDao(
+            database: FocusFlowDatabase,
+        ): com.focusflow.core.data.local.dao.BlockingDao =
+            database.blockingDao()
+
+        @Provides
+        fun provideSocialDao(
+            database: FocusFlowDatabase,
+        ): com.focusflow.core.data.local.dao.SocialDao =
+            database.socialDao()
+
+        @Provides
+        fun provideStudyModeDao(
+            database: FocusFlowDatabase,
+        ): com.focusflow.core.data.local.dao.StudyModeDao =
+            database.studyModeDao()
     }
 }

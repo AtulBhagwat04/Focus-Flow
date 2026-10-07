@@ -1,5 +1,5 @@
 <resources>
-    <!-- App name — placeholder until final branding is decided (see PROJECT_BRIEF.md §16.1) -->
+    <!-- App name -->
     <string name="app_name">FocusFlow</string>
 
     <!-- Bottom navigation labels -->
@@ -9,18 +9,54 @@
     <string name="nav_rooms">Rooms</string>
     <string name="nav_profile">Profile</string>
 
-    <!-- Accessibility content descriptions — all interactive elements need labels -->
+    <!-- Accessibility content descriptions -->
     <string name="cd_home_tab">Home tab</string>
     <string name="cd_focus_tab">Focus timer tab</string>
     <string name="cd_stats_tab">Statistics tab</string>
     <string name="cd_rooms_tab">Focus rooms tab</string>
     <string name="cd_profile_tab">Profile and rewards tab</string>
 
-    <!-- Generic UI strings -->
+    <!-- Generic actions & labels -->
+    <string name="action_start">Start Focus</string>
+    <string name="action_pause">Pause</string>
+    <string name="action_resume">Resume</string>
+    <string name="action_stop">End Session</string>
     <string name="action_retry">Retry</string>
     <string name="action_skip">Skip for now</string>
     <string name="action_back_to_focus">Back to focus</string>
+    <string name="action_join_room">Join Room</string>
+    <string name="action_leave_room">Leave Room</string>
+    <string name="action_create_room">Create Room</string>
+    <string name="action_open_settings">Open Settings</string>
     <string name="label_loading">Loading…</string>
     <string name="label_error_generic">Something went wrong. Please try again.</string>
     <string name="label_offline">You\'re offline. Showing cached data.</string>
+
+    <!-- Focus Timer Modes -->
+    <string name="mode_pomodoro">Pomodoro (25m)</string>
+    <string name="mode_deep_work">Deep Work (50m)</string>
+    <string name="mode_stopwatch">Open Stopwatch</string>
+    <string name="mode_break">Short Break</string>
+
+    <!-- App Blocking & Limits -->
+    <string name="title_app_blocking">App Blocking &amp; Limits</string>
+    <string name="subtitle_app_blocking">Control distractions and set daily screen limits.</string>
+    <string name="title_shorts_blocking">Shorts &amp; Reels Blocking</string>
+    <string name="subtitle_shorts_blocking">Block infinite short-form feeds while keeping standard apps usable.</string>
+    <string name="title_study_mode">YouTube Study Mode</string>
+    <string name="subtitle_study_mode">Only allowlisted educational channels are permitted.</string>
+    <string name="label_safe_listed">Essential (Never Blocked)</string>
+
+    <!-- Social & Rooms -->
+    <string name="title_rooms">Focus Rooms &amp; Social</string>
+    <string name="subtitle_rooms">Shared quiet study presence and weekly standings.</string>
+    <string name="tab_live_rooms">Live Rooms</string>
+    <string name="tab_leaderboard">Leaderboard</string>
+    <string name="tab_buddies">Buddies</string>
+    <string name="notice_no_chat">Quiet Study Space: Rooms feature synchronized timers and live presence without messaging.</string>
+
+    <!-- Privacy & Disclosures -->
+    <string name="accessibility_service_description">FocusFlow uses this permission strictly to detect short-form feeds (Shorts/Reels) and verify educational YouTube channels during study sessions. No personal data, text, or screen content is ever recorded, stored, or transmitted.</string>
+    <string name="privacy_pledge_title">Local-First Privacy Pledge</string>
+    <string name="privacy_pledge_body">Your detailed app usage and browsing remain 100% on this device. Only anonymous aggregates sync to the cloud.</string>
 </resources>

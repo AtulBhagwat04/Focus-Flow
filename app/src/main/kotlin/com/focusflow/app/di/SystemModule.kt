@@ -17,4 +17,10 @@ abstract class SystemModule {
     abstract fun bindAmbientAudioPlayer(
         impl: DefaultAmbientAudioPlayer,
     ): AmbientAudioPlayer
+
+    @Binds
+    @Singleton
+    abstract fun bindPermissionHealthRepository(
+        impl: com.focusflow.app.system.permission.AndroidPermissionHealthRepository,
+    ): com.focusflow.core.domain.permission.PermissionHealthRepository
 }
