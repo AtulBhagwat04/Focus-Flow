@@ -18,6 +18,7 @@ data class HomeUiState(
     val isLoading: Boolean = false,
     val title: String = "FocusFlow",
     val subtitle: String = "M1 Foundation ✓",
+    val initializedAtEpochMs: Long = 0L,
 )
 
 /**
@@ -31,6 +32,8 @@ class HomeViewModel @Inject constructor(
     private val clock: Clock,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(HomeUiState())
+    private val _uiState = MutableStateFlow(
+        HomeUiState(initializedAtEpochMs = clock.now())
+    )
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 }

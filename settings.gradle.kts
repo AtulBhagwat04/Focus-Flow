@@ -39,6 +39,8 @@ include(":app")
 include(":core:common")
 include(":core:designsystem")
 include(":core:domain")
+include(":core:data")
 
 // Feature modules
 include(":feature:home")
+include(":feature:timer")

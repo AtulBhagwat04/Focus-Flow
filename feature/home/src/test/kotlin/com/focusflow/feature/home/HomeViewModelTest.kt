@@ -21,5 +21,6 @@ class HomeViewModelTest {
         assertFalse(state.isLoading)
         assertEquals("FocusFlow", state.title)
         assertEquals("M1 Foundation ✓", state.subtitle)
+        assertEquals(1_700_000_000_000L, state.initializedAtEpochMs)
     }
 }

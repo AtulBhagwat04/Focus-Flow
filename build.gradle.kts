@@ -1,4 +1,4 @@
-// Root build file — plugin declarations only, no logic here
+// Root build file — plugin declarations and project-wide quality tools
 plugins {
     alias(libs.plugins.android.application)      apply false
     alias(libs.plugins.android.library)          apply false
@@ -10,5 +10,23 @@ plugins {
     alias(libs.plugins.google.services)          apply false
     alias(libs.plugins.firebase.crashlytics)     apply false
     alias(libs.plugins.firebase.perf)            apply false
-    alias(libs.plugins.detekt)                   apply false
+    alias(libs.plugins.detekt)
+}
+
+detekt {
+    toolVersion = libs.versions.detekt.get()
+    config.setFrom(files("$rootDir/detekt.yml"))
+    buildUponDefaultConfig = true
+    allRules = false
+    source.setFrom(
+        files(
+            "app/src/main/kotlin",
+            "core/common/src/main/kotlin",
+            "core/designsystem/src/main/kotlin",
+            "core/domain/src/main/kotlin",
+            "core/data/src/main/kotlin",
+            "feature/home/src/main/kotlin",
+            "feature/timer/src/main/kotlin"
+        )
+    )
 }

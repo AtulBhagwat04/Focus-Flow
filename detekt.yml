@@ -63,16 +63,13 @@ naming:
   FunctionNaming:
     active: true
     functionPattern: '[a-z][a-zA-Z0-9]*'
-    # Allow uppercase Composable function names
-    excludes: ['**/ui/**', '**/screen/**', '**/component/**', '**/designsystem/**', '**/preview/**']
+    ignoreAnnotated: ['Composable']
 
 performance:
   active: true
 
 potential-bugs:
   active: true
-  AvoidReferenceToMutableStateFlowExposedAsStateFlow:
-    active: true
 
 style:
   active: true
@@ -94,3 +91,6 @@ style:
   WildcardImport:
     active: true
     excludeImports: ['kotlinx.coroutines.*', 'androidx.compose.*']
+  UnusedPrivateMember:
+    active: true
+    ignoreAnnotated: ['Preview']

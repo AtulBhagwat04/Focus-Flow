@@ -42,11 +42,31 @@ private data class TopLevelDestination(
 )
 
 private val topLevelDestinations = listOf(
-    TopLevelDestination(ROUTE_HOME,    R.string.nav_home,    { Icon(Icons.Outlined.Home,    contentDescription = null) }),
-    TopLevelDestination(ROUTE_FOCUS,   R.string.nav_focus,   { Icon(Icons.Outlined.Timer,   contentDescription = null) }),
-    TopLevelDestination(ROUTE_STATS,   R.string.nav_stats,   { Icon(Icons.Outlined.BarChart, contentDescription = null) }),
-    TopLevelDestination(ROUTE_ROOMS,   R.string.nav_rooms,   { Icon(Icons.Outlined.Groups,  contentDescription = null) }),
-    TopLevelDestination(ROUTE_PROFILE, R.string.nav_profile, { Icon(Icons.Outlined.Person,  contentDescription = null) }),
+    TopLevelDestination(
+        route = ROUTE_HOME,
+        labelRes = R.string.nav_home,
+        icon = { Icon(Icons.Outlined.Home, contentDescription = null) },
+    ),
+    TopLevelDestination(
+        route = ROUTE_FOCUS,
+        labelRes = R.string.nav_focus,
+        icon = { Icon(Icons.Outlined.Timer, contentDescription = null) },
+    ),
+    TopLevelDestination(
+        route = ROUTE_STATS,
+        labelRes = R.string.nav_stats,
+        icon = { Icon(Icons.Outlined.BarChart, contentDescription = null) },
+    ),
+    TopLevelDestination(
+        route = ROUTE_ROOMS,
+        labelRes = R.string.nav_rooms,
+        icon = { Icon(Icons.Outlined.Groups, contentDescription = null) },
+    ),
+    TopLevelDestination(
+        route = ROUTE_PROFILE,
+        labelRes = R.string.nav_profile,
+        icon = { Icon(Icons.Outlined.Person, contentDescription = null) },
+    ),
 )
 
 /**
