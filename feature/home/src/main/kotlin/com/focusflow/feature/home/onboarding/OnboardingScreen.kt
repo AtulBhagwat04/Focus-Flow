@@ -354,7 +354,7 @@ private fun OnboardingStep1Welcome(
             contentAlignment = Alignment.Center,
         ) {
             Image(
-                painter = painterResource(id = R.drawable.bg_home_screen),
+                painter = painterResource(id = R.drawable.bg_onboarding_01),
                 contentDescription = null,
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop,
