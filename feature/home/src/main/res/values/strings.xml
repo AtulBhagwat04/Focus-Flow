@@ -20,4 +20,64 @@
     <string name="home_nav_home">Home</string>
     <string name="home_nav_insights">Insights</string>
     <string name="home_nav_profile">Profile</string>
+
+    <!-- Onboarding common -->
+    <string name="onboarding_skip">Skip</string>
+    <string name="onboarding_get_started">Get Started →</string>
+    <string name="onboarding_continue">Continue →</string>
+    <string name="onboarding_start_plan">Start My Plan →</string>
+
+    <!-- Onboarding Step 1 -->
+    <string name="onboarding_s1_headline_1">Let\'s build your\n</string>
+    <string name="onboarding_s1_headline_focus">focus</string>
+    <string name="onboarding_s1_headline_2"> routine.</string>
+    <string name="onboarding_s1_subtitle">Block distractions, stay consistent and make progress on what matters to you.</string>
+
+    <!-- Onboarding Step 2 -->
+    <string name="onboarding_s2_headline_1">What do you want\nto </string>
+    <string name="onboarding_s2_headline_improve">improve</string>
+    <string name="onboarding_s2_headline_2">?</string>
+    <string name="onboarding_s2_subtitle">Choose your main goal. You can always change it later.</string>
+    <string name="onboarding_goal_study_title">Study better</string>
+    <string name="onboarding_goal_study_subtitle">Stay consistent and learn more effectively</string>
+    <string name="onboarding_goal_work_title">Work without distractions</string>
+    <string name="onboarding_goal_work_subtitle">Get more done in less time</string>
+    <string name="onboarding_goal_habits_title">Build better habits</string>
+    <string name="onboarding_goal_habits_subtitle">Be more productive and consistent</string>
+    <string name="onboarding_goal_screen_time_title">Reduce screen time</string>
+    <string name="onboarding_goal_screen_time_subtitle">Spend less time on unnecessary apps</string>
+
+    <!-- Onboarding Step 3 -->
+    <string name="onboarding_s3_headline_1">What usually </string>
+    <string name="onboarding_s3_headline_breaks">breaks</string>
+    <string name="onboarding_s3_headline_2">\nyour focus?</string>
+    <string name="onboarding_s3_subtitle">Select all that apply.</string>
+    <string name="onboarding_distraction_social">Social media</string>
+    <string name="onboarding_distraction_youtube">YouTube &amp; videos</string>
+    <string name="onboarding_distraction_games">Games</string>
+    <string name="onboarding_distraction_messages">Messages</string>
+    <string name="onboarding_distraction_everything">Everything...</string>
+
+    <!-- Onboarding Step 4 -->
+    <string name="onboarding_s4_headline_1">How much focused\ntime do you want\n</string>
+    <string name="onboarding_s4_headline_each_day">each day</string>
+    <string name="onboarding_s4_headline_2">?</string>
+    <string name="onboarding_s4_subtitle">We\'ll start small and build from there.</string>
+    <string name="onboarding_time_15_title">15 min</string>
+    <string name="onboarding_time_15_subtitle">A great start</string>
+    <string name="onboarding_time_30_title">30 min</string>
+    <string name="onboarding_time_30_subtitle">Build momentum</string>
+    <string name="onboarding_time_60_title">60 min</string>
+    <string name="onboarding_time_60_subtitle">Go deeper</string>
+    <string name="onboarding_time_90_title">90+ min</string>
+    <string name="onboarding_time_90_subtitle">For consistent progress</string>
+
+    <!-- Onboarding Step 5 -->
+    <string name="onboarding_s5_headline_1">Your focus plan\n</string>
+    <string name="onboarding_s5_headline_ready">is ready</string>
+    <string name="onboarding_s5_subtitle">A personalised plan to help you stay focused and achieve goals.</string>
+    <string name="onboarding_s5_metric_block">Block distractions</string>
+    <string name="onboarding_s5_milestone_1">Build\nConsistency</string>
+    <string name="onboarding_s5_milestone_2">Stay\nFocused</string>
+    <string name="onboarding_s5_milestone_3">See\nProgress</string>
 </resources>

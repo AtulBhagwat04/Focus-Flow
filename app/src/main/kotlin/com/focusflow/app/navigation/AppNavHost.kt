@@ -52,6 +52,7 @@ import com.focusflow.core.designsystem.theme.FocusCardBorder
 import com.focusflow.core.designsystem.theme.FocusForestGreen
 import com.focusflow.core.designsystem.theme.FocusNavInactive
 import com.focusflow.feature.home.HomeScreen
+import com.focusflow.feature.home.onboarding.OnboardingScreen
 import com.focusflow.feature.limits.LimitsScreen
 import com.focusflow.feature.profile.ProfileScreen
 import com.focusflow.feature.rooms.RoomsScreen
@@ -61,6 +62,7 @@ import com.focusflow.feature.timer.TimerScreen
 
 // ─── Top-level route definitions ─────────────────────────────────────────────
 
+internal const val ROUTE_ONBOARDING        = "onboarding"
 internal const val ROUTE_HOME              = "home"
 internal const val ROUTE_FOCUS             = "focus"
 internal const val ROUTE_STATS             = "stats"
@@ -104,80 +106,85 @@ private val topLevelDestinations = listOf(
  * Home (with active indicator), Insights, and Profile.
  */
 @Composable
-fun AppNavHost() {
+fun AppNavHost(
+    startDestination: String = ROUTE_ONBOARDING,
+) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
+    val showBottomBar = currentDestination?.route != ROUTE_ONBOARDING
 
     Scaffold(
         bottomBar = {
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
-                color = Color.White,
-                shadowElevation = 8.dp,
-                border = BorderStroke(1.dp, FocusCardBorder),
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .navigationBarsPadding()
-                        .padding(horizontal = 24.dp, vertical = 6.dp),
-                    horizontalArrangement = Arrangement.SpaceAround,
-                    verticalAlignment = Alignment.CenterVertically,
+            if (showBottomBar) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+                    color = Color.White,
+                    shadowElevation = 8.dp,
+                    border = BorderStroke(1.dp, FocusCardBorder),
                 ) {
-                    topLevelDestinations.forEach { destination ->
-                        val selected = currentDestination?.hierarchy
-                            ?.any { it.route == destination.route } == true
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .navigationBarsPadding()
+                            .padding(horizontal = 24.dp, vertical = 6.dp),
+                        horizontalArrangement = Arrangement.SpaceAround,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        topLevelDestinations.forEach { destination ->
+                            val selected = currentDestination?.hierarchy
+                                ?.any { it.route == destination.route } == true
 
-                        Column(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(12.dp))
-                                .clickable(
-                                    interactionSource = null,
-                                    indication = ripple(bounded = false, radius = 28.dp),
-                                ) {
-                                    navController.navigate(destination.route) {
-                                        popUpTo(navController.graph.findStartDestination().id) {
-                                            saveState = true
+                            Column(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .clickable(
+                                        interactionSource = null,
+                                        indication = ripple(bounded = false, radius = 28.dp),
+                                    ) {
+                                        navController.navigate(destination.route) {
+                                            popUpTo(navController.graph.findStartDestination().id) {
+                                                saveState = true
+                                            }
+                                            launchSingleTop = true
+                                            restoreState    = true
                                         }
-                                        launchSingleTop = true
-                                        restoreState    = true
                                     }
-                                }
-                                .padding(horizontal = 20.dp, vertical = 6.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center,
-                        ) {
-                            Icon(
-                                imageVector = if (selected) destination.selectedIcon else destination.unselectedIcon,
-                                contentDescription = null,
-                                tint = if (selected) FocusForestGreen else FocusNavInactive,
-                                modifier = Modifier.size(24.dp),
-                            )
-
-                            Spacer(modifier = Modifier.height(3.dp))
-
-                            Text(
-                                text = stringResource(destination.labelRes),
-                                fontSize = 12.sp,
-                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                                color = if (selected) FocusForestGreen else FocusNavInactive,
-                            )
-
-                            Spacer(modifier = Modifier.height(4.dp))
-
-                            // Active indicator pill
-                            if (selected) {
-                                Box(
-                                    modifier = Modifier
-                                        .width(24.dp)
-                                        .height(3.dp)
-                                        .clip(RoundedCornerShape(1.5.dp))
-                                        .background(FocusForestGreen),
+                                    .padding(horizontal = 20.dp, vertical = 6.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center,
+                            ) {
+                                Icon(
+                                    imageVector = if (selected) destination.selectedIcon else destination.unselectedIcon,
+                                    contentDescription = null,
+                                    tint = if (selected) FocusForestGreen else FocusNavInactive,
+                                    modifier = Modifier.size(24.dp),
                                 )
-                            } else {
+
                                 Spacer(modifier = Modifier.height(3.dp))
+
+                                Text(
+                                    text = stringResource(destination.labelRes),
+                                    fontSize = 12.sp,
+                                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                                    color = if (selected) FocusForestGreen else FocusNavInactive,
+                                )
+
+                                Spacer(modifier = Modifier.height(4.dp))
+
+                                // Active indicator pill
+                                if (selected) {
+                                    Box(
+                                        modifier = Modifier
+                                            .width(24.dp)
+                                            .height(3.dp)
+                                            .clip(RoundedCornerShape(1.5.dp))
+                                            .background(FocusForestGreen),
+                                    )
+                                } else {
+                                    Spacer(modifier = Modifier.height(3.dp))
+                                }
                             }
                         }
                     }
@@ -187,9 +194,18 @@ fun AppNavHost() {
     ) { innerPadding ->
         NavHost(
             navController    = navController,
-            startDestination = ROUTE_HOME,
+            startDestination = startDestination,
             modifier         = Modifier.padding(innerPadding),
         ) {
+            composable(ROUTE_ONBOARDING) {
+                OnboardingScreen(
+                    onCompleteOnboarding = {
+                        navController.navigate(ROUTE_HOME) {
+                            popUpTo(ROUTE_ONBOARDING) { inclusive = true }
+                        }
+                    }
+                )
+            }
             composable(ROUTE_HOME) {
                 HomeScreen(
                     onNavigateToFocus = {
