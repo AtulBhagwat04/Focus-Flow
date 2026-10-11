@@ -1,27 +1,22 @@
 package com.focusflow.feature.home
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -31,26 +26,35 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.automirrored.outlined.Assignment
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.outlined.Laptop
+import androidx.compose.material.icons.outlined.Block
 import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.outlined.School
-import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.Spa
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
@@ -71,23 +75,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.focusflow.core.designsystem.theme.FocusCardBorder
 import com.focusflow.core.designsystem.theme.FocusDarkText
 import com.focusflow.core.designsystem.theme.FocusFlowTheme
-import com.focusflow.core.designsystem.theme.FocusForestAccentWave
 import com.focusflow.core.designsystem.theme.FocusForestGreen
 import com.focusflow.core.designsystem.theme.FocusForestGreenDeep
-import com.focusflow.core.designsystem.theme.FocusForestGreenLight
-import com.focusflow.core.designsystem.theme.FocusForestMintBadge
 import com.focusflow.core.designsystem.theme.FocusForestMintBg
 import com.focusflow.core.designsystem.theme.FocusForestMintBorder
-import com.focusflow.core.designsystem.theme.FocusInactiveIcon
 import com.focusflow.core.designsystem.theme.FocusMutedText
 
-/**
- * Home screen entry point.
- *
- * Follows Unidirectional Data Flow:
- * - Collects [HomeUiState] lifecycle-aware via [collectAsStateWithLifecycle]
- * - Delegates rendering to stateless [HomeScreenContent]
- */
+
 @Composable
 fun HomeScreen(
     modifier: Modifier = Modifier,
@@ -95,13 +89,21 @@ fun HomeScreen(
     onNavigateToFocus: () -> Unit = {},
     onNavigateToLimits: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
+    onNavigateToProfile: () -> Unit = {},
+    onNavigateToStats: () -> Unit = {},
+    onNavigateToTasks: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
     HomeScreenContent(
         uiState = uiState,
         onNavigateToFocus = onNavigateToFocus,
         onNavigateToLimits = onNavigateToLimits,
         onNavigateToSettings = onNavigateToSettings,
+        onNavigateToProfile = onNavigateToProfile,
+        onNavigateToStats = onNavigateToStats,
+        onNavigateToTasks = onNavigateToTasks,
+        onSelectDuration = viewModel::selectDuration,
         onSelectMode = viewModel::selectMode,
         modifier = modifier,
     )
@@ -109,7 +111,6 @@ fun HomeScreen(
 
 /**
  * Stateless content composable for Home screen.
- * Hoists state for easy Compose UI testing and @Preview support.
  */
 @Composable
 fun HomeScreenContent(
@@ -118,362 +119,651 @@ fun HomeScreenContent(
     onNavigateToFocus: () -> Unit = {},
     onNavigateToLimits: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
+    onNavigateToProfile: () -> Unit = {},
+    onNavigateToStats: () -> Unit = {},
+    onNavigateToTasks: () -> Unit = {},
+    onSelectDuration: (Int) -> Unit = {},
     onSelectMode: (FocusMode) -> Unit = {},
 ) {
-    Box(
-        modifier = modifier.fillMaxSize(),
-    ) {
-        // ── 1. Scenic Nature Background Image ────────────────────────────────
-        Image(
-            painter = painterResource(id = R.drawable.bg_home_screen),
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop,
-        )
+    var showCustomDurationDialog by remember { mutableStateOf(false) }
+    var showFocusModeDialog by remember { mutableStateOf(false) }
 
-        // ── 2. Scrollable / Adaptive Screen Content ──────────────────────────
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(Color(0xFFF7FAF8)),
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding()
-                .verticalScroll(rememberScrollState()),
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            // ── Top Bar: Logo & Settings ─────────────────────────────────────
-            HomeTopBar(
-                onNavigateToSettings = onNavigateToSettings,
+            // ── 1. Header: Greeting, Headline & Profile Avatar ───────────────
+            HomeHeaderSection(
+                greeting = uiState.greeting,
+                onNavigateToProfile = onNavigateToProfile,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 12.dp),
+                    .padding(top = 16.dp, bottom = 18.dp),
             )
 
-            // ── Headline: "Stay Focused, Build a Better You" ─────────────────
-            HomeHeadlineSection(
+            // ── 2. Hero Card: "Start a Focus Session" ────────────────────────
+            HeroFocusCard(
+                selectedDurationMinutes = uiState.selectedDurationMinutes,
+                onSelectDuration = onSelectDuration,
+                onCustomDurationClicked = { showCustomDurationDialog = true },
+                onStartFocus = onNavigateToFocus,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // ── 3. Quick Actions Row ─────────────────────────────────────────
+            QuickActionsSection(
+                onNavigateToLimits = onNavigateToLimits,
+                onNavigateToStats = onNavigateToStats,
+                onNavigateToTasks = onNavigateToTasks,
+                onFocusModeClicked = { showFocusModeDialog = true },
+                onSeeAllClicked = onNavigateToLimits,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // ── 4. Weekly Progress Card ──────────────────────────────────────
+            WeeklyProgressCard(
+                focusedFormatted = uiState.weeklyFocusFormatted,
+                goalPercent = uiState.weeklyGoalPercent,
+                dailyHours = uiState.weeklyDailyHours,
+                onViewDetails = onNavigateToStats,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // ── 5. Inspirational Quote Banner ────────────────────────────────
+            QuoteBannerCard(
+                quote = uiState.quote,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 6.dp),
-            )
-
-            Spacer(modifier = Modifier.height(28.dp))
-
-            // ── Center Focus Action: Concentric Glowing Play Button ──────────
-            CentralFocusButton(
-                onClick = onNavigateToFocus,
-                modifier = Modifier.padding(horizontal = 24.dp),
-            )
-
-            Spacer(modifier = Modifier.height(34.dp))
-
-            // ── Focus Mode Card: "Work", "Study", "Personal" ─────────────────
-            FocusModeCard(
-                selectedMode = uiState.selectedMode,
-                onSelectMode = onSelectMode,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 18.dp)
-                    .padding(bottom = 24.dp),
+                    .padding(bottom = 28.dp),
             )
         }
     }
+
+    // ── Dialogs ──────────────────────────────────────────────────────────────
+    if (showCustomDurationDialog) {
+        CustomDurationDialog(
+            currentMinutes = uiState.selectedDurationMinutes,
+            onDismiss = { showCustomDurationDialog = false },
+            onConfirm = { minutes ->
+                onSelectDuration(minutes)
+                showCustomDurationDialog = false
+            },
+        )
+    }
+
+    if (showFocusModeDialog) {
+        FocusModeDialog(
+            selectedMode = uiState.selectedMode,
+            onSelectMode = { mode ->
+                onSelectMode(mode)
+                showFocusModeDialog = false
+            },
+            onDismiss = { showFocusModeDialog = false },
+        )
+    }
 }
 
-/**
- * Top branding bar with "FocusFlow" logo and tagline on the left,
- * and a subtle circular Settings icon button on the right.
- */
+// ─────────────────────────────────────────────────────────────────────────────
+// 1. Header Section
+// ─────────────────────────────────────────────────────────────────────────────
+
 @Composable
-private fun HomeTopBar(
-    onNavigateToSettings: () -> Unit,
+private fun HomeHeaderSection(
+    greeting: String,
+    onNavigateToProfile: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val settingsCd = stringResource(R.string.home_cd_settings)
+    val profileCd = stringResource(R.string.home_cd_profile)
 
     Row(
         modifier = modifier,
-        verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = greeting,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color(0xFF64748B),
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.semantics { heading() },
+            ) {
                 Text(
-                    text = stringResource(R.string.home_brand_focus),
-                    fontSize = 24.sp,
+                    text = stringResource(R.string.home_headline_lets),
+                    fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
-                    color = FocusDarkText,
+                    color = Color(0xFF0F172A),
+                    letterSpacing = (-0.5).sp,
                 )
                 Text(
-                    text = stringResource(R.string.home_brand_flow),
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
+                    text = stringResource(R.string.home_headline_focus_word),
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.ExtraBold,
                     color = FocusForestGreen,
+                    letterSpacing = (-0.5).sp,
+                )
+                Text(
+                    text = stringResource(R.string.home_headline_today_word),
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF0F172A),
+                    letterSpacing = (-0.5).sp,
                 )
             }
+
+            Spacer(modifier = Modifier.height(3.dp))
+
             Text(
-                text = stringResource(R.string.home_tagline),
-                fontSize = 13.sp,
+                text = stringResource(R.string.home_headline_small_steps),
+                fontSize = 13.5.sp,
                 fontWeight = FontWeight.Normal,
-                color = FocusMutedText,
+                color = Color(0xFF64748B),
             )
         }
 
-        // Settings gear button
-        Box(
+        // Circular Profile / Avatar button
+        Surface(
             modifier = Modifier
-                .size(44.dp)
+                .size(46.dp)
                 .clip(CircleShape)
-                .background(Color(0xD9FFFFFF))
-                .border(BorderStroke(1.dp, Color(0x22000000)), CircleShape)
                 .clickable(
-                    indication = ripple(bounded = true, radius = 22.dp),
+                    indication = ripple(bounded = true, radius = 23.dp),
                     interactionSource = null,
-                    onClickLabel = settingsCd,
-                    onClick = onNavigateToSettings,
+                    onClickLabel = profileCd,
+                    onClick = onNavigateToProfile,
                 )
                 .semantics {
                     role = Role.Button
-                    contentDescription = settingsCd
+                    contentDescription = profileCd
                 },
-            contentAlignment = Alignment.Center,
+            shape = CircleShape,
+            color = Color(0xFFE8F3ED),
+            border = BorderStroke(1.dp, Color(0xFFD3E7DC)),
         ) {
-            Icon(
-                imageVector = Icons.Outlined.Settings,
-                contentDescription = null,
-                tint = FocusDarkText,
-                modifier = Modifier.size(22.dp),
-            )
-        }
-    }
-}
-
-/**
- * Hero headline with styled "Stay Focused, Build a Better You"
- * including a custom organic brush-drawn wavy underline beneath "Better You".
- */
-@Composable
-private fun HomeHeadlineSection(
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.Start,
-    ) {
-        Text(
-            text = "Stay Focused,",
-            fontSize = 30.sp,
-            fontWeight = FontWeight.ExtraBold,
-            color = FocusDarkText,
-            lineHeight = 36.sp,
-            modifier = Modifier.semantics { heading() },
-        )
-
-        Row(
-            verticalAlignment = Alignment.Bottom,
-        ) {
-            Text(
-                text = "Build a ",
-                fontSize = 30.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = FocusDarkText,
-                lineHeight = 36.sp,
-            )
-
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text(
-                    text = stringResource(R.string.home_headline_better_you),
-                    fontSize = 30.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = FocusForestGreen,
-                    lineHeight = 36.sp,
-                )
-                WavyAccentUnderline(
-                    modifier = Modifier
-                        .width(148.dp)
-                        .height(8.dp)
-                        .offset(y = (-2).dp),
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = Icons.Outlined.Person,
+                    contentDescription = null,
+                    tint = FocusForestGreenDeep,
+                    modifier = Modifier.size(24.dp),
                 )
             }
         }
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        Text(
-            text = stringResource(R.string.home_headline_subtitle),
-            fontSize = 15.sp,
-            fontWeight = FontWeight.Normal,
-            color = FocusMutedText,
-            lineHeight = 22.sp,
-        )
     }
 }
 
-/**
- * Hand-drawn style wavy underline accent curve under "Better You".
- */
+// ─────────────────────────────────────────────────────────────────────────────
+// 2. Hero Focus Card
+// ─────────────────────────────────────────────────────────────────────────────
+
 @Composable
-private fun WavyAccentUnderline(
-    modifier: Modifier = Modifier,
-    color: Color = FocusForestAccentWave,
-) {
-    Canvas(modifier = modifier) {
-        val width = size.width
-        val height = size.height
-
-        val path = Path().apply {
-            moveTo(x = 0f, y = height * 0.7f)
-            cubicTo(
-                x1 = width * 0.22f, y1 = height * 0.15f,
-                x2 = width * 0.44f, y2 = height * 0.95f,
-                x3 = width * 0.70f, y3 = height * 0.35f,
-            )
-            quadraticTo(
-                x1 = width * 0.88f, y1 = height * 0.10f,
-                x2 = width, y2 = height * 0.50f,
-            )
-        }
-
-        drawPath(
-            path = path,
-            color = color,
-            style = Stroke(
-                width = 3.2.dp.toPx(),
-                cap = StrokeCap.Round,
-                join = StrokeJoin.Round,
-            ),
-        )
-    }
-}
-
-/**
- * Concentric glowing circular rings surrounding the central Play button,
- * with label "Start Focus Session" beneath.
- */
-@Composable
-private fun CentralFocusButton(
-    onClick: () -> Unit,
+private fun HeroFocusCard(
+    selectedDurationMinutes: Int,
+    onSelectDuration: (Int) -> Unit,
+    onCustomDurationClicked: () -> Unit,
+    onStartFocus: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val startFocusActionLabel = stringResource(R.string.home_action_start_focus)
-    val startFocusCd = stringResource(R.string.home_cd_start_focus)
+    val startFocusActionLabel = stringResource(R.string.home_hero_start_btn)
 
-    // Gentle ambient pulse for the halo rings
-    val infiniteTransition = rememberInfiniteTransition(label = "halo_pulse")
-    val pulseScale by infiniteTransition.animateFloat(
-        initialValue = 0.98f,
-        targetValue = 1.03f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 2400, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse,
+    Surface(
+        modifier = modifier.shadow(
+            elevation = 6.dp,
+            shape = RoundedCornerShape(24.dp),
+            ambientColor = Color(0x10000000),
+            spotColor = Color(0x1A000000),
         ),
-        label = "pulse_scale",
-    )
-
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
+        shape = RoundedCornerShape(24.dp),
+        color = Color.White,
+        border = BorderStroke(1.dp, FocusCardBorder),
     ) {
         Box(
-            modifier = Modifier.size(210.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(24.dp)),
+        ) {
+            // Calm background photo on the right half
+            Image(
+                painter = painterResource(id = R.drawable.bg_hero_focus_card),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                alignment = Alignment.CenterEnd,
+                modifier = Modifier.matchParentSize(),
+            )
+
+            // Gradient scrim from left to right ensuring high legibility
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .background(
+                        Brush.horizontalGradient(
+                            0.0f to Color(0xFFF3F7F4),
+                            0.50f to Color(0xE6F5F8F6),
+                            0.75f to Color(0x70F7FAF8),
+                            1.0f to Color(0x10FFFFFF),
+                        ),
+                    ),
+            )
+
+            // Content inside the Hero Card
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 22.dp),
+            ) {
+                Text(
+                    text = stringResource(R.string.home_hero_title),
+                    fontSize = 19.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF0F172A),
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = stringResource(R.string.home_hero_subtitle),
+                    fontSize = 12.5.sp,
+                    fontWeight = FontWeight.Normal,
+                    color = Color(0xFF475569),
+                    lineHeight = 17.sp,
+                )
+
+                Spacer(modifier = Modifier.height(18.dp))
+
+                // Duration Selector Pills: 25, 50, 90, Custom
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    val standardDurations = listOf(25, 50, 90)
+                    standardDurations.forEach { duration ->
+                        val isSelected = selectedDurationMinutes == duration
+                        DurationPill(
+                            durationNumber = duration.toString(),
+                            unitLabel = stringResource(R.string.home_hero_min_label),
+                            isSelected = isSelected,
+                            onClick = { onSelectDuration(duration) },
+                        )
+                    }
+
+                    // Custom Pill
+                    val isCustom = selectedDurationMinutes !in standardDurations
+                    CustomPill(
+                        isSelected = isCustom,
+                        customLabel = if (isCustom) "$selectedDurationMinutes\nmin" else stringResource(R.string.home_hero_custom),
+                        onClick = onCustomDurationClicked,
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(18.dp))
+
+                // "Start Focus" CTA Button
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth(0.68f)
+                        .height(46.dp)
+                        .shadow(4.dp, RoundedCornerShape(23.dp), ambientColor = Color(0x301E5338))
+                        .clip(RoundedCornerShape(23.dp))
+                        .clickable(
+                            indication = ripple(bounded = true),
+                            interactionSource = null,
+                            onClickLabel = startFocusActionLabel,
+                            onClick = onStartFocus,
+                        )
+                        .semantics {
+                            role = Role.Button
+                            contentDescription = startFocusActionLabel
+                        },
+                    shape = RoundedCornerShape(23.dp),
+                    color = FocusForestGreenDeep,
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.PlayArrow,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp),
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = startFocusActionLabel,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DurationPill(
+    durationNumber: String,
+    unitLabel: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+) {
+    val bgColor by animateColorAsState(
+        targetValue = if (isSelected) FocusForestGreenDeep else Color.White,
+        animationSpec = tween(durationMillis = 200),
+        label = "pill_bg",
+    )
+    val numberColor = if (isSelected) Color.White else Color(0xFF0F172A)
+    val unitColor = if (isSelected) Color(0xD9FFFFFF) else Color(0xFF64748B)
+    val borderColor = if (isSelected) FocusForestGreenDeep else Color(0xFFE2E8F0)
+
+    Surface(
+        modifier = Modifier
+            .size(width = 54.dp, height = 54.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .clickable(
+                indication = ripple(bounded = true),
+                interactionSource = null,
+                onClick = onClick,
+            )
+            .semantics {
+                role = Role.RadioButton
+                this.contentDescription = "$durationNumber $unitLabel"
+            },
+        shape = RoundedCornerShape(16.dp),
+        color = bgColor,
+        border = BorderStroke(1.dp, borderColor),
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            Text(
+                text = durationNumber,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = numberColor,
+                lineHeight = 16.sp,
+            )
+            Text(
+                text = unitLabel,
+                fontSize = 10.5.sp,
+                fontWeight = FontWeight.Medium,
+                color = unitColor,
+                lineHeight = 12.sp,
+            )
+        }
+    }
+}
+
+@Composable
+private fun CustomPill(
+    isSelected: Boolean,
+    customLabel: String,
+    onClick: () -> Unit,
+) {
+    val bgColor by animateColorAsState(
+        targetValue = if (isSelected) FocusForestGreenDeep else Color.White,
+        animationSpec = tween(durationMillis = 200),
+        label = "custom_pill_bg",
+    )
+    val textColor = if (isSelected) Color.White else Color(0xFF0F172A)
+    val borderColor = if (isSelected) FocusForestGreenDeep else Color(0xFFE2E8F0)
+
+    Surface(
+        modifier = Modifier
+            .size(width = 64.dp, height = 54.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .clickable(
+                indication = ripple(bounded = true),
+                interactionSource = null,
+                onClick = onClick,
+            )
+            .semantics {
+                role = Role.RadioButton
+                this.contentDescription = customLabel
+            },
+        shape = RoundedCornerShape(16.dp),
+        color = bgColor,
+        border = BorderStroke(1.dp, borderColor),
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center,
         ) {
-            // Outer Halo Ring
-            Box(
-                modifier = Modifier
-                    .size(206.dp * pulseScale)
-                    .clip(CircleShape)
-                    .background(Color(0x1F286D4D)),
+            Text(
+                text = customLabel,
+                fontSize = 12.5.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = textColor,
+                textAlign = TextAlign.Center,
+                lineHeight = 14.sp,
+            )
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 3. Quick Actions Section
+// ─────────────────────────────────────────────────────────────────────────────
+
+@Composable
+private fun QuickActionsSection(
+    onNavigateToLimits: () -> Unit,
+    onNavigateToStats: () -> Unit,
+    onNavigateToTasks: () -> Unit,
+    onFocusModeClicked: () -> Unit,
+    onSeeAllClicked: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier) {
+        // Section Header
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(R.string.home_section_quick_actions),
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF0F172A),
             )
 
-            // Middle Halo Ring
-            Box(
+            Row(
                 modifier = Modifier
-                    .size(164.dp * pulseScale)
-                    .clip(CircleShape)
-                    .background(Color(0x2E286D4D)),
-            )
-
-            // Inner Halo Ring
-            Box(
-                modifier = Modifier
-                    .size(132.dp * pulseScale)
-                    .clip(CircleShape)
-                    .background(Color(0x42286D4D)),
-            )
-
-            // Central Play Button
-            Box(
-                modifier = Modifier
-                    .size(106.dp)
-                    .shadow(
-                        elevation = 14.dp,
-                        shape = CircleShape,
-                        ambientColor = Color(0x601B4E36),
-                        spotColor = Color(0x801B4E36),
-                    )
-                    .clip(CircleShape)
-                    .background(
-                        brush = Brush.radialGradient(
-                            colors = listOf(
-                                FocusForestGreenLight,
-                                FocusForestGreen,
-                                FocusForestGreenDeep,
-                            ),
-                        ),
-                    )
+                    .clip(RoundedCornerShape(8.dp))
                     .clickable(
-                        indication = ripple(bounded = true, radius = 53.dp),
+                        indication = ripple(bounded = true),
                         interactionSource = null,
-                        onClickLabel = startFocusActionLabel,
-                        onClick = onClick,
+                        onClick = onSeeAllClicked,
                     )
-                    .semantics {
-                        role = Role.Button
-                        contentDescription = startFocusCd
-                    },
-                contentAlignment = Alignment.Center,
+                    .padding(horizontal = 6.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Icon(
-                    imageVector = Icons.Filled.PlayArrow,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier
-                        .size(46.dp)
-                        .offset(x = 3.dp), // Optical alignment for play triangle
+                Text(
+                    text = "${stringResource(R.string.home_action_see_all)} >",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color(0xFF64748B),
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(14.dp))
 
-        Text(
-            text = startFocusActionLabel,
-            fontSize = 18.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = FocusDarkText,
-            textAlign = TextAlign.Center,
-        )
+        // 4 Quick Action Cards in a responsive Row
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            QuickActionItem(
+                title = stringResource(R.string.home_action_block_apps),
+                subtitle = stringResource(R.string.home_action_block_apps_sub),
+                icon = Icons.Outlined.Block,
+                iconTint = Color(0xFFDC2626),
+                iconBadgeBg = Color(0xFFFEE2E2),
+                onClick = onNavigateToLimits,
+                modifier = Modifier.weight(1f),
+            )
+
+            QuickActionItem(
+                title = stringResource(R.string.home_action_focus_stats),
+                subtitle = stringResource(R.string.home_action_focus_stats_sub),
+                icon = Icons.Filled.BarChart,
+                iconTint = FocusForestGreenDeep,
+                iconBadgeBg = Color(0xFFD1FAE5),
+                onClick = onNavigateToStats,
+                modifier = Modifier.weight(1f),
+            )
+
+            QuickActionItem(
+                title = stringResource(R.string.home_action_tasks),
+                subtitle = stringResource(R.string.home_action_tasks_sub),
+                icon = Icons.AutoMirrored.Outlined.Assignment,
+                iconTint = Color(0xFF2563EB),
+                iconBadgeBg = Color(0xFFDBEAFE),
+                onClick = onNavigateToTasks,
+                modifier = Modifier.weight(1f),
+            )
+
+            QuickActionItem(
+                title = stringResource(R.string.home_action_focus_mode_card),
+                subtitle = stringResource(R.string.home_action_focus_mode_sub),
+                icon = Icons.Outlined.Spa,
+                iconTint = Color(0xFF059669),
+                iconBadgeBg = Color(0xFFD1FAE5),
+                onClick = onFocusModeClicked,
+                modifier = Modifier.weight(1f),
+            )
+        }
     }
 }
 
-/**
- * Focus Mode Card container featuring 3 mode choices: "Work", "Study", "Personal".
- */
 @Composable
-private fun FocusModeCard(
-    selectedMode: FocusMode,
-    onSelectMode: (FocusMode) -> Unit,
+private fun QuickActionItem(
+    title: String,
+    subtitle: String,
+    icon: ImageVector,
+    iconTint: Color,
+    iconBadgeBg: Color,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Surface(
         modifier = modifier
             .shadow(
-                elevation = 8.dp,
-                shape = RoundedCornerShape(26.dp),
-                ambientColor = Color(0x0D000000),
-                spotColor = Color(0x12000000),
-            ),
-        shape = RoundedCornerShape(26.dp),
+                elevation = 2.dp,
+                shape = RoundedCornerShape(18.dp),
+                ambientColor = Color(0x08000000),
+                spotColor = Color(0x0F000000),
+            )
+            .clip(RoundedCornerShape(18.dp))
+            .clickable(
+                indication = ripple(bounded = true),
+                interactionSource = null,
+                onClick = onClick,
+            )
+            .semantics {
+                role = Role.Button
+                this.contentDescription = "$title, $subtitle"
+            },
+        shape = RoundedCornerShape(18.dp),
+        color = Color.White,
+        border = BorderStroke(1.dp, FocusCardBorder),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 6.dp, vertical = 12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            // Icon Badge
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(iconBadgeBg),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = iconTint,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = title,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF0F172A),
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+            )
+
+            Spacer(modifier = Modifier.height(2.dp))
+
+            Text(
+                text = subtitle,
+                fontSize = 9.5.sp,
+                fontWeight = FontWeight.Normal,
+                color = Color(0xFF64748B),
+                textAlign = TextAlign.Center,
+                lineHeight = 12.sp,
+                maxLines = 2,
+            )
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 4. Weekly Progress Card
+// ─────────────────────────────────────────────────────────────────────────────
+
+@Composable
+private fun WeeklyProgressCard(
+    focusedFormatted: String,
+    goalPercent: Int,
+    dailyHours: List<Pair<String, Float>>,
+    onViewDetails: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier.shadow(
+            elevation = 3.dp,
+            shape = RoundedCornerShape(22.dp),
+            ambientColor = Color(0x0A000000),
+            spotColor = Color(0x10000000),
+        ),
+        shape = RoundedCornerShape(22.dp),
         color = Color.White,
         border = BorderStroke(1.dp, FocusCardBorder),
     ) {
@@ -482,163 +772,415 @@ private fun FocusModeCard(
                 .fillMaxWidth()
                 .padding(horizontal = 18.dp, vertical = 18.dp),
         ) {
-            Text(
-                text = stringResource(R.string.home_section_focus_mode),
-                fontSize = 17.sp,
-                fontWeight = FontWeight.Bold,
-                color = FocusDarkText,
-            )
-            Text(
-                text = stringResource(R.string.home_section_choose_mode),
-                fontSize = 13.sp,
-                fontWeight = FontWeight.Normal,
-                color = FocusMutedText,
-            )
+            // Header: Icon + "Weekly Progress" | "View Details >"
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Filled.BarChart,
+                        contentDescription = null,
+                        tint = FocusForestGreen,
+                        modifier = Modifier.size(20.dp),
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = stringResource(R.string.home_weekly_title),
+                        fontSize = 16.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF0F172A),
+                    )
+                }
+
+                Row(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .clickable(
+                            indication = ripple(bounded = true),
+                            interactionSource = null,
+                            onClick = onViewDetails,
+                        )
+                        .padding(horizontal = 4.dp, vertical = 2.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = "${stringResource(R.string.home_weekly_view_details)} >",
+                        fontSize = 12.5.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color(0xFF64748B),
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(14.dp))
 
+            // Body: Weekly Hours & Bar Chart (Left) | Circular Gauge (Right)
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                FocusModeItem(
-                    title = stringResource(R.string.home_mode_work_title),
-                    subtitle = stringResource(R.string.home_mode_work_subtitle),
-                    icon = Icons.Outlined.Laptop,
-                    isSelected = selectedMode == FocusMode.WORK,
-                    onClick = { onSelectMode(FocusMode.WORK) },
-                    modifier = Modifier.weight(1f),
-                )
+                // Left Column: Hours + 7-Day Bar Chart
+                Column(
+                    modifier = Modifier.weight(1.5f),
+                ) {
+                    Text(
+                        text = focusedFormatted,
+                        fontSize = 25.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = Color(0xFF0F172A),
+                        letterSpacing = (-0.5).sp,
+                    )
+                    Text(
+                        text = stringResource(R.string.home_weekly_focused_this_week),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = Color(0xFF64748B),
+                    )
 
-                FocusModeItem(
-                    title = stringResource(R.string.home_mode_study_title),
-                    subtitle = stringResource(R.string.home_mode_study_subtitle),
-                    icon = Icons.Outlined.School,
-                    isSelected = selectedMode == FocusMode.STUDY,
-                    onClick = { onSelectMode(FocusMode.STUDY) },
-                    modifier = Modifier.weight(1f),
-                )
+                    Spacer(modifier = Modifier.height(14.dp))
 
-                FocusModeItem(
-                    title = stringResource(R.string.home_mode_personal_title),
-                    subtitle = stringResource(R.string.home_mode_personal_subtitle),
-                    icon = Icons.Outlined.Person,
-                    isSelected = selectedMode == FocusMode.PERSONAL,
-                    onClick = { onSelectMode(FocusMode.PERSONAL) },
-                    modifier = Modifier.weight(1f),
-                )
+                    // 7-day Bar chart (Mon to Sun)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(end = 12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.Bottom,
+                    ) {
+                        val maxDailyHour = (dailyHours.maxOfOrNull { it.second } ?: 5f).coerceAtLeast(1f)
+                        dailyHours.forEach { (day, hours) ->
+                            val barHeightFraction = (hours / maxDailyHour).coerceIn(0.2f, 1f)
+                            val targetBarDp = (54 * barHeightFraction).dp
+
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .width(15.dp)
+                                        .height(targetBarDp)
+                                        .clip(RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp, bottomStart = 4.dp, bottomEnd = 4.dp))
+                                        .background(Color(0xFF76A88E)),
+                                )
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text(
+                                    text = day,
+                                    fontSize = 10.5.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color(0xFF64748B),
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Right Column: Circular Goal Progress Ring
+                Box(
+                    modifier = Modifier
+                        .size(86.dp)
+                        .padding(2.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    val animatedSweep by animateFloatAsState(
+                        targetValue = (goalPercent / 100f) * 360f,
+                        animationSpec = tween(durationMillis = 800),
+                        label = "progress_sweep",
+                    )
+
+                    Canvas(modifier = Modifier.fillMaxSize()) {
+                        val strokeWidth = 8.dp.toPx()
+                        val diameter = size.minDimension - strokeWidth
+                        val topLeft = Offset(strokeWidth / 2, strokeWidth / 2)
+
+                        // Background Track Ring
+                        drawArc(
+                            color = Color(0xFFE5ECE8),
+                            startAngle = -90f,
+                            sweepAngle = 360f,
+                            useCenter = false,
+                            topLeft = topLeft,
+                            size = Size(diameter, diameter),
+                            style = Stroke(width = strokeWidth, cap = StrokeCap.Round),
+                        )
+
+                        // Foreground Progress Arc
+                        drawArc(
+                            color = FocusForestGreenDeep,
+                            startAngle = -90f,
+                            sweepAngle = animatedSweep,
+                            useCenter = false,
+                            topLeft = topLeft,
+                            size = Size(diameter, diameter),
+                            style = Stroke(width = strokeWidth, cap = StrokeCap.Round),
+                        )
+                    }
+
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                    ) {
+                        Text(
+                            text = "$goalPercent%",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = Color(0xFF0F172A),
+                        )
+                        Text(
+                            text = stringResource(R.string.home_weekly_goal_label),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Normal,
+                            color = Color(0xFF64748B),
+                        )
+                    }
+                }
             }
         }
     }
 }
 
-/**
- * Individual mode tile inside the Focus Mode Card.
- */
+// ─────────────────────────────────────────────────────────────────────────────
+// 5. Inspirational Quote Banner
+// ─────────────────────────────────────────────────────────────────────────────
+
 @Composable
-private fun FocusModeItem(
-    title: String,
-    subtitle: String,
-    icon: ImageVector,
-    isSelected: Boolean,
-    onClick: () -> Unit,
+private fun QuoteBannerCard(
+    quote: String,
     modifier: Modifier = Modifier,
 ) {
-    val animatedBg by animateColorAsState(
-        targetValue = if (isSelected) FocusForestMintBg else Color(0xFFFAFBFA),
-        label = "mode_bg",
-    )
-    val animatedBorderColor by animateColorAsState(
-        targetValue = if (isSelected) FocusForestMintBorder else Color(0xFFE5ECE8),
-        label = "mode_border",
-    )
-    val badgeBg = if (isSelected) FocusForestMintBadge else Color(0xFFEFF3F1)
-    val iconTint = if (isSelected) FocusForestGreenDeep else FocusInactiveIcon
-    val titleColor = if (isSelected) FocusForestGreenDeep else FocusDarkText
-    val subtitleColor = if (isSelected) FocusForestGreen else FocusMutedText
+    Surface(
+        modifier = modifier.shadow(
+            elevation = 2.dp,
+            shape = RoundedCornerShape(20.dp),
+            ambientColor = Color(0x06000000),
+            spotColor = Color(0x0A000000),
+        ),
+        shape = RoundedCornerShape(20.dp),
+        color = Color(0xFFEAF4EE),
+        border = BorderStroke(1.dp, Color(0xFFD6E8DC)),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(96.dp)
+                .clip(RoundedCornerShape(20.dp)),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            // Left Quote Content
+            Column(
+                modifier = Modifier
+                    .weight(1.35f)
+                    .padding(start = 18.dp, end = 8.dp, top = 12.dp, bottom = 12.dp),
+                verticalArrangement = Arrangement.Center,
+            ) {
+                Text(
+                    text = "“",
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = FocusForestGreenDeep,
+                    lineHeight = 24.sp,
+                )
+                Text(
+                    text = quote,
+                    fontSize = 13.5.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFF1E293B),
+                    lineHeight = 18.sp,
+                )
+            }
 
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(18.dp))
-            .background(animatedBg)
-            .border(
-                border = BorderStroke(
-                    width = if (isSelected) 1.6.dp else 1.dp,
-                    color = animatedBorderColor,
-                ),
-                shape = RoundedCornerShape(18.dp),
+            // Right Mountain Sunrise Artwork
+            Image(
+                painter = painterResource(id = R.drawable.bg_quote_mountain),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                alignment = Alignment.CenterEnd,
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
             )
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Dialogs: Custom Duration & Focus Mode
+// ─────────────────────────────────────────────────────────────────────────────
+
+@Composable
+private fun CustomDurationDialog(
+    currentMinutes: Int,
+    onDismiss: () -> Unit,
+    onConfirm: (Int) -> Unit,
+) {
+    var sliderValue by remember { mutableFloatStateOf(currentMinutes.toFloat().coerceIn(5f, 180f)) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = stringResource(R.string.home_custom_dialog_title),
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp,
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    text = "${sliderValue.toInt()} min",
+                    fontSize = 32.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = FocusForestGreenDeep,
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Slider(
+                    value = sliderValue,
+                    onValueChange = { sliderValue = it },
+                    valueRange = 5f..180f,
+                    steps = 34, // 5 min increments
+                    colors = SliderDefaults.colors(
+                        thumbColor = FocusForestGreenDeep,
+                        activeTrackColor = FocusForestGreen,
+                        inactiveTrackColor = Color(0xFFE2E8F0),
+                    ),
+                )
+                Text(
+                    text = "5 min – 180 min",
+                    fontSize = 12.sp,
+                    color = Color(0xFF64748B),
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirm(sliderValue.toInt()) }) {
+                Text(
+                    text = stringResource(R.string.home_custom_dialog_confirm),
+                    fontWeight = FontWeight.Bold,
+                    color = FocusForestGreenDeep,
+                )
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(
+                    text = stringResource(R.string.home_custom_dialog_cancel),
+                    color = Color(0xFF64748B),
+                )
+            }
+        },
+        shape = RoundedCornerShape(20.dp),
+        containerColor = Color.White,
+    )
+}
+
+@Composable
+private fun FocusModeDialog(
+    selectedMode: FocusMode,
+    onSelectMode: (FocusMode) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = stringResource(R.string.home_section_focus_mode),
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp,
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                FocusModeOption(
+                    title = stringResource(R.string.home_mode_work_title),
+                    subtitle = stringResource(R.string.home_mode_work_subtitle),
+                    isSelected = selectedMode == FocusMode.WORK,
+                    onClick = { onSelectMode(FocusMode.WORK) },
+                )
+                FocusModeOption(
+                    title = stringResource(R.string.home_mode_study_title),
+                    subtitle = stringResource(R.string.home_mode_study_subtitle),
+                    isSelected = selectedMode == FocusMode.STUDY,
+                    onClick = { onSelectMode(FocusMode.STUDY) },
+                )
+                FocusModeOption(
+                    title = stringResource(R.string.home_mode_personal_title),
+                    subtitle = stringResource(R.string.home_mode_personal_subtitle),
+                    isSelected = selectedMode == FocusMode.PERSONAL,
+                    onClick = { onSelectMode(FocusMode.PERSONAL) },
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text = stringResource(R.string.home_custom_dialog_cancel), color = Color(0xFF64748B))
+            }
+        },
+        shape = RoundedCornerShape(20.dp),
+        containerColor = Color.White,
+    )
+}
+
+@Composable
+private fun FocusModeOption(
+    title: String,
+    subtitle: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
             .clickable(
                 indication = ripple(bounded = true),
                 interactionSource = null,
                 onClick = onClick,
-            )
-            .padding(horizontal = 8.dp, vertical = 14.dp)
-            .semantics {
-                role = Role.RadioButton
-                this.contentDescription = "$title, $subtitle"
-            },
-        contentAlignment = Alignment.Center,
+            ),
+        shape = RoundedCornerShape(14.dp),
+        color = if (isSelected) FocusForestMintBg else Color(0xFFF8FAF8),
+        border = BorderStroke(
+            width = if (isSelected) 1.5.dp else 1.dp,
+            color = if (isSelected) FocusForestMintBorder else Color(0xFFE2E8F0),
+        ),
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            // Icon Badge
-            Box(
-                modifier = Modifier
-                    .size(42.dp)
-                    .clip(CircleShape)
-                    .background(badgeBg),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = iconTint,
-                    modifier = Modifier.size(22.dp),
+            Column {
+                Text(
+                    text = title,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isSelected) FocusForestGreenDeep else Color(0xFF0F172A),
+                )
+                Text(
+                    text = subtitle.replace("\n", " "),
+                    fontSize = 12.sp,
+                    color = Color(0xFF64748B),
                 )
             }
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Text(
-                text = title,
-                fontSize = 14.sp,
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
-                color = titleColor,
-                textAlign = TextAlign.Center,
-            )
-
-            Spacer(modifier = Modifier.height(3.dp))
-
-            Text(
-                text = subtitle,
-                fontSize = 10.5.sp,
-                fontWeight = FontWeight.Normal,
-                color = subtitleColor,
-                textAlign = TextAlign.Center,
-                lineHeight = 13.sp,
-                maxLines = 2,
-            )
         }
     }
 }
 
 // ── Previews ─────────────────────────────────────────────────────────────────
 
-@Preview(showBackground = true, name = "Home — Light")
+@Preview(showBackground = true, showSystemUi = true,name = "Home — Reference Design")
 @Composable
-private fun HomeScreenLightPreview() {
+private fun HomeScreenReferencePreview() {
     FocusFlowTheme(darkTheme = false) {
-        HomeScreenContent(uiState = HomeUiState())
-    }
-}
-
-@Preview(showBackground = true, name = "Home — Dark", uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
-@Composable
-private fun HomeScreenDarkPreview() {
-    FocusFlowTheme(darkTheme = true) {
         HomeScreenContent(uiState = HomeUiState())
     }
 }

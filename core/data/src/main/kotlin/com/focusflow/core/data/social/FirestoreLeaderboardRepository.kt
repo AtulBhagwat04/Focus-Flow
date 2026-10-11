@@ -13,6 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import java.util.Calendar
@@ -128,7 +129,7 @@ class FirestoreLeaderboardRepository @Inject constructor(
 
     private suspend fun seedDefaultLeaderboard(scopeType: LeaderboardScope) {
         val currentUserId = authRepository.currentUser.value?.id ?: "me"
-        val userProfile = authRepository.userProfile.value
+        val userProfile = authRepository.userProfile.firstOrNull()
         val starterEntries = listOf(
             LeaderboardEntryEntity(
                 id = "${scopeType.name}_starter_1",

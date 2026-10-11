@@ -23,6 +23,9 @@ class HomeViewModelTest {
         assertEquals("M1 Foundation ✓", state.subtitle)
         assertEquals(1_700_000_000_000L, state.initializedAtEpochMs)
         assertEquals(FocusMode.WORK, state.selectedMode)
+        assertEquals(25, state.selectedDurationMinutes)
+        assertEquals(listOf(25, 50, 90), state.availableDurations)
+        assertEquals(78, state.weeklyGoalPercent)
     }
 
     @Test
@@ -36,5 +39,18 @@ class HomeViewModelTest {
 
         viewModel.selectMode(FocusMode.WORK)
         assertEquals(FocusMode.WORK, viewModel.uiState.first().selectedMode)
+    }
+
+    @Test
+    fun selectDuration_updatesSelectedDuration() = runBlocking {
+        val viewModel = HomeViewModel(clock = fakeClock)
+        viewModel.selectDuration(50)
+        assertEquals(50, viewModel.uiState.first().selectedDurationMinutes)
+
+        viewModel.selectDuration(90)
+        assertEquals(90, viewModel.uiState.first().selectedDurationMinutes)
+
+        viewModel.selectDuration(45)
+        assertEquals(45, viewModel.uiState.first().selectedDurationMinutes)
     }
 }

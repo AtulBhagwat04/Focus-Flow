@@ -73,7 +73,7 @@ class FocusAccessibilityService : AccessibilityService() {
         }
 
         serviceScope.launch {
-            focusSessionRepository.getActiveSession().collect { session ->
+            focusSessionRepository.currentSession.collect { session ->
                 sessionState = session?.state ?: SessionState.IDLE
             }
         }

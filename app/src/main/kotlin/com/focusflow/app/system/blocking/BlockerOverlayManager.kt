@@ -28,6 +28,8 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
@@ -156,12 +158,8 @@ class BlockerOverlayManager @Inject constructor(
         }
 
         fun performPass(action: suspend () -> Unit) {
-            kotlinx.coroutines.CoroutineScope(Dispatchers.IO).launchAction(action)
-        }
-
-        private fun kotlinx.coroutines.CoroutineScope.launchAction(action: suspend () -> Unit) {
-            kotlinx.coroutines.CoroutineScope(Dispatchers.IO).run {
-                kotlinx.coroutines.launch { action() }
+            CoroutineScope(Dispatchers.IO).launch {
+                action()
             }
         }
     }

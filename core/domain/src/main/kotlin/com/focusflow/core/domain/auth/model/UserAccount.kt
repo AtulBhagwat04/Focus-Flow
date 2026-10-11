@@ -10,4 +10,6 @@ data class UserAccount(
     val displayName: String? = null,
     val isAnonymous: Boolean = true,
     val photoUrl: String? = null,
-)
+) {
+    val id: String get() = uid
+}

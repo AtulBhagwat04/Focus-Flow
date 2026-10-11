@@ -68,17 +68,18 @@ class RoomsViewModel @Inject constructor(
         friendsRepository.getFriends(),
         isIncognito,
         message,
-    ) { tab, rooms, activeRoom, participants, lbEntries, lbScope, friends, incognito, msg ->
+    ) { args: Array<Any?> ->
+        @Suppress("UNCHECKED_CAST")
         RoomsUiState(
-            selectedTab = tab,
-            publicRooms = rooms,
-            activeRoom = activeRoom,
-            activeRoomParticipants = participants,
-            leaderboardEntries = lbEntries,
-            leaderboardScope = lbScope,
-            friends = friends,
-            isIncognito = incognito,
-            message = msg,
+            selectedTab = args[0] as? Int ?: 0,
+            publicRooms = args[1] as? List<FocusRoom> ?: emptyList(),
+            activeRoom = args[2] as? FocusRoom,
+            activeRoomParticipants = args[3] as? List<RoomParticipant> ?: emptyList(),
+            leaderboardEntries = args[4] as? List<com.focusflow.core.domain.social.model.LeaderboardEntry> ?: emptyList(),
+            leaderboardScope = args[5] as? LeaderboardScope ?: LeaderboardScope.GLOBAL,
+            friends = args[6] as? List<com.focusflow.core.domain.social.model.Friend> ?: emptyList(),
+            isIncognito = args[7] as? Boolean ?: false,
+            message = args[8] as? String,
             isLoading = false,
         )
     }.stateIn(

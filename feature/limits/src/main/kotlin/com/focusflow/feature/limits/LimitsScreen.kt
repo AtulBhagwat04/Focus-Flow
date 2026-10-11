@@ -44,6 +44,7 @@ import com.focusflow.feature.limits.components.AppLimitItemCard
 import com.focusflow.feature.limits.components.EditLimitDialog
 import com.focusflow.feature.limits.components.StudyModeCard
 
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun LimitsScreen(
     modifier: Modifier = Modifier,

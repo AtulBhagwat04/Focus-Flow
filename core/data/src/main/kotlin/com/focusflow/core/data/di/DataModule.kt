@@ -206,5 +206,10 @@ abstract class DataModule {
             database: FocusFlowDatabase,
         ): com.focusflow.core.data.local.dao.StudyModeDao =
             database.studyModeDao()
+
+        @Provides
+        @Singleton
+        fun provideFirebaseFirestore(): com.google.firebase.firestore.FirebaseFirestore =
+            com.google.firebase.firestore.FirebaseFirestore.getInstance()
     }
 }

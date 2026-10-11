@@ -2,6 +2,7 @@ package com.focusflow.feature.home.onboarding
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -18,6 +19,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -53,6 +55,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -86,6 +89,7 @@ import com.focusflow.core.designsystem.theme.FocusForestMintBorder
 import com.focusflow.core.designsystem.theme.FocusInactiveIcon
 import com.focusflow.core.designsystem.theme.FocusMutedText
 import com.focusflow.feature.home.R
+import com.focusflow.feature.home.login.FocusFlowWaveAccent
 
 /**
  * Stateful entry point for the Onboarding screen.
@@ -120,7 +124,7 @@ fun OnboardingScreen(
 }
 
 /**
- * Stateless composable displaying the 5 onboarding steps.
+ * Stateless composable displaying the 5 onboarding steps with full-screen scenic nature backgrounds.
  */
 @Composable
 fun OnboardingScreenContent(
@@ -132,18 +136,56 @@ fun OnboardingScreenContent(
     onSelectDailyTarget: (DailyFocusTarget) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // Select the scenic background corresponding to the current step
+    val currentBg = when (uiState.currentStep) {
+        1 -> R.drawable.bg_onboarding_01
+        2, 3, 4 -> R.drawable.bg_onboarding_04
+        5 -> R.drawable.bg_onboarding_05
+        else -> R.drawable.bg_onboarding_01
+    }
+
     Box(
         modifier = modifier
             .fillMaxSize()
             .background(Color.White),
     ) {
+        // ── 1. Full Screen Scenic Nature Background with Crossfade ───────────
+        Crossfade(
+            targetState = currentBg,
+            animationSpec = tween(durationMillis = 350),
+            label = "onboarding_bg_crossfade",
+            modifier = Modifier.fillMaxSize(),
+        ) { bgRes ->
+            Image(
+                painter = painterResource(id = bgRes),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop,
+            )
+        }
+
+        // ── 2. Subtle Soft Ambient Frost Overlay for Content Legibility ──────
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        0.0f to Color.White.copy(alpha = 0.55f),
+                        0.25f to Color.White.copy(alpha = 0.25f),
+                        0.65f to Color.White.copy(alpha = 0.60f),
+                        1.0f to Color.White.copy(alpha = 0.95f),
+                    )
+                )
+        )
+
+        // ── 3. Foreground Content ────────────────────────────────────────────
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding()
                 .navigationBarsPadding(),
         ) {
-            // ── Top Header: 5-Segment Progress Bar + Skip Button ─────────────
+            // Top Header: 5-Segment Progress Bar + Skip Button
             OnboardingTopBar(
                 currentStep = uiState.currentStep,
                 totalSteps = uiState.totalSteps,
@@ -153,7 +195,7 @@ fun OnboardingScreenContent(
                     .padding(horizontal = 24.dp, vertical = 12.dp),
             )
 
-            // ── Animated Step Content ────────────────────────────────────────
+            // Animated Step Content
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -231,7 +273,7 @@ private fun OnboardingTopBar(
             for (index in 1..totalSteps) {
                 val isFilled = index <= currentStep
                 val animatedColor by animateColorAsState(
-                    targetValue = if (isFilled) FocusForestGreen else Color(0xFFE2E7E4),
+                    targetValue = if (isFilled) FocusForestGreen else Color(0x66A5B5AC),
                     label = "segment_color_$index",
                 )
                 Box(
@@ -255,12 +297,11 @@ private fun OnboardingTopBar(
                 Text(
                     text = stringResource(R.string.onboarding_skip),
                     fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Color(0xFF6F8179),
+                    fontWeight = FontWeight.SemiBold,
+                    color = FocusForestGreenDeep,
                 )
             }
         } else {
-            // Invisible placeholder for alignment consistency
             Spacer(modifier = Modifier.width(44.dp))
         }
     }
@@ -283,25 +324,44 @@ private fun OnboardingStep1Welcome(
     ) {
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Logo
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        // Branded Logo matching design system
+        Row(
+            verticalAlignment = Alignment.Bottom,
+            horizontalArrangement = Arrangement.Center,
+        ) {
             Text(
                 text = stringResource(R.string.home_brand_focus),
-                fontSize = 26.sp,
+                fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
                 color = FocusDarkText,
+                letterSpacing = (-0.5).sp,
+                modifier = Modifier.padding(bottom = 6.dp),
             )
-            Text(
-                text = stringResource(R.string.home_brand_flow),
-                fontSize = 26.sp,
-                fontWeight = FontWeight.Bold,
-                color = FocusForestGreen,
-            )
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.width(IntrinsicSize.Max),
+            ) {
+                Text(
+                    text = stringResource(R.string.home_brand_flow),
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = FocusForestGreen,
+                    letterSpacing = (-0.5).sp,
+                )
+                Spacer(modifier = Modifier.height(1.dp))
+                FocusFlowWaveAccent(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(5.dp),
+                )
+            }
         }
+        Spacer(modifier = Modifier.height(4.dp))
         Text(
             text = stringResource(R.string.home_tagline),
             fontSize = 13.sp,
             color = FocusMutedText,
+            letterSpacing = 0.1.sp,
         )
 
         Spacer(modifier = Modifier.height(28.dp))
@@ -310,7 +370,7 @@ private fun OnboardingStep1Welcome(
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 text = "Let's build your",
-                fontSize = 30.sp,
+                fontSize = 32.sp,
                 fontWeight = FontWeight.ExtraBold,
                 color = FocusDarkText,
                 textAlign = TextAlign.Center,
@@ -319,13 +379,13 @@ private fun OnboardingStep1Welcome(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = "focus",
-                    fontSize = 30.sp,
+                    fontSize = 32.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = FocusForestGreen,
                 )
                 Text(
                     text = " routine.",
-                    fontSize = 30.sp,
+                    fontSize = 32.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = FocusDarkText,
                 )
@@ -335,47 +395,16 @@ private fun OnboardingStep1Welcome(
 
             Text(
                 text = stringResource(R.string.onboarding_s1_subtitle),
-                fontSize = 14.sp,
+                fontSize = 14.5.sp,
                 color = FocusMutedText,
                 textAlign = TextAlign.Center,
-                lineHeight = 20.sp,
+                lineHeight = 21.sp,
                 modifier = Modifier.padding(horizontal = 16.dp),
             )
         }
 
-        Spacer(modifier = Modifier.height(20.dp))
-
-        // Scenic Nature Artwork
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(24.dp)),
-            contentAlignment = Alignment.Center,
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.bg_onboarding_01),
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop,
-            )
-            // Soft gradient overlay to blend into UI
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                Color.Transparent,
-                                Color(0x33FFFFFF),
-                                Color(0x66FFFFFF),
-                            ),
-                        ),
-                    ),
-            )
-        }
-
-        Spacer(modifier = Modifier.height(20.dp))
+        // Expanded scenic center opening to showcase the full-screen background artwork
+        Spacer(modifier = Modifier.weight(1f))
 
         // Action Button
         OnboardingPrimaryButton(
@@ -383,7 +412,7 @@ private fun OnboardingStep1Welcome(
             onClick = onGetStarted,
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(20.dp))
     }
 }
 
@@ -490,11 +519,11 @@ private fun GoalSelectableCard(
     modifier: Modifier = Modifier,
 ) {
     val animatedBg by animateColorAsState(
-        targetValue = if (isSelected) FocusForestMintBg else Color.White,
+        targetValue = if (isSelected) FocusForestMintBg.copy(alpha = 0.95f) else Color.White.copy(alpha = 0.88f),
         label = "goal_bg",
     )
     val animatedBorderColor by animateColorAsState(
-        targetValue = if (isSelected) FocusForestMintBorder else Color(0xFFE5ECE8),
+        targetValue = if (isSelected) FocusForestMintBorder else Color(0xFFE0E7E3),
         label = "goal_border",
     )
     val badgeBg = if (isSelected) FocusForestMintBadge else Color(0xFFEFF3F1)
@@ -503,6 +532,12 @@ private fun GoalSelectableCard(
     Surface(
         modifier = modifier
             .fillMaxWidth()
+            .shadow(
+                elevation = if (isSelected) 3.dp else 1.5.dp,
+                shape = RoundedCornerShape(18.dp),
+                ambientColor = Color(0x10000000),
+                spotColor = Color(0x14000000),
+            )
             .clip(RoundedCornerShape(18.dp))
             .clickable(
                 interactionSource = null,
@@ -683,17 +718,23 @@ private fun DistractionCheckboxCard(
     modifier: Modifier = Modifier,
 ) {
     val animatedBg by animateColorAsState(
-        targetValue = if (isChecked) Color(0xFFF9FBFA) else Color.White,
+        targetValue = if (isChecked) Color(0xFFF9FBFA).copy(alpha = 0.96f) else Color.White.copy(alpha = 0.88f),
         label = "distraction_bg",
     )
     val animatedBorderColor by animateColorAsState(
-        targetValue = if (isChecked) Color(0xFFD6EDE0) else Color(0xFFE5ECE8),
+        targetValue = if (isChecked) Color(0xFFD6EDE0) else Color(0xFFE0E7E3),
         label = "distraction_border",
     )
 
     Surface(
         modifier = modifier
             .fillMaxWidth()
+            .shadow(
+                elevation = if (isChecked) 3.dp else 1.5.dp,
+                shape = RoundedCornerShape(16.dp),
+                ambientColor = Color(0x10000000),
+                spotColor = Color(0x14000000),
+            )
             .clip(RoundedCornerShape(16.dp))
             .clickable(
                 interactionSource = null,
@@ -897,17 +938,23 @@ private fun DailyTargetCard(
     modifier: Modifier = Modifier,
 ) {
     val animatedBg by animateColorAsState(
-        targetValue = if (isSelected) FocusForestMintBg else Color.White,
+        targetValue = if (isSelected) FocusForestMintBg.copy(alpha = 0.95f) else Color.White.copy(alpha = 0.88f),
         label = "target_bg",
     )
     val animatedBorderColor by animateColorAsState(
-        targetValue = if (isSelected) FocusForestMintBorder else Color(0xFFE5ECE8),
+        targetValue = if (isSelected) FocusForestMintBorder else Color(0xFFE0E7E3),
         label = "target_border",
     )
 
     Surface(
         modifier = modifier
             .height(118.dp)
+            .shadow(
+                elevation = if (isSelected) 4.dp else 2.dp,
+                shape = RoundedCornerShape(20.dp),
+                ambientColor = Color(0x10000000),
+                spotColor = Color(0x18000000),
+            )
             .clip(RoundedCornerShape(20.dp))
             .clickable(
                 interactionSource = null,
@@ -990,15 +1037,14 @@ private fun OnboardingStep5PlanReady(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 24.dp)
-            .verticalScroll(rememberScrollState()),
+            .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Spacer(modifier = Modifier.height(12.dp))
 
         StepIconBadge(icon = Icons.Outlined.AutoAwesome)
 
-        Spacer(modifier = Modifier.height(18.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Headline
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -1025,7 +1071,7 @@ private fun OnboardingStep5PlanReady(
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
             Text(
                 text = stringResource(R.string.onboarding_s5_subtitle),
@@ -1037,13 +1083,20 @@ private fun OnboardingStep5PlanReady(
             )
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
-        // 3-Metric Summary Card
+        // 3-Metric Summary Card (Floating frosted glass)
         Surface(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .shadow(
+                    elevation = 3.dp,
+                    shape = RoundedCornerShape(20.dp),
+                    ambientColor = Color(0x10000000),
+                    spotColor = Color(0x14000000),
+                ),
             shape = RoundedCornerShape(20.dp),
-            color = Color(0xFFFAFBFA),
+            color = Color.White.copy(alpha = 0.90f),
             border = BorderStroke(1.dp, FocusCardBorder),
         ) {
             Row(
@@ -1073,17 +1126,59 @@ private fun OnboardingStep5PlanReady(
             }
         }
 
-        Spacer(modifier = Modifier.height(28.dp))
+        Spacer(modifier = Modifier.height(14.dp))
 
-        // Mountain Trail Journey Visual
-        MountainJourneyVisual(
+        // 3-Milestone Progression Row (Frosted glass card)
+        Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(180.dp),
-        )
+                .shadow(
+                    elevation = 2.dp,
+                    shape = RoundedCornerShape(16.dp),
+                    ambientColor = Color(0x0C000000),
+                    spotColor = Color(0x10000000),
+                ),
+            shape = RoundedCornerShape(16.dp),
+            color = Color.White.copy(alpha = 0.88f),
+            border = BorderStroke(1.dp, FocusCardBorder),
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                MilestoneStepBadge(
+                    number = "1",
+                    label = stringResource(R.string.onboarding_s5_milestone_1).replace("\n", " "),
+                )
+                Box(
+                    modifier = Modifier
+                        .width(18.dp)
+                        .height(2.dp)
+                        .background(FocusForestMintBorder.copy(alpha = 0.5f))
+                )
+                MilestoneStepBadge(
+                    number = "2",
+                    label = stringResource(R.string.onboarding_s5_milestone_2).replace("\n", " "),
+                )
+                Box(
+                    modifier = Modifier
+                        .width(18.dp)
+                        .height(2.dp)
+                        .background(FocusForestMintBorder.copy(alpha = 0.5f))
+                )
+                MilestoneStepBadge(
+                    number = "3",
+                    label = stringResource(R.string.onboarding_s5_milestone_3).replace("\n", " "),
+                    isSummit = true,
+                )
+            }
+        }
 
-        Spacer(modifier = Modifier.weight(1f, fill = false))
-        Spacer(modifier = Modifier.height(28.dp))
+        // Open center space showcasing the celebratory sprout mascot artwork on bg_onboarding_05
+        Spacer(modifier = Modifier.weight(1f))
 
         // Action Button
         OnboardingPrimaryButton(
@@ -1091,7 +1186,7 @@ private fun OnboardingStep5PlanReady(
             onClick = onStartPlan,
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(20.dp))
     }
 }
 
@@ -1122,147 +1217,46 @@ private fun PlanMetricItem(
     }
 }
 
-/**
- * Custom milestone mountain journey visual showing steps 1, 2, and 3 climbing to the summit.
- */
 @Composable
-private fun MountainJourneyVisual(
-    modifier: Modifier = Modifier,
-) {
-    Box(
-        modifier = modifier,
-        contentAlignment = Alignment.Center,
-    ) {
-        // Mountain Backdrop & Dashed Trail Canvas
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val width = size.width
-            val height = size.height
-
-            // Mountain Silhouette (Calm mint green tones)
-            val mountainPath = Path().apply {
-                moveTo(0f, height)
-                lineTo(width * 0.2f, height * 0.65f)
-                lineTo(width * 0.45f, height * 0.45f)
-                lineTo(width * 0.72f, height * 0.22f) // Peak
-                lineTo(width, height * 0.75f)
-                lineTo(width, height)
-                close()
-            }
-            drawPath(
-                path = mountainPath,
-                color = Color(0xFFF1F7F4),
-            )
-
-            // Warm golden sun on peak
-            drawCircle(
-                color = Color(0xFFFFECC4),
-                radius = 32.dp.toPx(),
-                center = androidx.compose.ui.geometry.Offset(width * 0.72f, height * 0.22f),
-            )
-
-            // Dashed trail connecting milestone steps
-            val trailPath = Path().apply {
-                moveTo(width * 0.16f, height * 0.75f)
-                quadraticTo(
-                    width * 0.35f, height * 0.72f,
-                    width * 0.48f, height * 0.52f,
-                )
-                quadraticTo(
-                    width * 0.60f, height * 0.36f,
-                    width * 0.78f, height * 0.28f,
-                )
-            }
-            drawPath(
-                path = trailPath,
-                color = FocusForestGreen,
-                style = Stroke(
-                    width = 2.dp.toPx(),
-                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(12f, 10f), 0f),
-                    cap = StrokeCap.Round,
-                ),
-            )
-        }
-
-        // Milestone Steps Row / Overlays
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Bottom,
-        ) {
-            // Step 1: Build Consistency
-            MilestoneStepNode(
-                number = "1",
-                label = stringResource(R.string.onboarding_s5_milestone_1),
-                isSummit = false,
-                modifier = Modifier.padding(bottom = 12.dp),
-            )
-
-            // Step 2: Stay Focused
-            MilestoneStepNode(
-                number = "2",
-                label = stringResource(R.string.onboarding_s5_milestone_2),
-                isSummit = false,
-                modifier = Modifier.padding(bottom = 44.dp),
-            )
-
-            // Step 3: See Progress (Summit Flag)
-            MilestoneStepNode(
-                number = "3",
-                label = stringResource(R.string.onboarding_s5_milestone_3),
-                isSummit = true,
-                modifier = Modifier.padding(bottom = 76.dp),
-            )
-        }
-    }
-}
-
-@Composable
-private fun MilestoneStepNode(
+private fun MilestoneStepBadge(
     number: String,
     label: String,
-    isSummit: Boolean,
+    isSummit: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
-    Column(
+    Row(
         modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (isSummit) {
-            Icon(
-                imageVector = Icons.Filled.Flag,
-                contentDescription = null,
-                tint = FocusForestGreen,
-                modifier = Modifier.size(16.dp),
-            )
-            Spacer(modifier = Modifier.height(2.dp))
-        }
-
         Box(
             modifier = Modifier
-                .size(26.dp)
+                .size(24.dp)
                 .clip(CircleShape)
-                .background(FocusForestGreen),
+                .background(if (isSummit) FocusForestGreenDeep else FocusForestGreen),
             contentAlignment = Alignment.Center,
         ) {
-            Text(
-                text = number,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
-            )
+            if (isSummit) {
+                Icon(
+                    imageVector = Icons.Filled.Flag,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(13.dp),
+                )
+            } else {
+                Text(
+                    text = number,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                )
+            }
         }
-
-        Spacer(modifier = Modifier.height(6.dp))
-
+        Spacer(modifier = Modifier.width(6.dp))
         Text(
             text = label,
-            fontSize = 11.sp,
+            fontSize = 11.5.sp,
             fontWeight = FontWeight.SemiBold,
             color = FocusDarkText,
-            textAlign = TextAlign.Center,
-            lineHeight = 14.sp,
         )
     }
 }
@@ -1308,18 +1302,24 @@ private fun OnboardingPrimaryButton(
         onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
-            .height(54.dp),
-        shape = RoundedCornerShape(27.dp),
+            .height(56.dp)
+            .shadow(
+                elevation = 6.dp,
+                shape = RoundedCornerShape(28.dp),
+                ambientColor = Color(0x18000000),
+                spotColor = Color(0x20000000),
+            ),
+        shape = RoundedCornerShape(28.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = FocusForestGreen,
             contentColor = Color.White,
         ),
-        elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp),
     ) {
         Text(
             text = text,
-            fontSize = 16.sp,
+            fontSize = 16.5.sp,
             fontWeight = FontWeight.Bold,
+            letterSpacing = 0.2.sp,
         )
     }
 }
