@@ -111,7 +111,7 @@ class FirestoreSyncRepository @Inject constructor(
     override suspend fun exportUserDataJson(): Result<String> {
         return try {
             val sessions = focusSessionDao.getHistoricalSessions(EXPORT_SESSION_LIMIT).first()
-            val tags = subjectTagDao.observeAllTags().first()
+            val tags = subjectTagDao.getAllTags().first()
             val user = authRepository.currentUser.first()
 
             val sessionsJson = sessions.joinToString(",", "[", "]") { s ->

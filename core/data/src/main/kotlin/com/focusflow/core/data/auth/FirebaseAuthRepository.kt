@@ -9,6 +9,9 @@ import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -22,13 +25,13 @@ class FirebaseAuthRepository @Inject constructor() : AuthRepository {
     private val auth: FirebaseAuth get() = FirebaseAuth.getInstance()
     private val firestore: FirebaseFirestore get() = FirebaseFirestore.getInstance()
 
-    override val currentUser: Flow<UserAccount?> = callbackFlow {
-        val listener = FirebaseAuth.AuthStateListener { firebaseAuth ->
-            val user = firebaseAuth.currentUser?.toDomain()
-            trySend(user)
+    private val _currentUser = MutableStateFlow<UserAccount?>(auth.currentUser?.toDomain())
+    override val currentUser: StateFlow<UserAccount?> = _currentUser.asStateFlow()
+
+    init {
+        auth.addAuthStateListener { firebaseAuth ->
+            _currentUser.value = firebaseAuth.currentUser?.toDomain()
         }
-        auth.addAuthStateListener(listener)
-        awaitClose { auth.removeAuthStateListener(listener) }
     }
 
     override val userProfile: Flow<UserProfile?> = currentUser.flatMapLatest { user ->
@@ -63,6 +66,27 @@ class FirebaseAuthRepository @Inject constructor() : AuthRepository {
             val result = auth.signInAnonymously().await()
             val user = result.user?.toDomain()
                 ?: return Result.failure(IllegalStateException("Anonymous user is null"))
+            Result.success(user)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun signInWithGoogle(idToken: String): Result<UserAccount> {
+        return try {
+            val credential = GoogleAuthProvider.getCredential(idToken, null)
+            val current = auth.currentUser
+            val result = if (current != null && current.isAnonymous) {
+                try {
+                    current.linkWithCredential(credential).await()
+                } catch (linkError: Exception) {
+                    auth.signInWithCredential(credential).await()
+                }
+            } else {
+                auth.signInWithCredential(credential).await()
+            }
+            val user = result.user?.toDomain()
+                ?: return Result.failure(IllegalStateException("User is null after Google sign-in"))
             Result.success(user)
         } catch (e: Exception) {
             Result.failure(e)

@@ -69,7 +69,7 @@ class AndroidUsageStatsReader @Inject constructor(
             while (events.hasNextEvent()) {
                 events.getNextEvent(event)
                 when (event.eventType) {
-                    UsageEvents.Event.KEYGUARD_DISMISSED,
+                    UsageEvents.Event.KEYGUARD_HIDDEN,
                     UsageEvents.Event.SCREEN_INTERACTIVE -> {
                         unlockCount++
                     }

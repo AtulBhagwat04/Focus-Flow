@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -16,14 +18,19 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Assignment
+import androidx.compose.material.icons.automirrored.outlined.Assignment
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.PersonOutline
+import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
@@ -50,8 +57,12 @@ import com.focusflow.app.R
 import com.focusflow.app.system.permission.AndroidPermissionChecker
 import com.focusflow.core.designsystem.theme.FocusCardBorder
 import com.focusflow.core.designsystem.theme.FocusForestGreen
+import com.focusflow.core.designsystem.theme.FocusForestGreenDeep
 import com.focusflow.core.designsystem.theme.FocusNavInactive
 import com.focusflow.feature.home.HomeScreen
+import com.focusflow.feature.home.login.LoginScreen
+import com.focusflow.feature.home.onboarding.OnboardingScreen
+import com.focusflow.feature.home.tasks.TasksScreen
 import com.focusflow.feature.limits.LimitsScreen
 import com.focusflow.feature.profile.ProfileScreen
 import com.focusflow.feature.rooms.RoomsScreen
@@ -61,8 +72,11 @@ import com.focusflow.feature.timer.TimerScreen
 
 // ─── Top-level route definitions ─────────────────────────────────────────────
 
+internal const val ROUTE_LOGIN             = "login"
+internal const val ROUTE_ONBOARDING        = "onboarding"
 internal const val ROUTE_HOME              = "home"
 internal const val ROUTE_FOCUS             = "focus"
+internal const val ROUTE_TASKS             = "tasks"
 internal const val ROUTE_STATS             = "stats"
 internal const val ROUTE_ROOMS             = "rooms"
 internal const val ROUTE_PROFILE           = "profile"
@@ -84,16 +98,22 @@ private val topLevelDestinations = listOf(
         unselectedIcon = Icons.Outlined.Home,
     ),
     TopLevelDestination(
-        route = ROUTE_STATS,
-        labelRes = R.string.nav_insights,
-        selectedIcon = Icons.Filled.BarChart,
-        unselectedIcon = Icons.Outlined.BarChart,
+        route = ROUTE_FOCUS,
+        labelRes = R.string.nav_focus,
+        selectedIcon = Icons.Filled.Timer,
+        unselectedIcon = Icons.Outlined.Timer,
     ),
     TopLevelDestination(
-        route = ROUTE_PROFILE,
-        labelRes = R.string.nav_profile,
-        selectedIcon = Icons.Filled.Person,
-        unselectedIcon = Icons.Outlined.PersonOutline,
+        route = ROUTE_TASKS,
+        labelRes = R.string.nav_tasks,
+        selectedIcon = Icons.AutoMirrored.Filled.Assignment,
+        unselectedIcon = Icons.AutoMirrored.Outlined.Assignment,
+    ),
+    TopLevelDestination(
+        route = ROUTE_STATS,
+        labelRes = R.string.nav_stats,
+        selectedIcon = Icons.Filled.BarChart,
+        unselectedIcon = Icons.Outlined.BarChart,
     ),
 )
 
@@ -104,80 +124,75 @@ private val topLevelDestinations = listOf(
  * Home (with active indicator), Insights, and Profile.
  */
 @Composable
-fun AppNavHost() {
+fun AppNavHost(
+    startDestination: String = ROUTE_LOGIN,
+) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
+    val isFullscreenRoute = currentDestination?.route == ROUTE_LOGIN || currentDestination?.route == ROUTE_ONBOARDING
+    val showBottomBar = !isFullscreenRoute
 
     Scaffold(
+        contentWindowInsets = if (isFullscreenRoute) WindowInsets(0, 0, 0, 0) else ScaffoldDefaults.contentWindowInsets,
         bottomBar = {
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
-                color = Color.White,
-                shadowElevation = 8.dp,
-                border = BorderStroke(1.dp, FocusCardBorder),
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .navigationBarsPadding()
-                        .padding(horizontal = 24.dp, vertical = 6.dp),
-                    horizontalArrangement = Arrangement.SpaceAround,
-                    verticalAlignment = Alignment.CenterVertically,
+            if (showBottomBar) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+                    color = Color.White,
+                    shadowElevation = 8.dp,
+                    border = BorderStroke(1.dp, FocusCardBorder),
                 ) {
-                    topLevelDestinations.forEach { destination ->
-                        val selected = currentDestination?.hierarchy
-                            ?.any { it.route == destination.route } == true
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .navigationBarsPadding()
+                            .padding(horizontal = 12.dp, vertical = 6.dp),
+                        horizontalArrangement = Arrangement.SpaceAround,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        topLevelDestinations.forEach { destination ->
+                            val selected = currentDestination?.hierarchy
+                                ?.any { it.route == destination.route } == true
 
-                        Column(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(12.dp))
-                                .clickable(
-                                    interactionSource = null,
-                                    indication = ripple(bounded = false, radius = 28.dp),
-                                ) {
-                                    navController.navigate(destination.route) {
-                                        popUpTo(navController.graph.findStartDestination().id) {
-                                            saveState = true
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .clickable(
+                                        interactionSource = null,
+                                        indication = ripple(bounded = false, radius = 28.dp),
+                                    ) {
+                                        navController.navigate(destination.route) {
+                                            popUpTo(navController.graph.findStartDestination().id) {
+                                                saveState = true
+                                            }
+                                            launchSingleTop = true
+                                            restoreState    = true
                                         }
-                                        launchSingleTop = true
-                                        restoreState    = true
                                     }
-                                }
-                                .padding(horizontal = 20.dp, vertical = 6.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center,
-                        ) {
-                            Icon(
-                                imageVector = if (selected) destination.selectedIcon else destination.unselectedIcon,
-                                contentDescription = null,
-                                tint = if (selected) FocusForestGreen else FocusNavInactive,
-                                modifier = Modifier.size(24.dp),
-                            )
-
-                            Spacer(modifier = Modifier.height(3.dp))
-
-                            Text(
-                                text = stringResource(destination.labelRes),
-                                fontSize = 12.sp,
-                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                                color = if (selected) FocusForestGreen else FocusNavInactive,
-                            )
-
-                            Spacer(modifier = Modifier.height(4.dp))
-
-                            // Active indicator pill
-                            if (selected) {
-                                Box(
-                                    modifier = Modifier
-                                        .width(24.dp)
-                                        .height(3.dp)
-                                        .clip(RoundedCornerShape(1.5.dp))
-                                        .background(FocusForestGreen),
+                                    .padding(vertical = 4.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center,
+                            ) {
+                                Icon(
+                                    imageVector = if (selected) destination.selectedIcon else destination.unselectedIcon,
+                                    contentDescription = null,
+                                    tint = if (selected) FocusForestGreenDeep else FocusNavInactive,
+                                    modifier = Modifier.size(24.dp),
                                 )
-                            } else {
+
                                 Spacer(modifier = Modifier.height(3.dp))
+
+                                Text(
+                                    text = stringResource(destination.labelRes),
+                                    fontSize = 11.5.sp,
+                                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                                    color = if (selected) FocusForestGreenDeep else FocusNavInactive,
+                                    maxLines = 1,
+                                    softWrap = false,
+                                )
                             }
                         }
                     }
@@ -187,9 +202,33 @@ fun AppNavHost() {
     ) { innerPadding ->
         NavHost(
             navController    = navController,
-            startDestination = ROUTE_HOME,
-            modifier         = Modifier.padding(innerPadding),
+            startDestination = startDestination,
+            modifier         = if (isFullscreenRoute) {
+                Modifier.fillMaxSize()
+            } else {
+                Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+            },
         ) {
+            composable(ROUTE_LOGIN) {
+                LoginScreen(
+                    onLoginSuccess = {
+                        navController.navigate(ROUTE_ONBOARDING) {
+                            popUpTo(ROUTE_LOGIN) { inclusive = true }
+                        }
+                    }
+                )
+            }
+            composable(ROUTE_ONBOARDING) {
+                OnboardingScreen(
+                    onCompleteOnboarding = {
+                        navController.navigate(ROUTE_HOME) {
+                            popUpTo(ROUTE_ONBOARDING) { inclusive = true }
+                        }
+                    }
+                )
+            }
             composable(ROUTE_HOME) {
                 HomeScreen(
                     onNavigateToFocus = {
@@ -207,9 +246,43 @@ fun AppNavHost() {
                     onNavigateToSettings = {
                         navController.navigate(ROUTE_PERMISSION_HEALTH)
                     },
+                    onNavigateToProfile = {
+                        navController.navigate(ROUTE_PROFILE)
+                    },
+                    onNavigateToStats = {
+                        navController.navigate(ROUTE_STATS) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    onNavigateToTasks = {
+                        navController.navigate(ROUTE_TASKS) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
                 )
             }
             composable(ROUTE_FOCUS)   { TimerScreen() }
+            composable(ROUTE_TASKS) {
+                TasksScreen(
+                    onStartFocusOnTask = { _, _ ->
+                        navController.navigate(ROUTE_FOCUS) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
+                )
+            }
             composable(ROUTE_STATS) {
                 StatsScreen(
                     onNavigateToPermissions = {

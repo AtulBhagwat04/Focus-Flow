@@ -20,4 +20,123 @@
     <string name="home_nav_home">Home</string>
     <string name="home_nav_insights">Insights</string>
     <string name="home_nav_profile">Profile</string>
+
+    <!-- Reference Mockup Home Screen UI Strings -->
+    <string name="home_greeting_morning">Good Morning ☀️</string>
+    <string name="home_greeting_afternoon">Good Afternoon ☀️</string>
+    <string name="home_greeting_evening">Good Evening 🌙</string>
+    <string name="home_headline_lets">Let’s </string>
+    <string name="home_headline_focus_word">Focus</string>
+    <string name="home_headline_today_word"> Today</string>
+    <string name="home_headline_small_steps">Small steps. Big results.</string>
+    <string name="home_cd_profile">Profile</string>
+
+    <string name="home_hero_title">Start a Focus Session</string>
+    <string name="home_hero_subtitle">Choose a time, put your phone away and get things done.</string>
+    <string name="home_hero_start_btn">Start Focus</string>
+    <string name="home_hero_min_label">min</string>
+    <string name="home_hero_custom">Custom</string>
+    <string name="home_custom_dialog_title">Select Focus Duration</string>
+    <string name="home_custom_dialog_confirm">Set</string>
+    <string name="home_custom_dialog_cancel">Cancel</string>
+
+    <string name="home_section_quick_actions">Quick Actions</string>
+    <string name="home_action_see_all">See All</string>
+    <string name="home_action_block_apps">Block Apps</string>
+    <string name="home_action_block_apps_sub">Stay distraction free</string>
+    <string name="home_action_focus_stats">Focus Stats</string>
+    <string name="home_action_focus_stats_sub">Track your progress</string>
+    <string name="home_action_tasks">Tasks</string>
+    <string name="home_action_tasks_sub">Plan your day</string>
+    <string name="home_action_focus_mode_card">Focus Mode</string>
+    <string name="home_action_focus_mode_sub">Deep work session</string>
+
+    <string name="home_weekly_title">Weekly Progress</string>
+    <string name="home_weekly_view_details">View Details</string>
+    <string name="home_weekly_focused_this_week">Focused this week</string>
+    <string name="home_weekly_goal_label">Goal</string>
+
+    <string name="home_quote_text">A focused mind can achieve anything.</string>
+    <string name="home_tasks_dialog_title">Today’s Tasks</string>
+    <string name="home_tasks_empty">No pending tasks. You’re on track!</string>
+
+    <!-- Onboarding common -->
+    <string name="onboarding_skip">Skip</string>
+    <string name="onboarding_get_started">Get Started →</string>
+    <string name="onboarding_continue">Continue →</string>
+    <string name="onboarding_start_plan">Start My Plan →</string>
+
+    <!-- Onboarding Step 1 -->
+    <string name="onboarding_s1_headline_1">Let\'s build your\n</string>
+    <string name="onboarding_s1_headline_focus">focus</string>
+    <string name="onboarding_s1_headline_2"> routine.</string>
+    <string name="onboarding_s1_subtitle">Block distractions, stay consistent and make progress on what matters to you.</string>
+
+    <!-- Onboarding Step 2 -->
+    <string name="onboarding_s2_headline_1">What do you want\nto </string>
+    <string name="onboarding_s2_headline_improve">improve</string>
+    <string name="onboarding_s2_headline_2">?</string>
+    <string name="onboarding_s2_subtitle">Choose your main goal. You can always change it later.</string>
+    <string name="onboarding_goal_study_title">Study better</string>
+    <string name="onboarding_goal_study_subtitle">Stay consistent and learn more effectively</string>
+    <string name="onboarding_goal_work_title">Work without distractions</string>
+    <string name="onboarding_goal_work_subtitle">Get more done in less time</string>
+    <string name="onboarding_goal_habits_title">Build better habits</string>
+    <string name="onboarding_goal_habits_subtitle">Be more productive and consistent</string>
+    <string name="onboarding_goal_screen_time_title">Reduce screen time</string>
+    <string name="onboarding_goal_screen_time_subtitle">Spend less time on unnecessary apps</string>
+
+    <!-- Onboarding Step 3 -->
+    <string name="onboarding_s3_headline_1">What usually </string>
+    <string name="onboarding_s3_headline_breaks">breaks</string>
+    <string name="onboarding_s3_headline_2">\nyour focus?</string>
+    <string name="onboarding_s3_subtitle">Select all that apply.</string>
+    <string name="onboarding_distraction_social">Social media</string>
+    <string name="onboarding_distraction_youtube">YouTube &amp; videos</string>
+    <string name="onboarding_distraction_games">Games</string>
+    <string name="onboarding_distraction_messages">Messages</string>
+    <string name="onboarding_distraction_everything">Everything...</string>
+
+    <!-- Onboarding Step 4 -->
+    <string name="onboarding_s4_headline_1">How much focused\ntime do you want\n</string>
+    <string name="onboarding_s4_headline_each_day">each day</string>
+    <string name="onboarding_s4_headline_2">?</string>
+    <string name="onboarding_s4_subtitle">We\'ll start small and build from there.</string>
+    <string name="onboarding_time_15_title">15 min</string>
+    <string name="onboarding_time_15_subtitle">A great start</string>
+    <string name="onboarding_time_30_title">30 min</string>
+    <string name="onboarding_time_30_subtitle">Build momentum</string>
+    <string name="onboarding_time_60_title">60 min</string>
+    <string name="onboarding_time_60_subtitle">Go deeper</string>
+    <string name="onboarding_time_90_title">90+ min</string>
+    <string name="onboarding_time_90_subtitle">For consistent progress</string>
+
+    <!-- Onboarding Step 5 -->
+    <string name="onboarding_s5_headline_1">Your focus plan\n</string>
+    <string name="onboarding_s5_headline_ready">is ready</string>
+    <string name="onboarding_s5_subtitle">A personalised plan to help you stay focused and achieve goals.</string>
+    <string name="onboarding_s5_metric_block">Block distractions</string>
+    <string name="onboarding_s5_milestone_1">Build\nConsistency</string>
+    <string name="onboarding_s5_milestone_2">Stay\nFocused</string>
+    <string name="onboarding_s5_milestone_3">See\nProgress</string>
+
+    <!-- Login Screen (Matching Reference UI) -->
+    <string name="login_continue_with_google">Continue with Google</string>
+    <string name="login_signing_in">Signing in…</string>
+    <string name="login_terms_prefix">By continuing, you agree to our</string>
+    <string name="login_terms_of_service">Terms of Service</string>
+    <string name="login_and"> and </string>
+    <string name="login_privacy_policy">Privacy Policy</string>
+    <string name="login_explore_guest">Explore as Guest</string>
+    <string name="login_error_generic">Sign in could not be completed. Please try again.</string>
+    <string name="login_error_cancelled">Google sign in was cancelled.</string>
+    <string name="login_error_no_credentials">No Google credentials found on this device.</string>
+    <string name="login_terms_dialog_title">Terms of Service</string>
+    <string name="login_terms_dialog_body">FocusFlow is designed to help you stay focused, reduce distractions, and build mindful digital habits. Your session and blocking preferences remain private on your device.</string>
+    <string name="login_privacy_dialog_title">Privacy Policy</string>
+    <string name="login_privacy_dialog_body">FocusFlow prioritizes your privacy. App blocking and usage analytics are processed locally on your device in accordance with our safety principles.</string>
+    <string name="login_dialog_close">Close</string>
+
+    <!-- Google OAuth Web Client ID -->
+    <string name="google_web_client_id" translatable="false">283378510664-j9g5edh93hpgtvt6i0qo74kk2qm7pjap.apps.googleusercontent.com</string>
 </resources>

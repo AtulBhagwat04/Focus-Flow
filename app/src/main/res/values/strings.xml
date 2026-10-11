@@ -5,6 +5,7 @@
     <!-- Bottom navigation labels -->
     <string name="nav_home">Home</string>
     <string name="nav_focus">Focus</string>
+    <string name="nav_tasks">Tasks</string>
     <string name="nav_stats">Stats</string>
     <string name="nav_insights">Insights</string>
     <string name="nav_rooms">Rooms</string>
@@ -13,6 +14,7 @@
     <!-- Accessibility content descriptions -->
     <string name="cd_home_tab">Home tab</string>
     <string name="cd_focus_tab">Focus timer tab</string>
+    <string name="cd_tasks_tab">Tasks tab</string>
     <string name="cd_stats_tab">Statistics tab</string>
     <string name="cd_rooms_tab">Focus rooms tab</string>
     <string name="cd_profile_tab">Profile and rewards tab</string>

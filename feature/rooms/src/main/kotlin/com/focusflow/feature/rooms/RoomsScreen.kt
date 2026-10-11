@@ -52,6 +52,7 @@ import com.focusflow.feature.rooms.components.LeaderboardItemCard
 import com.focusflow.feature.rooms.components.NoChatNoticeCard
 import com.focusflow.feature.rooms.components.RoomCard
 
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun RoomsScreen(
     modifier: Modifier = Modifier,

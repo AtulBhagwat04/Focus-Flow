@@ -2,6 +2,8 @@ package com.focusflow.feature.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.focusflow.core.domain.auth.model.UserAccount
+import com.focusflow.core.domain.auth.model.UserProfile
 import com.focusflow.core.domain.auth.repository.AuthRepository
 import com.focusflow.core.domain.sync.model.SyncResult
 import com.focusflow.core.domain.sync.repository.SyncRepository
@@ -31,14 +33,14 @@ class ProfileViewModel @Inject constructor(
         exportedData,
         isExporting,
         userMessage,
-    ) { account, profile, syncing, exported, exporting, message ->
+    ) { args: Array<Any?> ->
         ProfileUiState(
-            account = account,
-            profile = profile,
-            isSyncing = syncing,
-            exportedDataJson = exported,
-            isExporting = exporting,
-            message = message,
+            account = args[0] as? UserAccount,
+            profile = args[1] as? UserProfile,
+            isSyncing = args[2] as? Boolean ?: false,
+            exportedDataJson = args[3] as? String,
+            isExporting = args[4] as? Boolean ?: false,
+            message = args[5] as? String,
             isLoading = false,
         )
     }.stateIn(

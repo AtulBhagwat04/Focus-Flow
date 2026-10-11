@@ -28,6 +28,21 @@ data class HomeUiState(
     val selectedMode: FocusMode = FocusMode.WORK,
     val todayFocusTimeMinutes: Int = 0,
     val currentStreakDays: Int = 0,
+    val selectedDurationMinutes: Int = 25,
+    val availableDurations: List<Int> = listOf(25, 50, 90),
+    val weeklyFocusFormatted: String = "12h 30m",
+    val weeklyGoalPercent: Int = 78,
+    val weeklyDailyHours: List<Pair<String, Float>> = listOf(
+        "Mon" to 3.5f,
+        "Tue" to 1.8f,
+        "Wed" to 3.8f,
+        "Thu" to 2.8f,
+        "Fri" to 4.8f,
+        "Sat" to 2.2f,
+        "Sun" to 3.2f,
+    ),
+    val greeting: String = "Good Morning ☀️",
+    val quote: String = "A focused mind can achieve anything.",
 )
 
 /**
@@ -49,4 +64,9 @@ class HomeViewModel @Inject constructor(
     fun selectMode(mode: FocusMode) {
         _uiState.value = _uiState.value.copy(selectedMode = mode)
     }
+
+    fun selectDuration(minutes: Int) {
+        _uiState.value = _uiState.value.copy(selectedDurationMinutes = minutes)
+    }
 }
+
