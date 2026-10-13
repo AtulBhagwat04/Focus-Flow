@@ -14,4 +14,7 @@ data class TimerUiCallbacks(
     val onSelectTag: (SubjectTag) -> Unit,
     val onSelectSound: (AmbientSound) -> Unit,
     val onDismissCelebration: () -> Unit,
+    val onSelectDurationMinutes: (Int) -> Unit = {},
+    val onToggleBlockApps: (Boolean) -> Unit = {},
+    val onAbortClicked: () -> Unit = {},
 )

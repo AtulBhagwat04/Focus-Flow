@@ -19,9 +19,19 @@ data class TimerUiState(
     val isPaused: Boolean = false,
     val showCelebrationDialog: Boolean = false,
     val completedXpEarned: Int = 0,
+    val isBlockAppsEnabled: Boolean = true,
+    val quote: String = "A focused mind\nbuilds a better tomorrow.",
 ) {
     val isActive: Boolean
         get() = session?.state?.isActive == true
+
+    val selectedDurationMinutes: Int
+        get() = when (val mode = selectedMode) {
+            is SessionMode.Pomodoro -> (mode.workDurationMs / (MILLIS_PER_SECOND * SECONDS_PER_MINUTE)).toInt()
+            is SessionMode.Custom -> (mode.durationMs / (MILLIS_PER_SECOND * SECONDS_PER_MINUTE)).toInt()
+            is SessionMode.UntilTime -> 25
+            is SessionMode.Stopwatch -> 0
+        }
 
     val formattedDisplayTime: String
         get() {

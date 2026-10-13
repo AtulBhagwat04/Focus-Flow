@@ -17,9 +17,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
@@ -33,7 +33,7 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class TimerViewModelTest {
 
-    private val testDispatcher = StandardTestDispatcher()
+    private val testDispatcher = UnconfinedTestDispatcher()
 
     private class FakeFocusSessionRepository : FocusSessionRepository {
         val sessionFlow = MutableStateFlow<FocusSession?>(null)
@@ -143,12 +143,13 @@ class TimerViewModelTest {
 
     @After
     fun tearDown() {
+        viewModel.onAbortClicked()
         Dispatchers.resetMain()
     }
 
     @Test
     fun initialState_loadsAvailableTags_andDefaultDuration() = runTest {
-        advanceUntilIdle()
+        runCurrent()
         val state = viewModel.uiState.value
 
         assertEquals(2, state.availableTags.size)
@@ -159,10 +160,10 @@ class TimerViewModelTest {
 
     @Test
     fun startSession_updatesRunningState_andTriggersAudioIfSelected() = runTest {
-        advanceUntilIdle()
+        runCurrent()
         viewModel.onSelectSound(AmbientSound.RAIN)
         viewModel.onStartClicked()
-        advanceUntilIdle()
+        runCurrent()
 
         val state = viewModel.uiState.value
         assertTrue(state.isRunning)
@@ -173,17 +174,42 @@ class TimerViewModelTest {
 
     @Test
     fun completeSession_stopsAudio_andShowsCelebrationDialog() = runTest {
-        advanceUntilIdle()
+        runCurrent()
         viewModel.onStartClicked()
-        advanceUntilIdle()
+        runCurrent()
 
         viewModel.onCompleteClicked()
-        advanceUntilIdle()
+        runCurrent()
 
         val state = viewModel.uiState.value
         assertFalse(state.isActive)
         assertFalse(audioPlayer.playingState.value)
         assertTrue(state.showCelebrationDialog)
         assertEquals(25, state.completedXpEarned)
+    }
+
+    @Test
+    fun selectDurationMinutes_updatesModeAndRemainingMs() = runTest {
+        runCurrent()
+        viewModel.onSelectDurationMinutes(50)
+        runCurrent()
+
+        val state = viewModel.uiState.value
+        assertEquals(50, state.selectedDurationMinutes)
+        assertEquals(50 * 60 * 1000L, state.remainingMs)
+    }
+
+    @Test
+    fun toggleBlockApps_updatesBlockAppsFlag() = runTest {
+        runCurrent()
+        assertTrue(viewModel.uiState.value.isBlockAppsEnabled)
+
+        viewModel.onToggleBlockApps(false)
+        runCurrent()
+        assertFalse(viewModel.uiState.value.isBlockAppsEnabled)
+
+        viewModel.onToggleBlockApps(true)
+        runCurrent()
+        assertTrue(viewModel.uiState.value.isBlockAppsEnabled)
     }
 }
