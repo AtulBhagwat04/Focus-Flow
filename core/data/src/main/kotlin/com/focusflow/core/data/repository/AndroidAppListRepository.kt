@@ -22,7 +22,7 @@ import javax.inject.Singleton
 
 /**
  * Android implementation of [AppListRepository].
- * Resolves launchable packages and syncs user-essential overrides with Room.
+ * Resolves launchable packages safely on [Dispatchers.IO] and syncs user-essential overrides with Room.
  */
 @Singleton
 class AndroidAppListRepository @Inject constructor(
@@ -32,8 +32,12 @@ class AndroidAppListRepository @Inject constructor(
 
     private val packageManager: PackageManager = context.packageManager
 
-    override fun getInstalledApps(): Flow<List<InstalledApp>> {
-        val rawAppsFlow = flow {
+    /**
+     * Resolves all launchable apps with launcher activities safely.
+     * Uses defensive exception handling to prevent crashes from corrupt packages.
+     */
+    private fun queryInstalledPackages(): List<Pair<String, String>> {
+        return try {
             val mainIntent = Intent(Intent.ACTION_MAIN, null).apply {
                 addCategory(Intent.CATEGORY_LAUNCHER)
             }
@@ -47,32 +51,45 @@ class AndroidAppListRepository @Inject constructor(
                 packageManager.queryIntentActivities(mainIntent, 0)
             }
 
-            val appList = resolveInfos.mapNotNull { resolveInfo ->
+            resolveInfos.mapNotNull { resolveInfo ->
                 val activityInfo = resolveInfo.activityInfo ?: return@mapNotNull null
-                val packageName = activityInfo.packageName
-                val label = resolveInfo.loadLabel(packageManager).toString()
-                packageName to label
-            }
-            emit(appList)
-        }.flowOn(Dispatchers.IO)
-
-        return combine(rawAppsFlow, getUserEssentials()) { rawApps, essentials ->
-            rawApps.map { (packageName, label) ->
-                val isEssential = essentials.contains(packageName)
-                val isSafe = SafeListPolicy.isSafeListed(
-                    packageName = packageName,
-                    userEssentials = essentials,
-                )
-                InstalledApp(
-                    packageName = packageName,
-                    label = label,
-                    isSafeListed = isSafe,
-                    isEssential = isEssential,
-                    category = AppCategory.OTHER,
-                )
-            }.sortedBy { it.label.lowercase() }
+                val label = try {
+                    resolveInfo.loadLabel(packageManager).toString()
+                } catch (_: Exception) {
+                    activityInfo.packageName
+                }
+                activityInfo.packageName to label
+            }.distinctBy { it.first }
+        } catch (_: Exception) {
+            emptyList()
         }
     }
+
+    private fun rawInstalledAppsFlow(): Flow<List<Pair<String, String>>> = flow {
+        emit(queryInstalledPackages())
+    }.flowOn(Dispatchers.IO)
+
+    override fun getInstalledApps(): Flow<List<InstalledApp>> =
+        combine(rawInstalledAppsFlow(), getUserEssentials()) { rawApps, essentials ->
+            rawApps
+                .distinctBy { it.first }
+                .map { (packageName, label) ->
+                    val isEssential = essentials.contains(packageName)
+                    val isSafe = SafeListPolicy.isSafeListed(
+                        packageName = packageName,
+                        userEssentials = essentials,
+                    )
+                    InstalledApp(
+                        packageName = packageName,
+                        label = label,
+                        isSafeListed = isSafe,
+                        isEssential = isEssential,
+                        category = AppCategory.OTHER,
+                    )
+                }
+                .distinctBy { it.packageName }
+                .sortedBy { it.label.lowercase() }
+        }.flowOn(Dispatchers.IO)
 
     override fun getUserEssentials(): Flow<Set<String>> {
         return usageDao.observeUserEssentials().map { list ->

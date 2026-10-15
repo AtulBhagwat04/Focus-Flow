@@ -64,6 +64,7 @@ class LimitsViewModel @Inject constructor(
                 query.isBlank() || app.label.contains(query, ignoreCase = true) ||
                     app.packageName.contains(query, ignoreCase = true)
             }
+            .distinctBy { it.packageName }
             .map { app ->
                 val rule = ruleMap[app.packageName]
                 val limit = limitMap[app.packageName]

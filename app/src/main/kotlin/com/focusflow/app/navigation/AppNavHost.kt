@@ -1,5 +1,7 @@
 package com.focusflow.app.navigation
 
+import android.app.Activity
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -32,13 +34,15 @@ import androidx.compose.material.icons.outlined.PersonOutline
 import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -49,6 +53,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -58,7 +64,6 @@ import androidx.navigation.compose.rememberNavController
 import com.focusflow.app.R
 import com.focusflow.app.system.permission.AndroidPermissionChecker
 import com.focusflow.core.designsystem.theme.FocusCardBorder
-import com.focusflow.core.designsystem.theme.FocusForestGreen
 import com.focusflow.core.designsystem.theme.FocusForestGreenDeep
 import com.focusflow.core.designsystem.theme.FocusNavInactive
 import com.focusflow.feature.home.HomeScreen
@@ -122,19 +127,49 @@ private val topLevelDestinations = listOf(
 /**
  * Root navigation host for the app.
  *
- * Implements the polished FocusFlow design with matching bottom navigation:
- * Home (with active indicator), Insights, and Profile.
+ * Auth-aware start destination:
+ * - If Firebase already has a signed-in user (token persisted on disk), we jump
+ *   straight to [ROUTE_HOME] so the user never sees the Login screen again after
+ *   their first sign-in.
+ * - A [LaunchedEffect] watches [AppNavViewModel.currentUser]: if the user signs out
+ *   or the token is revoked at runtime, it navigates back to [ROUTE_LOGIN] and
+ *   clears the entire back stack.
+ *
+ * FirebaseAuth persists its auth token in local storage automatically — we only
+ * need to read [AppNavViewModel.isUserSignedInAtStartup] (which checks
+ * FirebaseAuth.getInstance().currentUser synchronously) to decide the initial route.
  */
 @Composable
 fun AppNavHost(
-    startDestination: String = ROUTE_LOGIN,
+    viewModel: AppNavViewModel = hiltViewModel(),
 ) {
+    val currentUser by viewModel.currentUser.collectAsStateWithLifecycle()
     val navController = rememberNavController()
+
+    val isUserSignedInAtStartup = remember { viewModel.isUserSignedInAtStartup }
+    var hasBeenSignedIn by remember { mutableStateOf(isUserSignedInAtStartup) }
+
+    // Synchronous check — no network call, reads the locally cached token.
+    val startDestination = if (isUserSignedInAtStartup) ROUTE_HOME else ROUTE_LOGIN
+
+    // React to runtime sign-out only if user was previously signed in
+    LaunchedEffect(currentUser) {
+        if (currentUser != null) {
+            hasBeenSignedIn = true
+        } else if (hasBeenSignedIn) {
+            hasBeenSignedIn = false
+            navController.navigate(ROUTE_LOGIN) {
+                popUpTo(0) { inclusive = true }
+            }
+        }
+    }
+
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
     val currentRoute = currentDestination?.route
     val isFullscreenRoute = currentRoute == ROUTE_LOGIN || currentRoute == ROUTE_ONBOARDING
-    val isScenicEdgeToEdgeRoute = isFullscreenRoute || currentRoute == ROUTE_HOME || currentRoute == ROUTE_FOCUS
+    val isScenicEdgeToEdgeRoute =
+        isFullscreenRoute || currentRoute == ROUTE_HOME || currentRoute == ROUTE_FOCUS
     val showBottomBar = !isFullscreenRoute
 
     Scaffold(
@@ -184,12 +219,15 @@ fun AppNavHost(
                                 Box(
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(16.dp))
-                                        .background(if (selected) Color(0xFFD6EFE1) else Color.Transparent)
+                                        .background(
+                                            if (selected) Color(0xFFD6EFE1) else Color.Transparent
+                                        )
                                         .padding(horizontal = 16.dp, vertical = 4.dp),
                                     contentAlignment = Alignment.Center,
                                 ) {
                                     Icon(
-                                        imageVector = if (selected) destination.selectedIcon else destination.unselectedIcon,
+                                        imageVector = if (selected) destination.selectedIcon
+                                                      else destination.unselectedIcon,
                                         contentDescription = null,
                                         tint = if (selected) FocusForestGreenDeep else FocusNavInactive,
                                         modifier = Modifier.size(24.dp),
@@ -211,41 +249,42 @@ fun AppNavHost(
                     }
                 }
             }
-        }
+        },
     ) { innerPadding ->
         NavHost(
             navController    = navController,
             startDestination = startDestination,
-            modifier         = if (isScenicEdgeToEdgeRoute) {
-                Modifier.fillMaxSize()
-            } else {
-                Modifier
-                    .fillMaxSize()
-                    .padding(
-                        top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding(),
-                        bottom = innerPadding.calculateBottomPadding(),
-                    )
-            },
+            modifier         = Modifier
+                .fillMaxSize()
+                .padding(
+                    bottom = if (isScenicEdgeToEdgeRoute) 0.dp else innerPadding.calculateBottomPadding(),
+                ),
         ) {
             composable(ROUTE_LOGIN) {
                 LoginScreen(
                     onLoginSuccess = {
-                        navController.navigate(ROUTE_ONBOARDING) {
-                            popUpTo(ROUTE_LOGIN) { inclusive = true }
+                        hasBeenSignedIn = true
+                        navController.navigate(ROUTE_HOME) {
+                            popUpTo(0) { inclusive = true }
                         }
-                    }
+                    },
                 )
             }
             composable(ROUTE_ONBOARDING) {
                 OnboardingScreen(
                     onCompleteOnboarding = {
+                        hasBeenSignedIn = true
                         navController.navigate(ROUTE_HOME) {
-                            popUpTo(ROUTE_ONBOARDING) { inclusive = true }
+                            popUpTo(0) { inclusive = true }
                         }
-                    }
+                    },
                 )
             }
             composable(ROUTE_HOME) {
+                val context = LocalContext.current
+                BackHandler {
+                    (context as? Activity)?.finish()
+                }
                 HomeScreen(
                     onNavigateToFocus = {
                         navController.navigate(ROUTE_FOCUS) {
@@ -253,25 +292,19 @@ fun AppNavHost(
                                 saveState = true
                             }
                             launchSingleTop = true
-                            restoreState = true
+                            restoreState    = true
                         }
                     },
-                    onNavigateToLimits = {
-                        navController.navigate(ROUTE_LIMITS)
-                    },
-                    onNavigateToSettings = {
-                        navController.navigate(ROUTE_PERMISSION_HEALTH)
-                    },
-                    onNavigateToProfile = {
-                        navController.navigate(ROUTE_PROFILE)
-                    },
+                    onNavigateToLimits  = { navController.navigate(ROUTE_LIMITS) },
+                    onNavigateToSettings = { navController.navigate(ROUTE_PERMISSION_HEALTH) },
+                    onNavigateToProfile  = { navController.navigate(ROUTE_PROFILE) },
                     onNavigateToStats = {
                         navController.navigate(ROUTE_STATS) {
                             popUpTo(navController.graph.findStartDestination().id) {
                                 saveState = true
                             }
                             launchSingleTop = true
-                            restoreState = true
+                            restoreState    = true
                         }
                     },
                     onNavigateToTasks = {
@@ -280,19 +313,15 @@ fun AppNavHost(
                                 saveState = true
                             }
                             launchSingleTop = true
-                            restoreState = true
+                            restoreState    = true
                         }
                     },
                 )
             }
             composable(ROUTE_FOCUS) {
                 TimerScreen(
-                    onNavigateToLimits = {
-                        navController.navigate(ROUTE_LIMITS)
-                    },
-                    onNavigateToSettings = {
-                        navController.navigate(ROUTE_PERMISSION_HEALTH)
-                    },
+                    onNavigateToLimits   = { navController.navigate(ROUTE_LIMITS) },
+                    onNavigateToSettings = { navController.navigate(ROUTE_PERMISSION_HEALTH) },
                 )
             }
             composable(ROUTE_TASKS) {
@@ -303,16 +332,14 @@ fun AppNavHost(
                                 saveState = true
                             }
                             launchSingleTop = true
-                            restoreState = true
+                            restoreState    = true
                         }
-                    }
+                    },
                 )
             }
             composable(ROUTE_STATS) {
                 StatsScreen(
-                    onNavigateToPermissions = {
-                        navController.navigate(ROUTE_PERMISSION_HEALTH)
-                    }
+                    onNavigateToPermissions = { navController.navigate(ROUTE_PERMISSION_HEALTH) },
                 )
             }
             composable(ROUTE_PERMISSION_HEALTH) {
@@ -326,12 +353,20 @@ fun AppNavHost(
                             context.startActivity(checker.createAppDetailsIntent())
                         }
                     },
-                    onBack = { navController.popBackStack() }
+                    onBack = { navController.popBackStack() },
                 )
             }
-            composable(ROUTE_LIMITS)  { LimitsScreen() }
+            composable(ROUTE_LIMITS) {
+                LimitsScreen(
+                    onBack = { navController.popBackStack() },
+                )
+            }
             composable(ROUTE_ROOMS)   { RoomsScreen() }
-            composable(ROUTE_PROFILE) { ProfileScreen() }
+            composable(ROUTE_PROFILE) {
+                ProfileScreen(
+                    onBack = { navController.popBackStack() },
+                )
+            }
         }
     }
 }

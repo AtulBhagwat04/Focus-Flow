@@ -23,5 +23,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.material.icons)
+    // Google Fonts provider — fetches Outfit at runtime; no TTF assets to bundle
+    implementation(libs.androidx.compose.ui.google.fonts)
     debugImplementation(libs.androidx.compose.ui.tooling)
 }

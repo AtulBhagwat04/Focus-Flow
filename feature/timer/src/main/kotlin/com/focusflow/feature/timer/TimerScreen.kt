@@ -67,9 +67,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.focusflow.core.designsystem.R as DesignR
+import com.focusflow.core.designsystem.component.FocusFlowActionButton
+import com.focusflow.core.designsystem.component.FocusFlowAppBar
 import com.focusflow.core.designsystem.component.FocusFlowLogo
 import com.focusflow.core.designsystem.theme.FocusCardBorder
 import com.focusflow.core.designsystem.theme.FocusDarkText
@@ -160,67 +162,81 @@ fun TimerScreenContent(
                 )
         )
 
-        // ── 3. Foreground Scrollable Layout ──────────────────────────────────
+        // ── 3. Foreground Layout ─────────────────────────────────────────────
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.fillMaxSize(),
         ) {
-            Spacer(modifier = Modifier.height(8.dp))
+            FocusFlowAppBar(
+                titleContent = {
+                    FocusFlowLogo(fontSize = 22.sp)
+                },
+                actions = {
+                    FocusFlowActionButton(
+                        icon = Icons.Outlined.Spa,
+                        onClick = { showAmbientSoundDialog = true },
+                        contentDescription = stringResource(R.string.timer_cd_ambient_sound),
+                    )
+                    Box {
+                        FocusFlowActionButton(
+                            icon = Icons.Default.MoreVert,
+                            onClick = { showMenu = true },
+                            contentDescription = stringResource(R.string.timer_cd_more_options),
+                        )
 
-            // ── Top Header: FocusFlow Logo & Action Buttons ──────────────────
-            TimerTopBar(
-                onLeafClicked = { showAmbientSoundDialog = true },
-                onMenuClicked = { showMenu = true },
-                modifier = Modifier.fillMaxWidth(),
+                        // Dropdown menu from More Options button
+                        DropdownMenu(
+                            expanded = showMenu,
+                            onDismissRequest = { showMenu = false },
+                            shape = RoundedCornerShape(16.dp),
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Ambient Sound") },
+                                leadingIcon = { Icon(Icons.Outlined.GraphicEq, contentDescription = null, tint = FocusForestGreen) },
+                                onClick = {
+                                    showMenu = false
+                                    showAmbientSoundDialog = true
+                                },
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Blocked Apps") },
+                                leadingIcon = { Icon(Icons.Outlined.Block, contentDescription = null, tint = FocusMutedText) },
+                                onClick = {
+                                    showMenu = false
+                                    onNavigateToLimits()
+                                },
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Settings") },
+                                leadingIcon = { Icon(Icons.Outlined.Settings, contentDescription = null, tint = FocusMutedText) },
+                                onClick = {
+                                    showMenu = false
+                                    onNavigateToSettings()
+                                },
+                            )
+                            if (uiState.isActive) {
+                                DropdownMenuItem(
+                                    text = { Text("Reset Session") },
+                                    leadingIcon = { Icon(Icons.Outlined.Refresh, contentDescription = null, tint = FocusDarkText) },
+                                    onClick = {
+                                        showMenu = false
+                                        callbacks.onAbortClicked()
+                                    },
+                                )
+                            }
+                        }
+                    }
+                },
+                containerColor = Color.Transparent,
             )
 
-            // Dropdown menu from More Options button
-            DropdownMenu(
-                expanded = showMenu,
-                onDismissRequest = { showMenu = false },
-                shape = RoundedCornerShape(16.dp),
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                DropdownMenuItem(
-                    text = { Text("Ambient Sound") },
-                    leadingIcon = { Icon(Icons.Outlined.GraphicEq, contentDescription = null, tint = FocusForestGreen) },
-                    onClick = {
-                        showMenu = false
-                        showAmbientSoundDialog = true
-                    },
-                )
-                DropdownMenuItem(
-                    text = { Text("Blocked Apps") },
-                    leadingIcon = { Icon(Icons.Outlined.Block, contentDescription = null, tint = FocusMutedText) },
-                    onClick = {
-                        showMenu = false
-                        onNavigateToLimits()
-                    },
-                )
-                DropdownMenuItem(
-                    text = { Text("Settings") },
-                    leadingIcon = { Icon(Icons.Outlined.Settings, contentDescription = null, tint = FocusMutedText) },
-                    onClick = {
-                        showMenu = false
-                        onNavigateToSettings()
-                    },
-                )
-                if (uiState.isActive) {
-                    DropdownMenuItem(
-                        text = { Text("Reset Session") },
-                        leadingIcon = { Icon(Icons.Outlined.Refresh, contentDescription = null, tint = FocusDarkText) },
-                        onClick = {
-                            showMenu = false
-                            callbacks.onAbortClicked()
-                        },
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(18.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
             // ── Title & Subtitle ─────────────────────────────────────────────
             Text(
@@ -302,6 +318,7 @@ fun TimerScreenContent(
             )
         }
     }
+}
 
     // ── Dialogs ──────────────────────────────────────────────────────────────
     if (showCustomDurationDialog) {
@@ -334,86 +351,6 @@ fun TimerScreenContent(
 // ─────────────────────────────────────────────────────────────────────────────
 // Subcomponents
 // ─────────────────────────────────────────────────────────────────────────────
-
-@Composable
-private fun TimerTopBar(
-    onLeafClicked: () -> Unit,
-    onMenuClicked: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        // Left: FocusFlow Logo with Wave Accent
-        FocusFlowLogo(fontSize = 22.sp)
-
-        // Right: Leaf Icon Button + More Options Button
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            // Leaf Icon Button (Soft mint circle)
-            Surface(
-                modifier = Modifier
-                    .size(42.dp)
-                    .clip(CircleShape)
-                    .clickable(
-                        indication = ripple(bounded = true, radius = 21.dp),
-                        interactionSource = null,
-                        onClickLabel = stringResource(R.string.timer_cd_ambient_sound),
-                        onClick = onLeafClicked,
-                    )
-                    .semantics {
-                        role = Role.Button
-                        contentDescription = "Ambient sound selector"
-                    },
-                shape = CircleShape,
-                color = FocusForestMintBg,
-                border = BorderStroke(1.dp, Color(0xFFD6EDE0)),
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = Icons.Outlined.Spa,
-                        contentDescription = null,
-                        tint = FocusForestGreen,
-                        modifier = Modifier.size(20.dp),
-                    )
-                }
-            }
-
-            // More Options Button (Subtle off-white circle)
-            Surface(
-                modifier = Modifier
-                    .size(42.dp)
-                    .clip(CircleShape)
-                    .clickable(
-                        indication = ripple(bounded = true, radius = 21.dp),
-                        interactionSource = null,
-                        onClickLabel = stringResource(R.string.timer_cd_more_options),
-                        onClick = onMenuClicked,
-                    )
-                    .semantics {
-                        role = Role.Button
-                        contentDescription = "More options"
-                    },
-                shape = CircleShape,
-                color = Color.White.copy(alpha = 0.90f),
-                border = BorderStroke(1.dp, FocusCardBorder),
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = Icons.Default.MoreVert,
-                        contentDescription = null,
-                        tint = FocusDarkText,
-                        modifier = Modifier.size(20.dp),
-                    )
-                }
-            }
-        }
-    }
-}
 
 @Composable
 private fun TimerActionButtons(

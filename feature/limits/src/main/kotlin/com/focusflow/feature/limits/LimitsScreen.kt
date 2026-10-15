@@ -2,27 +2,46 @@ package com.focusflow.feature.limits
 
 import android.content.Intent
 import android.provider.Settings
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.Spa
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Tab
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -31,12 +50,27 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.focusflow.core.designsystem.theme.FocusCardBorder
+import com.focusflow.core.designsystem.theme.FocusDarkText
+import com.focusflow.core.designsystem.theme.FocusForestGreen
+import com.focusflow.core.designsystem.theme.FocusForestGreenDeep
+import com.focusflow.core.designsystem.theme.FocusForestMintBadge
+import com.focusflow.core.designsystem.component.FocusFlowAppBar
+import com.focusflow.core.designsystem.theme.FocusForestMintBg
+import com.focusflow.core.designsystem.theme.FocusForestMintBorder
+import com.focusflow.core.designsystem.theme.FocusMutedText
 import com.focusflow.feature.limits.components.AccessibilityDisclosureDialog
 import com.focusflow.feature.limits.components.AddStudyChannelDialog
 import com.focusflow.feature.limits.components.AdvancedFeedBlockingCard
@@ -44,15 +78,17 @@ import com.focusflow.feature.limits.components.AppLimitItemCard
 import com.focusflow.feature.limits.components.EditLimitDialog
 import com.focusflow.feature.limits.components.StudyModeCard
 
-@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun LimitsScreen(
     modifier: Modifier = Modifier,
+    onBack: () -> Unit = {},
     viewModel: LimitsViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
+
+    BackHandler(onBack = onBack)
 
     var selectedTab by remember { mutableIntStateOf(0) }
     var editingApp by remember { mutableStateOf<AppLimitUiItem?>(null) }
@@ -66,82 +102,237 @@ fun LimitsScreen(
         }
     }
 
+    val uniqueApps = remember(uiState.apps) { uiState.apps.distinctBy { it.packageName } }
+    val blockedCount = remember(uniqueApps) {
+        uniqueApps.count { !it.isSafeListed && it.blockDuringFocus }
+    }
+    val safeCount = remember(uniqueApps) {
+        uniqueApps.count { it.isSafeListed }
+    }
+
     Scaffold(
+        topBar = {
+            FocusFlowAppBar(
+                title = "App Blocking & Limits",
+                subtitle = "Distraction control & screen limits",
+                onBack = onBack,
+                containerColor = Color(0xFFF7FAF8),
+            )
+        },
         modifier = modifier.fillMaxSize(),
+        containerColor = Color(0xFFF7FAF8),
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 20.dp, vertical = 20.dp),
+                .padding(horizontal = 20.dp),
         ) {
-            Text(
-                text = "App Blocking & Study Mode",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "Manage app time limits, feed restrictions, and YouTube study modes.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Spacer(modifier = Modifier.height(10.dp))
 
-            Spacer(modifier = Modifier.height(16.dp))
+            // ── Quick Summary Cards Row ───────────────────────────────────────
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                border = BorderStroke(1.dp, FocusCardBorder),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    SummaryMetric(
+                        count = uniqueApps.size.toString(),
+                        label = "Apps Found",
+                        color = FocusDarkText,
+                    )
 
-            PrimaryTabRow(selectedTabIndex = selectedTab) {
-                Tab(
-                    selected = selectedTab == 0,
-                    onClick = { selectedTab = 0 },
-                    text = { Text("App Limits") },
-                )
-                Tab(
-                    selected = selectedTab == 1,
-                    onClick = { selectedTab = 1 },
-                    text = { Text("Advanced & Feeds") },
-                )
+                    Box(
+                        modifier = Modifier
+                            .height(28.dp)
+                            .width(1.dp)
+                            .background(FocusCardBorder)
+                    )
+
+                    SummaryMetric(
+                        count = blockedCount.toString(),
+                        label = "Blocked in Focus",
+                        color = FocusForestGreen,
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .height(28.dp)
+                            .width(1.dp)
+                            .background(FocusCardBorder)
+                    )
+
+                    SummaryMetric(
+                        count = safeCount.toString(),
+                        label = "Safe Listed",
+                        color = FocusForestGreenDeep,
+                    )
+                }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
+            // ── Segmented Pill Tabs Selector ──────────────────────────────────
+            Surface(
+                shape = RoundedCornerShape(20.dp),
+                color = Color(0xFFEBF1EE),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(46.dp),
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(4.dp),
+                ) {
+                    // Tab 0: App Limits
+                    PillTabItem(
+                        selected = selectedTab == 0,
+                        title = "App Limits (${uniqueApps.size})",
+                        onClick = { selectedTab = 0 },
+                        modifier = Modifier.weight(1f),
+                    )
+
+                    // Tab 1: Advanced & Feeds
+                    PillTabItem(
+                        selected = selectedTab == 1,
+                        title = "Feeds & Study",
+                        onClick = { selectedTab = 1 },
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // ── Tab Content ───────────────────────────────────────────────────
             if (selectedTab == 0) {
-                // Tab 0: Standard App Limits
+                // Search Field
                 OutlinedTextField(
                     value = uiState.searchQuery,
                     onValueChange = viewModel::onSearchQueryChanged,
-                    placeholder = { Text("Search installed apps...") },
+                    placeholder = {
+                        Text(
+                            text = "Search installed apps...",
+                            color = FocusMutedText.copy(alpha = 0.8f),
+                            fontSize = 14.sp,
+                        )
+                    },
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Default.Search,
                             contentDescription = "Search",
+                            tint = FocusForestGreen,
+                            modifier = Modifier.size(20.dp),
                         )
                     },
+                    trailingIcon = {
+                        if (uiState.searchQuery.isNotEmpty()) {
+                            IconButton(onClick = { viewModel.onSearchQueryChanged("") }) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Clear search",
+                                    tint = FocusMutedText,
+                                    modifier = Modifier.size(18.dp),
+                                )
+                            }
+                        }
+                    },
+                    shape = RoundedCornerShape(16.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = FocusForestMintBorder,
+                        unfocusedBorderColor = FocusCardBorder,
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White,
+                        cursorColor = FocusForestGreen,
+                    ),
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.fillMaxSize(),
-                ) {
-                    items(
-                        items = uiState.apps,
-                        key = { it.packageName },
-                    ) { item ->
-                        AppLimitItemCard(
-                            item = item,
-                            onToggleBlockDuringFocus = { enabled ->
-                                viewModel.onToggleBlockDuringFocus(item.packageName, enabled)
-                            },
-                            onEditLimitsClicked = { editingApp = item },
-                            onToggleEssential = { isEssential ->
-                                viewModel.onToggleEssential(item.packageName, isEssential)
-                            },
-                        )
+                if (uniqueApps.isEmpty()) {
+                    // Empty Search Results State
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(bottom = 60.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.padding(24.dp),
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(64.dp)
+                                    .clip(CircleShape)
+                                    .background(FocusForestMintBg),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Spa,
+                                    contentDescription = null,
+                                    tint = FocusForestGreen,
+                                    modifier = Modifier.size(32.dp),
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            Text(
+                                text = if (uiState.searchQuery.isNotBlank()) "No matching apps found" else "Loading installed apps...",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = FocusDarkText,
+                            )
+
+                            Spacer(modifier = Modifier.height(6.dp))
+
+                            Text(
+                                text = if (uiState.searchQuery.isNotBlank()) "Try checking the spelling or search with a different keyword." else "Retrieving launcher applications on this device.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = FocusMutedText,
+                                textAlign = TextAlign.Center,
+                            )
+                        }
+                    }
+                } else {
+                    // App List
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                        modifier = Modifier.fillMaxSize(),
+                    ) {
+                        items(
+                            items = uniqueApps,
+                            key = { it.packageName },
+                        ) { item ->
+                            AppLimitItemCard(
+                                item = item,
+                                onToggleBlockDuringFocus = { enabled ->
+                                    viewModel.onToggleBlockDuringFocus(item.packageName, enabled)
+                                },
+                                onEditLimitsClicked = { editingApp = item },
+                                onToggleEssential = { isEssential ->
+                                    viewModel.onToggleEssential(item.packageName, isEssential)
+                                },
+                            )
+                        }
+
+                        item {
+                            Spacer(modifier = Modifier.height(24.dp))
+                        }
                     }
                 }
             } else {
@@ -151,7 +342,7 @@ fun LimitsScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .verticalScroll(scrollState),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
                     AdvancedFeedBlockingCard(
                         config = uiState.advancedBlockingConfig,
@@ -171,6 +362,8 @@ fun LimitsScreen(
                         onToggleChannel = viewModel::onToggleChannel,
                         onAddChannelClicked = { showAddChannelDialog = true },
                     )
+
+                    Spacer(modifier = Modifier.height(24.dp))
                 }
             }
         }
@@ -209,5 +402,67 @@ fun LimitsScreen(
                 editingApp = null
             },
         )
+    }
+}
+
+@Composable
+private fun SummaryMetric(
+    count: String,
+    label: String,
+    color: Color,
+) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = count,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = color,
+            fontSize = 17.sp,
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = FocusMutedText,
+            fontSize = 11.sp,
+        )
+    }
+}
+
+@Composable
+private fun PillTabItem(
+    selected: Boolean,
+    title: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val tabBackground by animateColorAsState(
+        targetValue = if (selected) Color.White else Color.Transparent,
+        label = "tab_bg",
+    )
+    val tabTextColor by animateColorAsState(
+        targetValue = if (selected) FocusForestGreenDeep else FocusMutedText,
+        label = "tab_text",
+    )
+
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = tabBackground,
+        shadowElevation = if (selected) 2.dp else 0.dp,
+        modifier = modifier
+            .clip(RoundedCornerShape(16.dp))
+            .clickable { onClick() },
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                color = tabTextColor,
+                fontSize = 13.sp,
+            )
+        }
     }
 }

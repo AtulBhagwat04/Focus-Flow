@@ -31,6 +31,10 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import com.focusflow.core.designsystem.component.FocusFlowActionButton
+import com.focusflow.core.designsystem.component.FocusFlowAppBar
+import com.focusflow.core.designsystem.component.FocusFlowChipBadge
+import com.focusflow.core.designsystem.theme.FocusForestGreenDeep
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -41,7 +45,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.focusflow.core.domain.social.model.FocusRoom
 import com.focusflow.core.domain.social.model.LeaderboardScope
@@ -72,6 +76,25 @@ fun RoomsScreen(
     }
 
     Scaffold(
+        topBar = {
+            FocusFlowAppBar(
+                title = "Focus Rooms",
+                subtitle = "Shared presence & standings",
+                actions = {
+                    FocusFlowActionButton(
+                        icon = if (uiState.isIncognito) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                        onClick = { viewModel.onToggleIncognito(!uiState.isIncognito) },
+                        contentDescription = if (uiState.isIncognito) "Incognito active" else "Incognito off",
+                        iconTint = if (uiState.isIncognito) MaterialTheme.colorScheme.error else FocusForestGreenDeep,
+                    )
+                    FocusFlowChipBadge(
+                        text = "Host",
+                        icon = Icons.Default.Add,
+                        onClick = { showCreateRoomDialog = true },
+                    )
+                },
+            )
+        },
         modifier = modifier.fillMaxSize(),
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { innerPadding ->
@@ -79,54 +102,8 @@ fun RoomsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 20.dp, vertical = 20.dp),
+                .padding(horizontal = 20.dp, vertical = 12.dp),
         ) {
-            // Header
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column {
-                    Text(
-                        text = "Social & Focus Rooms",
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = "Shared quiet presence & weekly standings",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(
-                        onClick = { viewModel.onToggleIncognito(!uiState.isIncognito) },
-                    ) {
-                        Icon(
-                            imageVector = if (uiState.isIncognito) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                            contentDescription = "Toggle Incognito",
-                            tint = if (uiState.isIncognito) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
-                        )
-                    }
-
-                    Button(onClick = { showCreateRoomDialog = true }) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp),
-                        )
-                        Spacer(modifier = Modifier.size(4.dp))
-                        Text("Host")
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(14.dp))
-
             // Active Room Banner if currently joined
             uiState.activeRoom?.let { room ->
                 ActiveRoomBanner(

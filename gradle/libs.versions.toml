@@ -74,6 +74,7 @@ androidx-compose-ui-tooling     = { module = "androidx.compose.ui:ui-tooling" }
 androidx-compose-ui-test-junit4 = { module = "androidx.compose.ui:ui-test-junit4" }
 androidx-compose-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest" }
 androidx-compose-material-icons = { module = "androidx.compose.material:material-icons-extended" }
+androidx-compose-ui-google-fonts = { module = "androidx.compose.ui:ui-text-google-fonts" }
 
 # --- Navigation Compose (stable 2.x, not Nav3 alpha) ---
 androidx-navigation-compose     = { module = "androidx.navigation:navigation-compose",     version.ref = "navigationCompose" }

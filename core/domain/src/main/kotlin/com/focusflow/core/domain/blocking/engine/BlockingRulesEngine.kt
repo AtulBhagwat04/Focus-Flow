@@ -51,7 +51,8 @@ object BlockingRulesEngine {
         }
 
         // Priority 4: Active Focus Session
-        if (signals.sessionState == SessionState.RUNNING && signals.blockRule?.blockDuringFocus == true) {
+        val shouldBlockInFocus = signals.blockRule?.blockDuringFocus ?: true
+        if (signals.sessionState == SessionState.RUNNING && shouldBlockInFocus) {
             return BlockingDecision.Block(
                 reason = BlockReason.IN_FOCUS_SESSION,
                 remainingSessionMs = signals.remainingSessionDurationMs,

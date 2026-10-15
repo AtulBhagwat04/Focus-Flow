@@ -1,6 +1,8 @@
 package com.focusflow.feature.home.tasks
 
 import androidx.compose.animation.AnimatedVisibility
+import com.focusflow.core.designsystem.component.FocusFlowAppBar
+import com.focusflow.core.designsystem.component.FocusFlowChipBadge
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
@@ -96,55 +98,30 @@ fun TasksScreen(
             .background(Color(0xFFF7FAF8)),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 20.dp),
+            modifier = Modifier.fillMaxSize(),
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Header
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column {
-                    Text(
-                        text = "Daily Tasks",
-                        fontSize = 26.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = FocusDarkText,
-                        modifier = Modifier.semantics { heading() },
-                    )
-                    Text(
-                        text = "${tasks.count { it.isCompleted }} of ${tasks.size} completed",
-                        fontSize = 13.5.sp,
-                        color = FocusMutedText,
-                    )
-                }
-
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = FocusForestMintBg,
-                    border = BorderStroke(1.dp, FocusCardBorder),
-                ) {
-                    Text(
+            FocusFlowAppBar(
+                title = "Daily Tasks",
+                subtitle = "${tasks.count { it.isCompleted }} of ${tasks.size} completed",
+                actions = {
+                    FocusFlowChipBadge(
                         text = "Today",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = FocusForestGreenDeep,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                     )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(18.dp))
+                },
+                containerColor = Color(0xFFF7FAF8),
+            )
 
             // Task List
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 20.dp),
             ) {
+                item {
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
+
                 items(tasks, key = { it.id }) { task ->
                     TaskCard(
                         task = task,
@@ -159,7 +136,7 @@ fun TasksScreen(
                 }
 
                 item {
-                    Spacer(modifier = Modifier.height(80.dp))
+                    Spacer(modifier = Modifier.height(88.dp))
                 }
             }
         }

@@ -24,8 +24,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.focusflow.core.designsystem.component.FocusFlowActionButton
+import com.focusflow.core.designsystem.component.FocusFlowAppBar
 import com.focusflow.feature.stats.components.ScreenTimeSummaryCard
 import com.focusflow.feature.stats.components.TimeRangeSelector
 import com.focusflow.feature.stats.components.TopAppsCard
@@ -58,26 +60,27 @@ fun StatsScreenContent(
     val scrollState = rememberScrollState()
 
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(scrollState)
-            .padding(horizontal = 20.dp, vertical = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        modifier = modifier.fillMaxSize(),
     ) {
-        Column {
-            Text(
-                text = "Digital Wellbeing",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "Track your daily screen time and focus sessions.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+        FocusFlowAppBar(
+            title = "Digital Wellbeing",
+            subtitle = "Track screen time & focus sessions",
+            actions = {
+                FocusFlowActionButton(
+                    icon = Icons.Outlined.Refresh,
+                    onClick = onRefresh,
+                    contentDescription = "Refresh statistics",
+                )
+            },
+        )
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(scrollState)
+                .padding(horizontal = 20.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
 
         if (!uiState.hasUsagePermission) {
             PermissionRequiredCard(onGrantClicked = onNavigateToPermissions)
@@ -96,6 +99,7 @@ fun StatsScreenContent(
         )
 
         TopAppsCard(apps = uiState.topApps)
+        }
     }
 }
 
@@ -129,4 +133,4 @@ private fun PermissionRequiredCard(
             }
         }
     }
-}
+} 
