@@ -1,30 +1,125 @@
-*.iml
-.gradle/
-.kotlin/
-/local.properties
-/.idea/
-.DS_Store
-/build/
-/captures/
-.externalNativeBuild/
-.cxx/
+# ==============================================================================
+# FocusFlow - Git Ignore
+# ==============================================================================
 
-# Signing keys — NEVER commit these
+# ------------------------------------------------------------------------------
+# 1. Environment & Secret Files (CRITICAL: NEVER COMMIT SECRETS TO GITHUB)
+# ------------------------------------------------------------------------------
+.env
+.env.*
+*.env
+!.env.example
+secrets.properties
+local.properties
+local.defaults.properties
+*-service-account*.json
+service-account*.json
+
+# Signing keys & Keystores
 *.keystore
 *.jks
 *.p12
+*.key
+*.pem
+*.pk8
 
-# Firebase config — contains project keys
-app/google-services.json
+# Firebase configuration (Contains project keys and app identifiers)
 google-services.json
+app/google-services.json
+GoogleService-Info.plist
 
-# Generated files
-/app/build/
-/core/*/build/
-/feature/*/build/
+# ------------------------------------------------------------------------------
+# 2. Build Outputs & Caches
+# ------------------------------------------------------------------------------
+.gradle/
+.kotlin/
+build/
+**/build/
+app/build/
+core/*/build/
+feature/*/build/
+captures/
+.externalNativeBuild/
+**/.externalNativeBuild/
+.cxx/
+**/.cxx/
+out/
+bin/
+target/
 
-# Android profiling
+# Android profiling & Memory dumps
 *.hprof
+*.log
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
 
-# OS files
+# Package binaries
+*.apk
+*.ap_
+*.aab
+*.dex
+*.class
+
+# ------------------------------------------------------------------------------
+# 3. IDEs & Text Editors
+# ------------------------------------------------------------------------------
+# Android Studio / IntelliJ IDEA
+.idea/
+*.iml
+**/*.iml
+*.ipr
+*.iws
+
+# Visual Studio Code & Cursor
+.vscode/
+.cursor/
+
+# Editors temporary files
+*.swp
+*.swo
+*~
+
+# ------------------------------------------------------------------------------
+# 4. OS-Generated Files
+# ------------------------------------------------------------------------------
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
 Thumbs.db
+desktop.ini
+ehthumbs.db
+
+# ------------------------------------------------------------------------------
+# 5. External AI Tool & Agent Caches
+# ------------------------------------------------------------------------------
+.claude/
+.devin/
+.grok/
+.minimax/
+.windsurf/
+.gemini/
+.agent/
+.gsd/
+.agents/agents/
+.agents/skills/codebase-mapper/
+.agents/skills/context-compressor/
+.agents/skills/context-fetch/
+.agents/skills/context-health-monitor/
+.agents/skills/debugger/
+.agents/skills/empirical-validation/
+.agents/skills/executor/
+.agents/skills/plan-checker/
+.agents/skills/planner/
+.agents/skills/subagent-delegation/
+.agents/skills/token-budget/
+.agents/skills/verifier/
+model_capabilities.yaml
+data/
+skills-lock.json
+scratch/
