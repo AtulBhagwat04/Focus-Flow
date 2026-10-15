@@ -1,0 +1,303 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>ComplexCondition:FocusAccessibilityService.kt$FocusAccessibilityService$desc.contains("shorts") || desc.contains("reels") || text.contains("shorts") || text.contains("reels")</ID>
+    <ID>CyclomaticComplexMethod:AppNavHost.kt$@Composable fun AppNavHost( viewModel: AppNavViewModel = hiltViewModel(), )</ID>
+    <ID>CyclomaticComplexMethod:BlockingRulesEngine.kt$BlockingRulesEngine$fun evaluate(signals: BlockingSignals): BlockingDecision</ID>
+    <ID>CyclomaticComplexMethod:FocusAccessibilityService.kt$FocusAccessibilityService$override fun onAccessibilityEvent(event: AccessibilityEvent?)</ID>
+    <ID>LongMethod:AccessibilityDisclosureDialog.kt$@Composable fun AccessibilityDisclosureDialog( onConfirm: () -&gt; Unit, onDismiss: () -&gt; Unit, )</ID>
+    <ID>LongMethod:AccountHeaderCard.kt$@Composable fun AccountHeaderCard( account: UserAccount?, isSyncing: Boolean, onSyncClicked: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>LongMethod:AddStudyChannelDialog.kt$@Composable fun AddStudyChannelDialog( onDismiss: () -&gt; Unit, onConfirm: (channelTitle: String) -&gt; Unit, )</ID>
+    <ID>LongMethod:AdvancedFeedBlockingCard.kt$@Composable fun AdvancedFeedBlockingCard( config: AdvancedBlockingConfig, isAccessibilityEnabled: Boolean, onRequestAccessibility: () -&gt; Unit, onToggleShorts: (Boolean) -&gt; Unit, onToggleReels: (Boolean) -&gt; Unit, onToggleFocusOnly: (Boolean) -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>LongMethod:AmbientSoundDialog.kt$@Composable fun AmbientSoundDialog( selectedSound: AmbientSound, onSelectSound: (AmbientSound) -&gt; Unit, onDismiss: () -&gt; Unit, )</ID>
+    <ID>LongMethod:AndroidUsageStatsReader.kt$AndroidUsageStatsReader$fun readUsageForDay(epochDay: Long, userEssentials: Set&lt;String&gt; = emptySet()): RawDailyUsage</ID>
+    <ID>LongMethod:AppLimitItemCard.kt$@Composable fun AppLimitItemCard( item: AppLimitUiItem, onToggleBlockDuringFocus: (Boolean) -&gt; Unit, onEditLimitsClicked: () -&gt; Unit, onToggleEssential: (Boolean) -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>LongMethod:AppNavHost.kt$@Composable fun AppNavHost( viewModel: AppNavViewModel = hiltViewModel(), )</ID>
+    <ID>LongMethod:BlockAppsCard.kt$@Composable fun BlockAppsCard( isEnabled: Boolean, onToggle: (Boolean) -&gt; Unit, onNavigateToLimits: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>LongMethod:BlockerOverlayManager.kt$@Composable internal fun BlockerOverlayContent( packageName: String, decision: BlockingDecision.Block, onBackToFocus: () -&gt; Unit, onNotNow: () -&gt; Unit, onEmergencyPass: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>LongMethod:BlockerOverlayManager.kt$@Composable private fun RadiantAppIcon( iconBitmap: ImageBitmap?, appName: String, modifier: Modifier = Modifier, )</ID>
+    <ID>LongMethod:BlockerOverlayManager.kt$BlockerOverlayManager$suspend fun showOverlay( packageName: String, decision: BlockingDecision.Block, onEmergencyPass: suspend () -&gt; Unit, )</ID>
+    <ID>LongMethod:BlockingRulesEngine.kt$BlockingRulesEngine$fun evaluate(signals: BlockingSignals): BlockingDecision</ID>
+    <ID>LongMethod:CustomDurationDialog.kt$@OptIn(ExperimentalLayoutApi::class) @Composable fun CustomDurationDialog( currentMinutes: Int, onDismiss: () -&gt; Unit, onConfirm: (Int) -&gt; Unit, )</ID>
+    <ID>LongMethod:EditLimitDialog.kt$@Composable fun EditLimitDialog( item: AppLimitUiItem, onDismiss: () -&gt; Unit, onConfirm: (minutes: Int?, launchLimit: Int?) -&gt; Unit, )</ID>
+    <ID>LongMethod:FocusAccessibilityService.kt$FocusAccessibilityService$override fun onAccessibilityEvent(event: AccessibilityEvent?)</ID>
+    <ID>LongMethod:FocusDialDisplay.kt$@Composable fun FocusDialDisplay( formattedTime: String, statusLabel: String, isActive: Boolean, progressFraction: Float, selectedDurationMinutes: Int, modifier: Modifier = Modifier, )</ID>
+    <ID>LongMethod:FocusFlowAppBar.kt$@Composable fun FocusFlowAppBar( modifier: Modifier = Modifier, title: String = "", subtitle: String? = null, onBack: (() -&gt; Unit)? = null, navigationIcon: (@Composable () -&gt; Unit)? = null, titleContent: (@Composable () -&gt; Unit)? = null, actions: (@Composable RowScope.() -&gt; Unit)? = null, containerColor: Color = Color.Transparent, contentColor: Color = FocusDarkText, showDivider: Boolean = false, dividerColor: Color = FocusCardBorder, )</ID>
+    <ID>LongMethod:HomeScreen.kt$@Composable fun HomeScreenContent( uiState: HomeUiState, modifier: Modifier = Modifier, onNavigateToFocus: () -&gt; Unit = {}, onNavigateToLimits: () -&gt; Unit = {}, onNavigateToSettings: () -&gt; Unit = {}, onNavigateToProfile: () -&gt; Unit = {}, onNavigateToStats: () -&gt; Unit = {}, onNavigateToTasks: () -&gt; Unit = {}, onSelectDuration: (Int) -&gt; Unit = {}, onSelectMode: (FocusMode) -&gt; Unit = {}, )</ID>
+    <ID>LongMethod:HomeScreen.kt$@Composable private fun CustomDurationDialog( currentMinutes: Int, onDismiss: () -&gt; Unit, onConfirm: (Int) -&gt; Unit, )</ID>
+    <ID>LongMethod:HomeScreen.kt$@Composable private fun CustomPill( isSelected: Boolean, customMinutes: Int, unitLabel: String, onClick: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>LongMethod:HomeScreen.kt$@Composable private fun HeroFocusCard( selectedDurationMinutes: Int, onSelectDuration: (Int) -&gt; Unit, onCustomDurationClicked: () -&gt; Unit, onStartFocus: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>LongMethod:HomeScreen.kt$@Composable private fun QuickActionItem( title: String, subtitle: String, icon: ImageVector, iconTint: Color, iconBadgeBg: Color, onClick: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>LongMethod:HomeScreen.kt$@Composable private fun QuickActionsSection( onNavigateToLimits: () -&gt; Unit, onNavigateToStats: () -&gt; Unit, onNavigateToTasks: () -&gt; Unit, onFocusModeClicked: () -&gt; Unit, onSeeAllClicked: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>LongMethod:HomeScreen.kt$@Composable private fun WeeklyProgressCard( focusedFormatted: String, goalPercent: Int, dailyHours: List&lt;Pair&lt;String, Float&gt;&gt;, onViewDetails: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>LongMethod:LimitsScreen.kt$@Composable fun LimitsScreen( modifier: Modifier = Modifier, onBack: () -&gt; Unit = {}, viewModel: LimitsViewModel = hiltViewModel(), )</ID>
+    <ID>LongMethod:LoginScreen.kt$@Composable fun LoginScreen( onLoginSuccess: () -&gt; Unit, modifier: Modifier = Modifier, viewModel: LoginViewModel = hiltViewModel(), )</ID>
+    <ID>LongMethod:LoginScreen.kt$@Composable fun LoginScreenContent( uiState: LoginUiState, snackbarHostState: SnackbarHostState, onContinueWithGoogle: () -&gt; Unit, onExploreAsGuest: () -&gt; Unit = {}, onShowTerms: () -&gt; Unit, onDismissTerms: () -&gt; Unit, onShowPrivacy: () -&gt; Unit, onDismissPrivacy: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>LongMethod:OnboardingScreen.kt$@Composable fun OnboardingScreenContent( uiState: OnboardingUiState, onNextStep: () -&gt; Unit, onSkip: () -&gt; Unit, onSelectGoal: (OnboardingGoal) -&gt; Unit, onToggleDistraction: (DistractionType) -&gt; Unit, onSelectDailyTarget: (DailyFocusTarget) -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>LongMethod:OnboardingScreen.kt$@Composable private fun DailyTargetCard( target: DailyFocusTarget, isSelected: Boolean, onClick: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>LongMethod:OnboardingScreen.kt$@Composable private fun DistractionCheckboxCard( distraction: DistractionType, isChecked: Boolean, onToggle: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>LongMethod:OnboardingScreen.kt$@Composable private fun GoalSelectableCard( goal: OnboardingGoal, isSelected: Boolean, onSelect: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>LongMethod:OnboardingScreen.kt$@Composable private fun OnboardingStep1Welcome( onGetStarted: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>LongMethod:OnboardingScreen.kt$@Composable private fun OnboardingStep2Goals( selectedGoal: OnboardingGoal, onSelectGoal: (OnboardingGoal) -&gt; Unit, onContinue: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>LongMethod:OnboardingScreen.kt$@Composable private fun OnboardingStep3Distractions( selectedDistractions: Set&lt;DistractionType&gt;, onToggleDistraction: (DistractionType) -&gt; Unit, onContinue: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>LongMethod:OnboardingScreen.kt$@Composable private fun OnboardingStep4DailyTarget( selectedDailyTarget: DailyFocusTarget, onSelectDailyTarget: (DailyFocusTarget) -&gt; Unit, onContinue: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>LongMethod:OnboardingScreen.kt$@Composable private fun OnboardingStep5PlanReady( selectedGoal: OnboardingGoal, selectedDailyTarget: DailyFocusTarget, onStartPlan: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>LongMethod:PrivacyDashboardCard.kt$@Composable fun PrivacyDashboardCard( modifier: Modifier = Modifier, )</ID>
+    <ID>LongMethod:ProfileScreen.kt$@Composable fun ProfileScreen( modifier: Modifier = Modifier, onBack: (() -&gt; Unit)? = null, viewModel: ProfileViewModel = hiltViewModel(), )</ID>
+    <ID>LongMethod:ScreenTimeSummaryCard.kt$@Composable fun ScreenTimeSummaryCard( screenTime: String, focusTime: String, focusRatio: Float, unlockCount: Int, modifier: Modifier = Modifier, )</ID>
+    <ID>LongMethod:StudyModeCard.kt$@OptIn(ExperimentalLayoutApi::class) @Composable fun StudyModeCard( config: StudyModeConfig, channels: List&lt;StudyChannel&gt;, isAccessibilityEnabled: Boolean, onToggleStudyMode: (Boolean) -&gt; Unit, onToggleFailClosed: (Boolean) -&gt; Unit, onToggleChannel: (channelId: String, isAllowlisted: Boolean) -&gt; Unit, onAddChannelClicked: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>LongMethod:TasksScreen.kt$@Composable fun TasksScreen( onStartFocusOnTask: (String, Int) -&gt; Unit = { _, _ -&gt; }, modifier: Modifier = Modifier, )</ID>
+    <ID>LongMethod:TasksScreen.kt$@Composable private fun TaskCard( task: TaskItem, onToggle: () -&gt; Unit, onFocus: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>LongMethod:TimerScreen.kt$@Composable fun TimerScreenContent( uiState: TimerUiState, callbacks: TimerUiCallbacks, modifier: Modifier = Modifier, onNavigateToLimits: () -&gt; Unit = {}, onNavigateToSettings: () -&gt; Unit = {}, )</ID>
+    <ID>LongMethod:TimerScreen.kt$@Composable private fun TimerActionButtons( uiState: TimerUiState, callbacks: TimerUiCallbacks, modifier: Modifier = Modifier, )</ID>
+    <ID>LongParameterList:FocusFlowAppBar.kt$( modifier: Modifier = Modifier, title: String = "", subtitle: String? = null, onBack: (() -&gt; Unit)? = null, navigationIcon: (@Composable () -&gt; Unit)? = null, titleContent: (@Composable () -&gt; Unit)? = null, actions: (@Composable RowScope.() -&gt; Unit)? = null, containerColor: Color = Color.Transparent, contentColor: Color = FocusDarkText, showDivider: Boolean = false, dividerColor: Color = FocusCardBorder, )</ID>
+    <ID>LongParameterList:ForegroundAppDetector.kt$ForegroundAppDetector$( @ApplicationContext private val context: Context, private val screenStateReceiver: ScreenStateReceiver, private val overlayManager: BlockerOverlayManager, private val sessionRepository: FocusSessionRepository, private val blockRuleRepository: BlockRuleRepository, private val appLimitRepository: AppLimitRepository, private val emergencyPassRepository: EmergencyPassRepository, private val appListRepository: AppListRepository, private val clock: Clock, )</ID>
+    <ID>LongParameterList:HomeScreen.kt$( modifier: Modifier = Modifier, viewModel: HomeViewModel = hiltViewModel(), onNavigateToFocus: () -&gt; Unit = {}, onNavigateToLimits: () -&gt; Unit = {}, onNavigateToSettings: () -&gt; Unit = {}, onNavigateToProfile: () -&gt; Unit = {}, onNavigateToStats: () -&gt; Unit = {}, onNavigateToTasks: () -&gt; Unit = {}, )</ID>
+    <ID>LongParameterList:HomeScreen.kt$( uiState: HomeUiState, modifier: Modifier = Modifier, onNavigateToFocus: () -&gt; Unit = {}, onNavigateToLimits: () -&gt; Unit = {}, onNavigateToSettings: () -&gt; Unit = {}, onNavigateToProfile: () -&gt; Unit = {}, onNavigateToStats: () -&gt; Unit = {}, onNavigateToTasks: () -&gt; Unit = {}, onSelectDuration: (Int) -&gt; Unit = {}, onSelectMode: (FocusMode) -&gt; Unit = {}, )</ID>
+    <ID>LongParameterList:LoginScreen.kt$( uiState: LoginUiState, snackbarHostState: SnackbarHostState, onContinueWithGoogle: () -&gt; Unit, onExploreAsGuest: () -&gt; Unit = {}, onShowTerms: () -&gt; Unit, onDismissTerms: () -&gt; Unit, onShowPrivacy: () -&gt; Unit, onDismissPrivacy: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>LongParameterList:StudyModeCard.kt$( config: StudyModeConfig, channels: List&lt;StudyChannel&gt;, isAccessibilityEnabled: Boolean, onToggleStudyMode: (Boolean) -&gt; Unit, onToggleFailClosed: (Boolean) -&gt; Unit, onToggleChannel: (channelId: String, isAllowlisted: Boolean) -&gt; Unit, onAddChannelClicked: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>MagicNumber:AddStudyChannelDialog.kt$0xFFE2EBE5</ID>
+    <ID>MagicNumber:AddStudyChannelDialog.kt$0xFFF9FBF9</ID>
+    <ID>MagicNumber:AdvancedFeedBlockingCard.kt$0xFF78350F</ID>
+    <ID>MagicNumber:AdvancedFeedBlockingCard.kt$0xFFB45309</ID>
+    <ID>MagicNumber:AdvancedFeedBlockingCard.kt$0xFFE2EBE5</ID>
+    <ID>MagicNumber:AdvancedFeedBlockingCard.kt$0xFFFFE0B2</ID>
+    <ID>MagicNumber:AdvancedFeedBlockingCard.kt$0xFFFFF9EE</ID>
+    <ID>MagicNumber:AppLimitItemCard.kt$0xFFE2EBE5</ID>
+    <ID>MagicNumber:AppLimitItemCard.kt$0xFFE8F4EE</ID>
+    <ID>MagicNumber:AppLimitItemCard.kt$0xFFF1F6F3</ID>
+    <ID>MagicNumber:AppNavHost.kt$0xFFD6EFE1</ID>
+    <ID>MagicNumber:BlockAppsCard.kt$0xFF94A3B8</ID>
+    <ID>MagicNumber:BlockAppsCard.kt$0xFFCBD5E1</ID>
+    <ID>MagicNumber:BlockAppsCard.kt$0xFFF1F5F3</ID>
+    <ID>MagicNumber:BlockerOverlayManager.kt$0x33000000</ID>
+    <ID>MagicNumber:BlockerOverlayManager.kt$0xFF183D2B</ID>
+    <ID>MagicNumber:BlockerOverlayManager.kt$0xFF1E4D38</ID>
+    <ID>MagicNumber:BlockerOverlayManager.kt$0xFF4D6356</ID>
+    <ID>MagicNumber:BlockerOverlayManager.kt$0xFF5A7065</ID>
+    <ID>MagicNumber:BlockerOverlayManager.kt$0xFF7A8D84</ID>
+    <ID>MagicNumber:BlockerOverlayManager.kt$0xFF8FA89B</ID>
+    <ID>MagicNumber:BlockerOverlayManager.kt$0xFFDCE7D6</ID>
+    <ID>MagicNumber:BlockerOverlayManager.kt$0xFFE2ECE0</ID>
+    <ID>MagicNumber:BlockerOverlayManager.kt$0xFFE54343</ID>
+    <ID>MagicNumber:BlockerOverlayManager.kt$0xFFEFF5ED</ID>
+    <ID>MagicNumber:BlockerOverlayManager.kt$0xFFF7F8F4</ID>
+    <ID>MagicNumber:BlockerOverlayManager.kt$120f</ID>
+    <ID>MagicNumber:BlockerOverlayManager.kt$150f</ID>
+    <ID>MagicNumber:BlockerOverlayManager.kt$192</ID>
+    <ID>MagicNumber:BlockerOverlayManager.kt$30f</ID>
+    <ID>MagicNumber:BlockerOverlayManager.kt$60f</ID>
+    <ID>MagicNumber:CustomDurationDialog.kt$0xFFE2E8F0</ID>
+    <ID>MagicNumber:CustomDurationDialog.kt$120</ID>
+    <ID>MagicNumber:CustomDurationDialog.kt$15</ID>
+    <ID>MagicNumber:CustomDurationDialog.kt$180</ID>
+    <ID>MagicNumber:CustomDurationDialog.kt$30</ID>
+    <ID>MagicNumber:CustomDurationDialog.kt$45</ID>
+    <ID>MagicNumber:CustomDurationDialog.kt$5</ID>
+    <ID>MagicNumber:CustomDurationDialog.kt$5f</ID>
+    <ID>MagicNumber:CustomDurationDialog.kt$60</ID>
+    <ID>MagicNumber:CustomDurationDialog.kt$75</ID>
+    <ID>MagicNumber:DurationPresetsRow.kt$0xFFE5EDE8</ID>
+    <ID>MagicNumber:DurationPresetsRow.kt$25</ID>
+    <ID>MagicNumber:DurationPresetsRow.kt$50</ID>
+    <ID>MagicNumber:DurationPresetsRow.kt$90</ID>
+    <ID>MagicNumber:EditLimitDialog.kt$0xFFF9FBF9</ID>
+    <ID>MagicNumber:EmergencyPassRepository.kt$EmergencyPassRepository$1000L</ID>
+    <ID>MagicNumber:EmergencyPassRepository.kt$EmergencyPassRepository$5</ID>
+    <ID>MagicNumber:EmergencyPassRepository.kt$EmergencyPassRepository$60</ID>
+    <ID>MagicNumber:FirestoreFocusRoomRepository.kt$FirestoreFocusRoomRepository$50</ID>
+    <ID>MagicNumber:FirestoreLeaderboardRepository.kt$FirestoreLeaderboardRepository$50</ID>
+    <ID>MagicNumber:FirestoreSyncRepository.kt$FirestoreSyncRepository$100</ID>
+    <ID>MagicNumber:FirestoreSyncRepository.kt$FirestoreSyncRepository$60_000L</ID>
+    <ID>MagicNumber:FocusDialDisplay.kt$0.12f</ID>
+    <ID>MagicNumber:FocusDialDisplay.kt$0x20000000</ID>
+    <ID>MagicNumber:FocusDialDisplay.kt$0xFFE2EBE5</ID>
+    <ID>MagicNumber:FocusDialDisplay.kt$105f</ID>
+    <ID>MagicNumber:FocusDialDisplay.kt$195f</ID>
+    <ID>MagicNumber:FocusDialDisplay.kt$25</ID>
+    <ID>MagicNumber:FocusDialDisplay.kt$285f</ID>
+    <ID>MagicNumber:FocusDialDisplay.kt$300f</ID>
+    <ID>MagicNumber:FocusDialDisplay.kt$360f</ID>
+    <ID>MagicNumber:FocusDialDisplay.kt$50</ID>
+    <ID>MagicNumber:FocusDialDisplay.kt$6f</ID>
+    <ID>MagicNumber:FocusDialDisplay.kt$90</ID>
+    <ID>MagicNumber:FocusDialDisplay.kt$90f</ID>
+    <ID>MagicNumber:ForegroundAppDetector.kt$ForegroundAppDetector$60</ID>
+    <ID>MagicNumber:HomeScreen.kt$0.22f</ID>
+    <ID>MagicNumber:HomeScreen.kt$0.2f</ID>
+    <ID>MagicNumber:HomeScreen.kt$0.45f</ID>
+    <ID>MagicNumber:HomeScreen.kt$0.55f</ID>
+    <ID>MagicNumber:HomeScreen.kt$0.75f</ID>
+    <ID>MagicNumber:HomeScreen.kt$0x06000000</ID>
+    <ID>MagicNumber:HomeScreen.kt$0x08000000</ID>
+    <ID>MagicNumber:HomeScreen.kt$0x0A000000</ID>
+    <ID>MagicNumber:HomeScreen.kt$0x0F000000</ID>
+    <ID>MagicNumber:HomeScreen.kt$0x10000000</ID>
+    <ID>MagicNumber:HomeScreen.kt$0x1A000000</ID>
+    <ID>MagicNumber:HomeScreen.kt$0x301E5338</ID>
+    <ID>MagicNumber:HomeScreen.kt$0xD9FFFFFF</ID>
+    <ID>MagicNumber:HomeScreen.kt$0xFF059669</ID>
+    <ID>MagicNumber:HomeScreen.kt$0xFF0F172A</ID>
+    <ID>MagicNumber:HomeScreen.kt$0xFF1E293B</ID>
+    <ID>MagicNumber:HomeScreen.kt$0xFF2563EB</ID>
+    <ID>MagicNumber:HomeScreen.kt$0xFF475569</ID>
+    <ID>MagicNumber:HomeScreen.kt$0xFF64748B</ID>
+    <ID>MagicNumber:HomeScreen.kt$0xFF76A88E</ID>
+    <ID>MagicNumber:HomeScreen.kt$0xFFD1FAE5</ID>
+    <ID>MagicNumber:HomeScreen.kt$0xFFD6E8DC</ID>
+    <ID>MagicNumber:HomeScreen.kt$0xFFDBEAFE</ID>
+    <ID>MagicNumber:HomeScreen.kt$0xFFDC2626</ID>
+    <ID>MagicNumber:HomeScreen.kt$0xFFE2E8F0</ID>
+    <ID>MagicNumber:HomeScreen.kt$0xFFE5ECE8</ID>
+    <ID>MagicNumber:HomeScreen.kt$0xFFEAF4EE</ID>
+    <ID>MagicNumber:HomeScreen.kt$0xFFF7FAF8</ID>
+    <ID>MagicNumber:HomeScreen.kt$0xFFF8FAF8</ID>
+    <ID>MagicNumber:HomeScreen.kt$0xFFFEE2E2</ID>
+    <ID>MagicNumber:HomeScreen.kt$1.35f</ID>
+    <ID>MagicNumber:HomeScreen.kt$1.5f</ID>
+    <ID>MagicNumber:HomeScreen.kt$180f</ID>
+    <ID>MagicNumber:HomeScreen.kt$25</ID>
+    <ID>MagicNumber:HomeScreen.kt$50</ID>
+    <ID>MagicNumber:HomeScreen.kt$54</ID>
+    <ID>MagicNumber:HomeScreen.kt$5f</ID>
+    <ID>MagicNumber:HomeScreen.kt$90</ID>
+    <ID>MagicNumber:HomeViewModel.kt$HomeUiState$1.8f</ID>
+    <ID>MagicNumber:HomeViewModel.kt$HomeUiState$2.2f</ID>
+    <ID>MagicNumber:HomeViewModel.kt$HomeUiState$2.8f</ID>
+    <ID>MagicNumber:HomeViewModel.kt$HomeUiState$25</ID>
+    <ID>MagicNumber:HomeViewModel.kt$HomeUiState$3.2f</ID>
+    <ID>MagicNumber:HomeViewModel.kt$HomeUiState$3.5f</ID>
+    <ID>MagicNumber:HomeViewModel.kt$HomeUiState$3.8f</ID>
+    <ID>MagicNumber:HomeViewModel.kt$HomeUiState$4.8f</ID>
+    <ID>MagicNumber:HomeViewModel.kt$HomeUiState$50</ID>
+    <ID>MagicNumber:HomeViewModel.kt$HomeUiState$90</ID>
+    <ID>MagicNumber:LimitsScreen.kt$0xFFEBF1EE</ID>
+    <ID>MagicNumber:LimitsScreen.kt$0xFFF7FAF8</ID>
+    <ID>MagicNumber:LimitsViewModel.kt$LimitsViewModel$5_000L</ID>
+    <ID>MagicNumber:LoginScreen.kt$0.18f</ID>
+    <ID>MagicNumber:LoginScreen.kt$0.30f</ID>
+    <ID>MagicNumber:LoginScreen.kt$0.38f</ID>
+    <ID>MagicNumber:LoginScreen.kt$0.42f</ID>
+    <ID>MagicNumber:LoginScreen.kt$0.45f</ID>
+    <ID>MagicNumber:LoginScreen.kt$0.48f</ID>
+    <ID>MagicNumber:LoginScreen.kt$0.52f</ID>
+    <ID>MagicNumber:LoginScreen.kt$0.60f</ID>
+    <ID>MagicNumber:LoginScreen.kt$0.66f</ID>
+    <ID>MagicNumber:LoginScreen.kt$0.82f</ID>
+    <ID>MagicNumber:LoginScreen.kt$0.86f</ID>
+    <ID>MagicNumber:LoginScreen.kt$0.98f</ID>
+    <ID>MagicNumber:LoginScreen.kt$0x14000000</ID>
+    <ID>MagicNumber:LoginScreen.kt$0x1F000000</ID>
+    <ID>MagicNumber:LoginScreen.kt$0x66FFFFFF</ID>
+    <ID>MagicNumber:LoginScreen.kt$0xE6FFFFFF</ID>
+    <ID>MagicNumber:OnboardingScreen.kt$0.25f</ID>
+    <ID>MagicNumber:OnboardingScreen.kt$0.65f</ID>
+    <ID>MagicNumber:OnboardingScreen.kt$0x0C000000</ID>
+    <ID>MagicNumber:OnboardingScreen.kt$0x10000000</ID>
+    <ID>MagicNumber:OnboardingScreen.kt$0x14000000</ID>
+    <ID>MagicNumber:OnboardingScreen.kt$0x18000000</ID>
+    <ID>MagicNumber:OnboardingScreen.kt$0x20000000</ID>
+    <ID>MagicNumber:OnboardingScreen.kt$0x66A5B5AC</ID>
+    <ID>MagicNumber:OnboardingScreen.kt$0xFFCCD4D0</ID>
+    <ID>MagicNumber:OnboardingScreen.kt$0xFFD0D7D3</ID>
+    <ID>MagicNumber:OnboardingScreen.kt$0xFFD6EDE0</ID>
+    <ID>MagicNumber:OnboardingScreen.kt$0xFFE0E7E3</ID>
+    <ID>MagicNumber:OnboardingScreen.kt$0xFFEFF3F1</ID>
+    <ID>MagicNumber:OnboardingScreen.kt$0xFFF9FBFA</ID>
+    <ID>MagicNumber:OnboardingScreen.kt$3</ID>
+    <ID>MagicNumber:OnboardingScreen.kt$300</ID>
+    <ID>MagicNumber:OnboardingScreen.kt$4</ID>
+    <ID>MagicNumber:OnboardingScreen.kt$5</ID>
+    <ID>MagicNumber:PermissionHealth.kt$PermissionHealth$100</ID>
+    <ID>MagicNumber:PermissionHealthViewModel.kt$PermissionHealthViewModel$5_000L</ID>
+    <ID>MagicNumber:ProfileViewModel.kt$ProfileViewModel$5_000L</ID>
+    <ID>MagicNumber:ScenicQuoteCard.kt$0.90f</ID>
+    <ID>MagicNumber:ScenicQuoteCard.kt$0xF2FBF9F6</ID>
+    <ID>MagicNumber:ScreenTimeSummaryCard.kt$100</ID>
+    <ID>MagicNumber:StatsViewModel.kt$StatsViewModel$5_000L</ID>
+    <ID>MagicNumber:StudyModeCard.kt$0xFFE2EBE5</ID>
+    <ID>MagicNumber:StudyModeCard.kt$0xFFF1F6F3</ID>
+    <ID>MagicNumber:StudyModeCard.kt$0xFFF7FAF8</ID>
+    <ID>MagicNumber:TasksScreen.kt$0x08000000</ID>
+    <ID>MagicNumber:TasksScreen.kt$0x0D000000</ID>
+    <ID>MagicNumber:TasksScreen.kt$0xFF64748B</ID>
+    <ID>MagicNumber:TasksScreen.kt$0xFF94A3B8</ID>
+    <ID>MagicNumber:TasksScreen.kt$0xFFF1F5F2</ID>
+    <ID>MagicNumber:TasksScreen.kt$0xFFF7FAF8</ID>
+    <ID>MagicNumber:TasksScreen.kt$15</ID>
+    <ID>MagicNumber:TasksScreen.kt$25</ID>
+    <ID>MagicNumber:TasksScreen.kt$50</ID>
+    <ID>MagicNumber:TimerScreen.kt$0.35f</ID>
+    <ID>MagicNumber:TimerScreen.kt$0.58f</ID>
+    <ID>MagicNumber:TimerScreen.kt$0.72f</ID>
+    <ID>MagicNumber:TimerScreen.kt$0.78f</ID>
+    <ID>MagicNumber:TimerScreen.kt$0x301B4E36</ID>
+    <ID>MagicNumber:TimerScreen.kt$0x401B4E36</ID>
+    <ID>MagicNumber:TimerScreen.kt$0xFFCBD5E1</ID>
+    <ID>MagicNumber:TimerScreen.kt$0xFFF7FAF8</ID>
+    <ID>MagicNumber:TimerScreen.kt$0xFFF9FBF9</ID>
+    <ID>MagicNumber:TimerUiState.kt$TimerUiState$25</ID>
+    <ID>MagicNumber:TimerViewModel.kt$TimerViewModel$1000L</ID>
+    <ID>MagicNumber:TimerViewModel.kt$TimerViewModel$25</ID>
+    <ID>MagicNumber:TimerViewModel.kt$TimerViewModel$60</ID>
+    <ID>MatchingDeclarationName:TasksScreen.kt$TaskItem</ID>
+    <ID>MaxLineLength:AccessibilityDisclosureDialog.kt$DisclosureBullet(text = "Checks YouTube channel names in Study Mode to permit approved educational creators.")</ID>
+    <ID>MaxLineLength:AccessibilityDisclosureDialog.kt$DisclosureBullet(text = "Detects when short-form video players (YouTube Shorts, Instagram Reels) open and navigates back to protect your focus.")</ID>
+    <ID>MaxLineLength:AccessibilityDisclosureDialog.kt$DisclosureBullet(text = "No personal messages, keystrokes, passwords, or browsing data are ever logged or sent anywhere.")</ID>
+    <ID>MaxLineLength:AccessibilityDisclosureDialog.kt$text = "To enable Shorts &amp; Reels blocking and YouTube Study Mode, FocusFlow needs the Accessibility service."</ID>
+    <ID>MaxLineLength:BlockerOverlayManager.kt$BlockerOverlayManager$val</ID>
+    <ID>MaxLineLength:BlockingRulesEngine.kt$BlockingRulesEngine$!detectedChannelId.isNullOrBlank() &amp;&amp; studyConfig.allowlistedChannelIds.contains(detectedChannelId) -&gt; true</ID>
+    <ID>MaxLineLength:BlockingRulesEngine.kt$BlockingRulesEngine$if</ID>
+    <ID>MaxLineLength:DeleteAccountConfirmDialog.kt$text = "This will permanently delete your remote profile, streaks, and reset cloud progress. Local focus rules and statistics on this device can also be cleared. This action cannot be undone."</ID>
+    <ID>MaxLineLength:FirebasePresenceRepository.kt$FirebasePresenceRepository.&lt;no name provided&gt;$sessionRemainingSeconds = snapshot.child("sessionRemainingSeconds").getValue(Long::class.java) ?: 0L</ID>
+    <ID>MaxLineLength:FirebasePresenceRepository.kt$FirebasePresenceRepository.&lt;no name provided&gt;$val joinedAt = child.child("joinedAtTimestamp").getValue(Long::class.java) ?: System.currentTimeMillis()</ID>
+    <ID>MaxLineLength:FocusAccessibilityService.kt$FocusAccessibilityService$if</ID>
+    <ID>MaxLineLength:GoogleAuthHelper.kt$GoogleAuthConfigurationException$message: String = "Google Web Client ID is not configured. Please add SHA-1 to Firebase and update google-services.json."</ID>
+    <ID>MaxLineLength:GoogleAuthHelper.kt$GoogleAuthHelper$"Google Web Client ID is missing or invalid. Please configure Google Sign-In in Firebase Console and update google-services.json."</ID>
+    <ID>MaxLineLength:GoogleAuthHelper.kt$GoogleAuthHelper$"No Google credentials available. Ensure a Google account is logged into the device and your SHA-1 fingerprint is registered in Firebase."</ID>
+    <ID>MaxLineLength:GoogleAuthHelper.kt$NoCredentialsFoundException$message: String = "No Google credentials available. Ensure a Google account is logged into the device and your SHA-1 fingerprint is registered in Firebase."</ID>
+    <ID>MaxLineLength:LimitsScreen.kt$text = if (uiState.searchQuery.isNotBlank()) "No matching apps found" else "Loading installed apps..."</ID>
+    <ID>MaxLineLength:LimitsScreen.kt$text = if (uiState.searchQuery.isNotBlank()) "Try checking the spelling or search with a different keyword." else "Retrieving launcher applications on this device."</ID>
+    <ID>MaxLineLength:StudyModeCard.kt$text = "Allows videos from verified educational channels while silencing recommendations and entertainment."</ID>
+    <ID>MaxLineLength:TimerScreen.kt$leadingIcon = { Icon(Icons.Outlined.Block, contentDescription = null, tint = FocusMutedText) }</ID>
+    <ID>MaxLineLength:TimerScreen.kt$leadingIcon = { Icon(Icons.Outlined.GraphicEq, contentDescription = null, tint = FocusForestGreen) }</ID>
+    <ID>MaxLineLength:TimerScreen.kt$leadingIcon = { Icon(Icons.Outlined.Refresh, contentDescription = null, tint = FocusDarkText) }</ID>
+    <ID>MaxLineLength:TimerScreen.kt$leadingIcon = { Icon(Icons.Outlined.Settings, contentDescription = null, tint = FocusMutedText) }</ID>
+    <ID>MaxLineLength:UsageDao.kt$UsageDao$@Query("SELECT * FROM daily_usage WHERE epochDay &gt;= :startEpochDay AND epochDay &lt;= :endEpochDay ORDER BY epochDay ASC")</ID>
+    <ID>NestedBlockDepth:AndroidUsageStatsReader.kt$AndroidUsageStatsReader$fun readUsageForDay(epochDay: Long, userEssentials: Set&lt;String&gt; = emptySet()): RawDailyUsage</ID>
+    <ID>NestedBlockDepth:FocusAccessibilityService.kt$FocusAccessibilityService$override fun onAccessibilityEvent(event: AccessibilityEvent?)</ID>
+    <ID>NewLineAtEndOfFile:StatsScreen.kt$com.focusflow.feature.stats.StatsScreen.kt</ID>
+    <ID>ReturnCount:AndroidUsageStatsReader.kt$AndroidUsageStatsReader$fun readUsageForDay(epochDay: Long, userEssentials: Set&lt;String&gt; = emptySet()): RawDailyUsage</ID>
+    <ID>ReturnCount:BlockingRulesEngine.kt$BlockingRulesEngine$fun evaluate(signals: BlockingSignals): BlockingDecision</ID>
+    <ID>ReturnCount:FirebaseAuthRepository.kt$FirebaseAuthRepository$override suspend fun linkGoogleAccount(idToken: String): Result&lt;UserAccount&gt;</ID>
+    <ID>ReturnCount:FocusAccessibilityService.kt$FocusAccessibilityService$override fun onAccessibilityEvent(event: AccessibilityEvent?)</ID>
+    <ID>ReturnCount:FocusAccessibilityService.kt$FocusAccessibilityService$private fun findYouTubeChannelName(root: AccessibilityNodeInfo): String?</ID>
+    <ID>ReturnCount:ForegroundAppDetector.kt$ForegroundAppDetector$private suspend fun evaluateForegroundApp()</ID>
+    <ID>ReturnCount:SafeListPolicy.kt$SafeListPolicy$fun isSafeListed( packageName: String, isDefaultLauncher: Boolean = false, isDefaultDialer: Boolean = false, userEssentials: Set&lt;String&gt; = emptySet(), ): Boolean</ID>
+    <ID>SwallowedException:FirebaseAuthRepository.kt$FirebaseAuthRepository$linkError: Exception</ID>
+    <ID>TooGenericExceptionCaught:FirebaseAuthRepository.kt$FirebaseAuthRepository$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:FirebaseAuthRepository.kt$FirebaseAuthRepository$linkError: Exception</ID>
+    <ID>TooGenericExceptionCaught:FirestoreSyncRepository.kt$FirestoreSyncRepository$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:GoogleAuthHelper.kt$GoogleAuthHelper$e: Exception</ID>
+    <ID>TooManyFunctions:BlockingDao.kt$BlockingDao</ID>
+    <ID>TooManyFunctions:DataModule.kt$DataModule</ID>
+    <ID>TooManyFunctions:OnboardingScreen.kt$com.focusflow.feature.home.onboarding.OnboardingScreen.kt</ID>
+    <ID>TooManyFunctions:SocialDao.kt$SocialDao</ID>
+    <ID>UnusedParameter:AppLimitItemCard.kt$onToggleEssential: (Boolean) -&gt; Unit</ID>
+    <ID>UnusedParameter:HomeScreen.kt$onNavigateToSettings: () -&gt; Unit = {}</ID>
+    <ID>UnusedParameter:LoginScreen.kt$onExploreAsGuest: () -&gt; Unit = {}</ID>
+    <ID>UnusedPrivateProperty:FirestoreSyncRepository.kt$FirestoreSyncRepository$private val usageDao: UsageDao</ID>
+    <ID>UseCheckOrError:FirestoreFocusRoomRepository.kt$FirestoreFocusRoomRepository$throw IllegalStateException("Must be signed in to create a room")</ID>
+    <ID>UseCheckOrError:FirestoreFocusRoomRepository.kt$FirestoreFocusRoomRepository$throw IllegalStateException("Must be signed in to join a room")</ID>
+    <ID>UseCheckOrError:FirestoreFriendsRepository.kt$FirestoreFriendsRepository$throw IllegalStateException("Must be signed in to add friends")</ID>
+    <ID>UseRequire:FirestoreFocusRoomRepository.kt$FirestoreFocusRoomRepository$throw IllegalArgumentException("Invalid room passcode")</ID>
+    <ID>UseRequire:FirestoreFocusRoomRepository.kt$FirestoreFocusRoomRepository$throw IllegalArgumentException("Room does not exist")</ID>
+    <ID>UseRequire:FirestoreFriendsRepository.kt$FirestoreFriendsRepository$throw IllegalArgumentException("Invite code cannot be empty")</ID>
+    <ID>VariableNaming:OfflineAdvancedBlockingRepository.kt$OfflineAdvancedBlockingRepository$private val KEY_FOCUS_ONLY = booleanPreferencesKey("feed_focus_only")</ID>
+    <ID>VariableNaming:OfflineAdvancedBlockingRepository.kt$OfflineAdvancedBlockingRepository$private val KEY_REELS_BLOCKED = booleanPreferencesKey("reels_blocking_enabled")</ID>
+    <ID>VariableNaming:OfflineAdvancedBlockingRepository.kt$OfflineAdvancedBlockingRepository$private val KEY_SHORTS_BLOCKED = booleanPreferencesKey("shorts_blocking_enabled")</ID>
+    <ID>VariableNaming:OfflineStudyModeRepository.kt$OfflineStudyModeRepository$private val KEY_FAIL_CLOSED = booleanPreferencesKey("fail_closed")</ID>
+    <ID>VariableNaming:OfflineStudyModeRepository.kt$OfflineStudyModeRepository$private val KEY_STUDY_MODE_ENABLED = booleanPreferencesKey("study_mode_enabled")</ID>
+  </CurrentIssues>
+</SmellBaseline>

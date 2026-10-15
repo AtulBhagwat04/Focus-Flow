@@ -44,6 +44,13 @@ class OfflineFocusSessionRepositoryTest {
         override suspend fun deleteSession(id: String) {
             sessions.value = sessions.value - id
         }
+
+        override fun observeFocusDurationBetween(startEpochMs: Long, endEpochMs: Long): Flow<Long> =
+            sessions.map { map ->
+                map.values
+                    .filter { it.state == "COMPLETED" && it.startedAtEpochMs >= startEpochMs && it.startedAtEpochMs < endEpochMs }
+                    .sumOf { (it.completedAtEpochMs ?: it.startedAtEpochMs) - it.startedAtEpochMs - it.totalPausedDurationMs }
+            }
     }
 
     private class FakeClock(var currentTimeMs: Long) : Clock {

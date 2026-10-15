@@ -18,6 +18,7 @@ detekt {
     config.setFrom(files("$rootDir/detekt.yml"))
     buildUponDefaultConfig = true
     allRules = false
+    baseline = file("$rootDir/detekt-baseline.xml")
     source.setFrom(
         files(
             "app/src/main/kotlin",

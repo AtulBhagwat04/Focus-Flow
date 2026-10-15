@@ -9,12 +9,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -130,17 +132,20 @@ fun AppNavHost(
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
-    val isFullscreenRoute = currentDestination?.route == ROUTE_LOGIN || currentDestination?.route == ROUTE_ONBOARDING
+    val currentRoute = currentDestination?.route
+    val isFullscreenRoute = currentRoute == ROUTE_LOGIN || currentRoute == ROUTE_ONBOARDING
+    val isScenicEdgeToEdgeRoute = isFullscreenRoute || currentRoute == ROUTE_HOME || currentRoute == ROUTE_FOCUS
     val showBottomBar = !isFullscreenRoute
 
     Scaffold(
-        contentWindowInsets = if (isFullscreenRoute) WindowInsets(0, 0, 0, 0) else ScaffoldDefaults.contentWindowInsets,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        containerColor = Color.Transparent,
         bottomBar = {
             if (showBottomBar) {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
-                    color = Color.White,
+                    color = Color.White.copy(alpha = 0.95f),
                     shadowElevation = 8.dp,
                     border = BorderStroke(1.dp, FocusCardBorder),
                 ) {
@@ -172,18 +177,26 @@ fun AppNavHost(
                                             restoreState    = true
                                         }
                                     }
-                                    .padding(vertical = 4.dp),
+                                    .padding(vertical = 2.dp),
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.Center,
                             ) {
-                                Icon(
-                                    imageVector = if (selected) destination.selectedIcon else destination.unselectedIcon,
-                                    contentDescription = null,
-                                    tint = if (selected) FocusForestGreenDeep else FocusNavInactive,
-                                    modifier = Modifier.size(24.dp),
-                                )
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(16.dp))
+                                        .background(if (selected) Color(0xFFD6EFE1) else Color.Transparent)
+                                        .padding(horizontal = 16.dp, vertical = 4.dp),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Icon(
+                                        imageVector = if (selected) destination.selectedIcon else destination.unselectedIcon,
+                                        contentDescription = null,
+                                        tint = if (selected) FocusForestGreenDeep else FocusNavInactive,
+                                        modifier = Modifier.size(24.dp),
+                                    )
+                                }
 
-                                Spacer(modifier = Modifier.height(3.dp))
+                                Spacer(modifier = Modifier.height(2.dp))
 
                                 Text(
                                     text = stringResource(destination.labelRes),
@@ -203,12 +216,15 @@ fun AppNavHost(
         NavHost(
             navController    = navController,
             startDestination = startDestination,
-            modifier         = if (isFullscreenRoute) {
+            modifier         = if (isScenicEdgeToEdgeRoute) {
                 Modifier.fillMaxSize()
             } else {
                 Modifier
                     .fillMaxSize()
-                    .padding(innerPadding)
+                    .padding(
+                        top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding(),
+                        bottom = innerPadding.calculateBottomPadding(),
+                    )
             },
         ) {
             composable(ROUTE_LOGIN) {
@@ -269,7 +285,16 @@ fun AppNavHost(
                     },
                 )
             }
-            composable(ROUTE_FOCUS)   { TimerScreen() }
+            composable(ROUTE_FOCUS) {
+                TimerScreen(
+                    onNavigateToLimits = {
+                        navController.navigate(ROUTE_LIMITS)
+                    },
+                    onNavigateToSettings = {
+                        navController.navigate(ROUTE_PERMISSION_HEALTH)
+                    },
+                )
+            }
             composable(ROUTE_TASKS) {
                 TasksScreen(
                     onStartFocusOnTask = { _, _ ->

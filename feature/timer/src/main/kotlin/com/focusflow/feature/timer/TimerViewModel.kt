@@ -171,6 +171,21 @@ class TimerViewModel @Inject constructor(
         }
     }
 
+    fun onSelectDurationMinutes(minutes: Int) {
+        if (_uiState.value.isActive) return
+        val durationMs = minutes * 60 * 1000L
+        val mode = if (minutes == 25) {
+            SessionMode.Pomodoro(durationMs)
+        } else {
+            SessionMode.Custom(durationMs)
+        }
+        onSelectMode(mode)
+    }
+
+    fun onToggleBlockApps(enabled: Boolean) {
+        _uiState.update { it.copy(isBlockAppsEnabled = enabled) }
+    }
+
     fun onSelectMode(mode: SessionMode) {
         if (_uiState.value.isActive) return
         val defaultDuration = when (mode) {

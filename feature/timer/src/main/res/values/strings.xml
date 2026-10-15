@@ -1,0 +1,24 @@
+<resources>
+    <string name="timer_screen_title">Focus Time</string>
+    <string name="timer_screen_subtitle">Put your phone away and get things done.</string>
+    <string name="timer_session_label">Focus Session</string>
+    <string name="timer_session_running">Focusing</string>
+    <string name="timer_session_paused">Paused</string>
+    <string name="timer_start_focus">Start Focus</string>
+    <string name="timer_pause">Pause</string>
+    <string name="timer_resume">Resume</string>
+    <string name="timer_finish">Finish</string>
+    <string name="timer_unit_min">min</string>
+    <string name="timer_preset_custom">Custom</string>
+    <string name="timer_block_apps_title">Block Apps</string>
+    <string name="timer_block_apps_subtitle">Keep distractions away</string>
+    <string name="timer_quote">A focused mind\nbuilds a better tomorrow.</string>
+    <string name="timer_ambient_sound">Ambient Sound</string>
+    <string name="timer_custom_duration_title">Custom Duration</string>
+    <string name="timer_menu_settings">Settings</string>
+    <string name="timer_menu_reset">Reset Session</string>
+    <string name="timer_menu_blocked_apps">Blocked Apps</string>
+    <string name="timer_cd_ambient_sound">Ambient sound selector</string>
+    <string name="timer_cd_more_options">More options</string>
+    <string name="timer_cd_block_apps_toggle">Toggle app blocking during focus</string>
+</resources>

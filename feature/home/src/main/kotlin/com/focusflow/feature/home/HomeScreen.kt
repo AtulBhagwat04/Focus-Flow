@@ -17,6 +17,8 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -131,8 +133,31 @@ fun HomeScreenContent(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xFFF7FAF8)),
+            .background(Color.White),
     ) {
+        // ── 1. Full Screen Scenic Nature Background ──────────────────────────
+        Image(
+            painter = painterResource(id = R.drawable.bg_home_screen),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop,
+        )
+
+        // ── 2. Soft Ambient Frost Overlay for Content Legibility ─────────────
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        0.0f to Color.White.copy(alpha = 0.20f),
+                        0.22f to Color(0xFFF7FAF8).copy(alpha = 0.65f),
+                        0.55f to Color(0xFFF7FAF8).copy(alpha = 0.88f),
+                        1.0f to Color(0xFFF7FAF8).copy(alpha = 0.95f),
+                    )
+                )
+        )
+
+        // ── 3. Foreground Scrollable Content ─────────────────────────────────
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -189,7 +214,14 @@ fun HomeScreenContent(
                 quote = uiState.quote,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 28.dp),
+                    .padding(bottom = 12.dp),
+            )
+
+            // ── 6. Bottom Navigation Bar Spacing ─────────────────────────────
+            Spacer(
+                modifier = Modifier
+                    .navigationBarsPadding()
+                    .height(84.dp)
             )
         }
     }
@@ -676,6 +708,7 @@ private fun QuickActionItem(
 ) {
     Surface(
         modifier = modifier
+            .heightIn(min = 106.dp)
             .shadow(
                 elevation = 2.dp,
                 shape = RoundedCornerShape(18.dp),
