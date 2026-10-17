@@ -42,6 +42,15 @@ import com.focusflow.core.designsystem.theme.FocusForestMintBadge
 import com.focusflow.core.designsystem.theme.FocusMutedText
 import com.focusflow.core.domain.blocking.model.AdvancedBlockingConfig
 
+private val SwitchTrackUnchecked = Color(0xFFE2EBE5)
+private val AlertBannerBg = Color(0xFFFFF9EE)
+private val AlertBannerBorder = Color(0xFFFFE0B2)
+private val AlertBannerText = Color(0xFF78350F)
+private val AlertButtonBg = Color(0xFFB45309)
+
+/**
+ * Card for configuring Shorts & Reels distraction feed blocking.
+ */
 @Composable
 fun AdvancedFeedBlockingCard(
     config: AdvancedBlockingConfig,
@@ -54,108 +63,23 @@ fun AdvancedFeedBlockingCard(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(22.dp),
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         border = BorderStroke(1.dp, FocusCardBorder),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
     ) {
         Column(modifier = Modifier.padding(18.dp)) {
-            // Header Row: Icon squircle + title + description
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(46.dp)
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(FocusForestMintBadge),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.PlayCircle,
-                        contentDescription = null,
-                        tint = FocusForestGreenDeep,
-                        modifier = Modifier.size(24.dp),
-                    )
-                }
+            FeedBlockingHeader()
 
-                Spacer(modifier = Modifier.width(14.dp))
-
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "Shorts & Reels Blocking",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = FocusDarkText,
-                    )
-                    Text(
-                        text = "Gently exit fast-scrolling feeds without disabling apps",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = FocusMutedText,
-                    )
-                }
-            }
-
-            // Accessibility Warning Banner (soft neutral warning)
             if (!isAccessibilityEnabled) {
                 Spacer(modifier = Modifier.height(14.dp))
-                Surface(
-                    shape = RoundedCornerShape(14.dp),
-                    color = Color(0xFFFFF9EE),
-                    border = BorderStroke(1.dp, Color(0xFFFFE0B2)),
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 14.dp, vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.weight(1f),
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Info,
-                                contentDescription = null,
-                                tint = Color(0xFFB45309),
-                                modifier = Modifier.size(18.dp),
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = "Accessibility needed for feed detection",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = Color(0xFF78350F),
-                            )
-                        }
-
-                        Surface(
-                            shape = RoundedCornerShape(10.dp),
-                            color = Color(0xFFB45309),
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(10.dp))
-                                .clickable { onRequestAccessibility() },
-                        ) {
-                            Text(
-                                text = "Setup",
-                                color = Color.White,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
-                            )
-                        }
-                    }
-                }
+                AccessibilitySetupBanner(onClick = onRequestAccessibility)
             }
 
             Spacer(modifier = Modifier.height(14.dp))
             HorizontalDivider(color = FocusCardBorder, thickness = 1.dp)
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Switch 1: YouTube Shorts
             FeedSwitchRow(
                 title = "Block YouTube Shorts",
                 subtitle = "Redirects out of Shorts back to focus",
@@ -166,7 +90,6 @@ fun AdvancedFeedBlockingCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Switch 2: Instagram Reels
             FeedSwitchRow(
                 title = "Block Instagram Reels",
                 subtitle = "Redirects out of the Reels player",
@@ -177,7 +100,6 @@ fun AdvancedFeedBlockingCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Switch 3: Block Only During Focus Sessions
             FeedSwitchRow(
                 title = "Block Only During Focus Sessions",
                 subtitle = "Allows feeds during leisure and breaks",
@@ -185,6 +107,98 @@ fun AdvancedFeedBlockingCard(
                 onCheckedChange = onToggleFocusOnly,
                 enabled = true,
             )
+        }
+    }
+}
+
+@Composable
+private fun FeedBlockingHeader() {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(44.dp)
+                .clip(RoundedCornerShape(13.dp))
+                .background(FocusForestMintBadge),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = Icons.Default.PlayCircle,
+                contentDescription = null,
+                tint = FocusForestGreenDeep,
+                modifier = Modifier.size(22.dp),
+            )
+        }
+
+        Spacer(modifier = Modifier.width(12.dp))
+
+        Column {
+            Text(
+                text = "Shorts & Reels Blocking",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = FocusDarkText,
+            )
+            Text(
+                text = "Gently exit fast-scrolling feeds without disabling apps",
+                style = MaterialTheme.typography.bodySmall,
+                color = FocusMutedText,
+            )
+        }
+    }
+}
+
+@Composable
+private fun AccessibilitySetupBanner(onClick: () -> Unit) {
+    Surface(
+        shape = RoundedCornerShape(14.dp),
+        color = AlertBannerBg,
+        border = BorderStroke(1.dp, AlertBannerBorder),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Info,
+                    contentDescription = null,
+                    tint = AlertButtonBg,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Accessibility needed for feed detection",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = AlertBannerText,
+                )
+            }
+
+            Surface(
+                shape = RoundedCornerShape(10.dp),
+                color = AlertButtonBg,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(10.dp))
+                    .clickable(onClick = onClick),
+            ) {
+                Text(
+                    text = "Setup",
+                    color = Color.White,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                )
+            }
         }
     }
 }
@@ -225,7 +239,7 @@ private fun FeedSwitchRow(
             colors = SwitchDefaults.colors(
                 checkedThumbColor = Color.White,
                 checkedTrackColor = FocusForestGreen,
-                uncheckedTrackColor = Color(0xFFE2EBE5),
+                uncheckedTrackColor = SwitchTrackUnchecked,
                 uncheckedThumbColor = Color.White,
                 uncheckedBorderColor = Color.Transparent,
             ),

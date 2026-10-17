@@ -30,16 +30,7 @@ class OfflineStudyModeRepository @Inject constructor(
     private val KEY_STUDY_MODE_ENABLED = booleanPreferencesKey("study_mode_enabled")
     private val KEY_FAIL_CLOSED = booleanPreferencesKey("fail_closed")
 
-    private val scope = CoroutineScope(Dispatchers.IO)
 
-    init {
-        // Seed curated starter educational channels if local store is empty
-        scope.launch {
-            if (studyModeDao.count() == 0) {
-                seedCuratedChannels()
-            }
-        }
-    }
 
     override fun getStudyModeConfig(): Flow<StudyModeConfig> {
         val prefsFlow = context.studyModeDataStore.data.map { prefs ->
@@ -98,53 +89,7 @@ class OfflineStudyModeRepository @Inject constructor(
         studyModeDao.setAllowlisted(channelId, isAllowlisted)
     }
 
-    private suspend fun seedCuratedChannels() {
-        val curated = listOf(
-            StudyChannelEntity(
-                channelId = "UC4a-Gbdw7vOaccHmFo40b9g",
-                channelTitle = "Khan Academy",
-                category = "Maths & Science",
-                isCuratedDefault = true,
-                isAllowlisted = true,
-            ),
-            StudyChannelEntity(
-                channelId = "UCYO_jab_esuFRV4b17AJtAw",
-                channelTitle = "3Blue1Brown",
-                category = "Mathematics",
-                isCuratedDefault = true,
-                isAllowlisted = true,
-            ),
-            StudyChannelEntity(
-                channelId = "UC8butISFwT-Wl7EV0hUK0BQ",
-                channelTitle = "freeCodeCamp.org",
-                category = "Computer Science",
-                isCuratedDefault = true,
-                isAllowlisted = true,
-            ),
-            StudyChannelEntity(
-                channelId = "UCEBb1b_L6zDS3xTUrIALZOw",
-                channelTitle = "MIT OpenCourseWare",
-                category = "University Courses",
-                isCuratedDefault = true,
-                isAllowlisted = true,
-            ),
-            StudyChannelEntity(
-                channelId = "UCX6b17PVsYBQ0ip5gyeme-Q",
-                channelTitle = "CrashCourse",
-                category = "General Knowledge",
-                isCuratedDefault = true,
-                isAllowlisted = true,
-            ),
-            StudyChannelEntity(
-                channelId = "UCsXVk37bltHxD1rDPwtNM8Q",
-                channelTitle = "Kurzgesagt – In a Nutshell",
-                category = "Science",
-                isCuratedDefault = true,
-                isAllowlisted = true,
-            ),
-        )
-        studyModeDao.insertChannels(curated)
-    }
+
 
     private fun StudyChannelEntity.toDomain() = StudyChannel(
         channelId = channelId,

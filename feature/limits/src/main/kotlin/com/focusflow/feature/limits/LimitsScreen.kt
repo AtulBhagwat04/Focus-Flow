@@ -3,7 +3,6 @@ package com.focusflow.feature.limits
 import android.content.Intent
 import android.provider.Settings
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -27,7 +26,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Spa
@@ -53,7 +51,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -62,21 +61,26 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.focusflow.core.designsystem.component.FocusFlowActionButton
+import com.focusflow.core.designsystem.component.FocusFlowAppBar
+import com.focusflow.core.designsystem.component.FocusFlowBackButton
 import com.focusflow.core.designsystem.theme.FocusCardBorder
 import com.focusflow.core.designsystem.theme.FocusDarkText
 import com.focusflow.core.designsystem.theme.FocusForestGreen
 import com.focusflow.core.designsystem.theme.FocusForestGreenDeep
 import com.focusflow.core.designsystem.theme.FocusForestMintBadge
-import com.focusflow.core.designsystem.component.FocusFlowAppBar
 import com.focusflow.core.designsystem.theme.FocusForestMintBg
 import com.focusflow.core.designsystem.theme.FocusForestMintBorder
 import com.focusflow.core.designsystem.theme.FocusMutedText
 import com.focusflow.feature.limits.components.AccessibilityDisclosureDialog
 import com.focusflow.feature.limits.components.AddStudyChannelDialog
 import com.focusflow.feature.limits.components.AdvancedFeedBlockingCard
-import com.focusflow.feature.limits.components.AppLimitItemCard
+import com.focusflow.feature.limits.components.AppLimitListItem
 import com.focusflow.feature.limits.components.EditLimitDialog
 import com.focusflow.feature.limits.components.StudyModeCard
+
+private val ScreenBackground = Color(0xFFF7FAF8)
+private val TabBarBackground = Color(0xFFEFF4F1)
 
 @Composable
 fun LimitsScreen(
@@ -88,12 +92,20 @@ fun LimitsScreen(
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
 
-    BackHandler(onBack = onBack)
-
     var selectedTab by remember { mutableIntStateOf(0) }
+    var isSearchActive by remember { mutableStateOf(false) }
     var editingApp by remember { mutableStateOf<AppLimitUiItem?>(null) }
     var showDisclosureDialog by remember { mutableStateOf(false) }
     var showAddChannelDialog by remember { mutableStateOf(false) }
+
+    BackHandler {
+        if (isSearchActive || uiState.searchQuery.isNotEmpty()) {
+            isSearchActive = false
+            viewModel.onSearchQueryChanged("")
+        } else {
+            onBack()
+        }
+    }
 
     LaunchedEffect(uiState.message) {
         uiState.message?.let { msg ->
@@ -112,15 +124,19 @@ fun LimitsScreen(
 
     Scaffold(
         topBar = {
-            FocusFlowAppBar(
-                title = "App Blocking & Limits",
-                subtitle = "Distraction control & screen limits",
+            LimitsTopBar(
+                isSearchActive = isSearchActive,
+                searchQuery = uiState.searchQuery,
+                onSearchQueryChange = viewModel::onSearchQueryChanged,
+                onSearchToggled = { active ->
+                    isSearchActive = active
+                    if (!active) viewModel.onSearchQueryChanged("")
+                },
                 onBack = onBack,
-                containerColor = Color(0xFFF7FAF8),
             )
         },
         modifier = modifier.fillMaxSize(),
-        containerColor = Color(0xFFF7FAF8),
+        containerColor = ScreenBackground,
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { innerPadding ->
         Column(
@@ -131,240 +147,35 @@ fun LimitsScreen(
         ) {
             Spacer(modifier = Modifier.height(10.dp))
 
-            // ── Quick Summary Cards Row ───────────────────────────────────────
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                border = BorderStroke(1.dp, FocusCardBorder),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    SummaryMetric(
-                        count = uniqueApps.size.toString(),
-                        label = "Apps Found",
-                        color = FocusDarkText,
-                    )
-
-                    Box(
-                        modifier = Modifier
-                            .height(28.dp)
-                            .width(1.dp)
-                            .background(FocusCardBorder)
-                    )
-
-                    SummaryMetric(
-                        count = blockedCount.toString(),
-                        label = "Blocked in Focus",
-                        color = FocusForestGreen,
-                    )
-
-                    Box(
-                        modifier = Modifier
-                            .height(28.dp)
-                            .width(1.dp)
-                            .background(FocusCardBorder)
-                    )
-
-                    SummaryMetric(
-                        count = safeCount.toString(),
-                        label = "Safe Listed",
-                        color = FocusForestGreenDeep,
-                    )
-                }
-            }
+            SummaryMetricsRow(
+                totalCount = uniqueApps.size,
+                blockedCount = blockedCount,
+                safeCount = safeCount,
+            )
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // ── Segmented Pill Tabs Selector ──────────────────────────────────
-            Surface(
-                shape = RoundedCornerShape(20.dp),
-                color = Color(0xFFEBF1EE),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(46.dp),
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(4.dp),
-                ) {
-                    // Tab 0: App Limits
-                    PillTabItem(
-                        selected = selectedTab == 0,
-                        title = "App Limits (${uniqueApps.size})",
-                        onClick = { selectedTab = 0 },
-                        modifier = Modifier.weight(1f),
-                    )
-
-                    // Tab 1: Advanced & Feeds
-                    PillTabItem(
-                        selected = selectedTab == 1,
-                        title = "Feeds & Study",
-                        onClick = { selectedTab = 1 },
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-            }
+            RefinedSegmentedTabs(
+                selectedTab = selectedTab,
+                onTabSelected = { selectedTab = it },
+            )
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // ── Tab Content ───────────────────────────────────────────────────
             if (selectedTab == 0) {
-                // Search Field
-                OutlinedTextField(
-                    value = uiState.searchQuery,
-                    onValueChange = viewModel::onSearchQueryChanged,
-                    placeholder = {
-                        Text(
-                            text = "Search installed apps...",
-                            color = FocusMutedText.copy(alpha = 0.8f),
-                            fontSize = 14.sp,
-                        )
-                    },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = "Search",
-                            tint = FocusForestGreen,
-                            modifier = Modifier.size(20.dp),
-                        )
-                    },
-                    trailingIcon = {
-                        if (uiState.searchQuery.isNotEmpty()) {
-                            IconButton(onClick = { viewModel.onSearchQueryChanged("") }) {
-                                Icon(
-                                    imageVector = Icons.Default.Close,
-                                    contentDescription = "Clear search",
-                                    tint = FocusMutedText,
-                                    modifier = Modifier.size(18.dp),
-                                )
-                            }
-                        }
-                    },
-                    shape = RoundedCornerShape(16.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = FocusForestMintBorder,
-                        unfocusedBorderColor = FocusCardBorder,
-                        focusedContainerColor = Color.White,
-                        unfocusedContainerColor = Color.White,
-                        cursorColor = FocusForestGreen,
-                    ),
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
+                BlockAndLimitTab(
+                    apps = uniqueApps,
+                    searchQuery = uiState.searchQuery,
+                    onToggleBlock = viewModel::onToggleBlockDuringFocus,
+                    onEditLimits = { editingApp = it },
                 )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                if (uniqueApps.isEmpty()) {
-                    // Empty Search Results State
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(bottom = 60.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.padding(24.dp),
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(64.dp)
-                                    .clip(CircleShape)
-                                    .background(FocusForestMintBg),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Outlined.Spa,
-                                    contentDescription = null,
-                                    tint = FocusForestGreen,
-                                    modifier = Modifier.size(32.dp),
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            Text(
-                                text = if (uiState.searchQuery.isNotBlank()) "No matching apps found" else "Loading installed apps...",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = FocusDarkText,
-                            )
-
-                            Spacer(modifier = Modifier.height(6.dp))
-
-                            Text(
-                                text = if (uiState.searchQuery.isNotBlank()) "Try checking the spelling or search with a different keyword." else "Retrieving launcher applications on this device.",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = FocusMutedText,
-                                textAlign = TextAlign.Center,
-                            )
-                        }
-                    }
-                } else {
-                    // App List
-                    LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
-                        modifier = Modifier.fillMaxSize(),
-                    ) {
-                        items(
-                            items = uniqueApps,
-                            key = { it.packageName },
-                        ) { item ->
-                            AppLimitItemCard(
-                                item = item,
-                                onToggleBlockDuringFocus = { enabled ->
-                                    viewModel.onToggleBlockDuringFocus(item.packageName, enabled)
-                                },
-                                onEditLimitsClicked = { editingApp = item },
-                                onToggleEssential = { isEssential ->
-                                    viewModel.onToggleEssential(item.packageName, isEssential)
-                                },
-                            )
-                        }
-
-                        item {
-                            Spacer(modifier = Modifier.height(24.dp))
-                        }
-                    }
-                }
             } else {
-                // Tab 1: Advanced Shorts/Reels & Study Mode
-                val scrollState = rememberScrollState()
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(scrollState),
-                    verticalArrangement = Arrangement.spacedBy(14.dp),
-                ) {
-                    AdvancedFeedBlockingCard(
-                        config = uiState.advancedBlockingConfig,
-                        isAccessibilityEnabled = uiState.isAccessibilityEnabled,
-                        onRequestAccessibility = { showDisclosureDialog = true },
-                        onToggleShorts = viewModel::onToggleShorts,
-                        onToggleReels = viewModel::onToggleReels,
-                        onToggleFocusOnly = viewModel::onToggleFocusOnly,
-                    )
-
-                    StudyModeCard(
-                        config = uiState.studyModeConfig,
-                        channels = uiState.studyChannels,
-                        isAccessibilityEnabled = uiState.isAccessibilityEnabled,
-                        onToggleStudyMode = viewModel::onToggleStudyMode,
-                        onToggleFailClosed = viewModel::onToggleFailClosed,
-                        onToggleChannel = viewModel::onToggleChannel,
-                        onAddChannelClicked = { showAddChannelDialog = true },
-                    )
-
-                    Spacer(modifier = Modifier.height(24.dp))
-                }
+                AdvanceBlockingTab(
+                    uiState = uiState,
+                    viewModel = viewModel,
+                    onRequestAccessibility = { showDisclosureDialog = true },
+                    onAddChannelClicked = { showAddChannelDialog = true },
+                )
             }
         }
     }
@@ -402,6 +213,317 @@ fun LimitsScreen(
                 editingApp = null
             },
         )
+    }
+}
+
+@Composable
+private fun LimitsTopBar(
+    isSearchActive: Boolean,
+    searchQuery: String,
+    onSearchQueryChange: (String) -> Unit,
+    onSearchToggled: (Boolean) -> Unit,
+    onBack: () -> Unit,
+) {
+    if (isSearchActive || searchQuery.isNotEmpty()) {
+        LimitsSearchAppBar(
+            query = searchQuery,
+            onQueryChange = onSearchQueryChange,
+            onCloseSearch = { onSearchToggled(false) },
+        )
+    } else {
+        FocusFlowAppBar(
+            title = "App Blocking & Limits",
+            subtitle = "Distraction control & screen limits",
+            onBack = onBack,
+            containerColor = ScreenBackground,
+            actions = {
+                FocusFlowActionButton(
+                    icon = Icons.Default.Search,
+                    contentDescription = "Search installed apps",
+                    onClick = { onSearchToggled(true) },
+                )
+            },
+        )
+    }
+}
+
+@Composable
+private fun LimitsSearchAppBar(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    onCloseSearch: () -> Unit,
+) {
+    val focusRequester = remember { FocusRequester() }
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+    }
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = ScreenBackground,
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .statusBarsPadding()
+                .height(64.dp)
+                .padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            FocusFlowBackButton(onClick = onCloseSearch, contentDescription = "Close search")
+
+            Spacer(modifier = Modifier.width(10.dp))
+
+            OutlinedTextField(
+                value = query,
+                onValueChange = onQueryChange,
+                placeholder = {
+                    Text(
+                        text = "Search installed apps...",
+                        color = FocusMutedText.copy(alpha = 0.7f),
+                        fontSize = 14.sp,
+                    )
+                },
+                trailingIcon = {
+                    if (query.isNotEmpty()) {
+                        IconButton(onClick = { onQueryChange("") }) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Clear search",
+                                tint = FocusMutedText,
+                                modifier = Modifier.size(18.dp),
+                            )
+                        }
+                    }
+                },
+                shape = RoundedCornerShape(16.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = FocusForestMintBorder,
+                    unfocusedBorderColor = FocusCardBorder,
+                    focusedContainerColor = Color.White,
+                    unfocusedContainerColor = Color.White,
+                    cursorColor = FocusForestGreen,
+                ),
+                singleLine = true,
+                modifier = Modifier
+                    .weight(1f)
+                    .focusRequester(focusRequester),
+            )
+        }
+    }
+}
+
+@Composable
+private fun SummaryMetricsRow(
+    totalCount: Int,
+    blockedCount: Int,
+    safeCount: Int,
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        border = BorderStroke(1.dp, FocusCardBorder),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            SummaryMetric(
+                count = totalCount.toString(),
+                label = "Apps Found",
+                color = FocusDarkText,
+            )
+
+            Box(
+                modifier = Modifier
+                    .height(28.dp)
+                    .width(1.dp)
+                    .background(FocusCardBorder),
+            )
+
+            SummaryMetric(
+                count = blockedCount.toString(),
+                label = "Blocked in Focus",
+                color = FocusForestGreen,
+            )
+
+            Box(
+                modifier = Modifier
+                    .height(28.dp)
+                    .width(1.dp)
+                    .background(FocusCardBorder),
+            )
+
+            SummaryMetric(
+                count = safeCount.toString(),
+                label = "Safe Listed",
+                color = FocusForestGreenDeep,
+            )
+        }
+    }
+}
+
+@Composable
+private fun RefinedSegmentedTabs(
+    selectedTab: Int,
+    onTabSelected: (Int) -> Unit,
+) {
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = TabBarBackground,
+        border = BorderStroke(1.dp, FocusCardBorder),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(48.dp),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(4.dp),
+        ) {
+            PillTabItem(
+                selected = selectedTab == 0,
+                title = "Block & Limit",
+                onClick = { onTabSelected(0) },
+                modifier = Modifier.weight(1f),
+            )
+
+            PillTabItem(
+                selected = selectedTab == 1,
+                title = "Advance Blocking",
+                onClick = { onTabSelected(1) },
+                modifier = Modifier.weight(1f),
+            )
+        }
+    }
+}
+
+@Composable
+private fun BlockAndLimitTab(
+    apps: List<AppLimitUiItem>,
+    searchQuery: String,
+    onToggleBlock: (String, Boolean) -> Unit,
+    onEditLimits: (AppLimitUiItem) -> Unit,
+) {
+    if (apps.isEmpty()) {
+        EmptyAppsState(searchQuery = searchQuery)
+    } else {
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxSize(),
+        ) {
+            items(
+                items = apps,
+                key = { it.packageName },
+            ) { item ->
+                AppLimitListItem(
+                    item = item,
+                    onToggleBlock = { blocked ->
+                        onToggleBlock(item.packageName, blocked)
+                    },
+                    onSetLimitClicked = { onEditLimits(item) },
+                )
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun EmptyAppsState(searchQuery: String) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(bottom = 60.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(24.dp),
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(64.dp)
+                    .clip(CircleShape)
+                    .background(FocusForestMintBg),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Spa,
+                    contentDescription = null,
+                    tint = FocusForestGreen,
+                    modifier = Modifier.size(32.dp),
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = if (searchQuery.isNotBlank()) "No matching apps found" else "Loading installed apps...",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = FocusDarkText,
+            )
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            Text(
+                text = if (searchQuery.isNotBlank()) {
+                    "Try checking the spelling or search with a different keyword."
+                } else {
+                    "Retrieving launcher applications on this device."
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = FocusMutedText,
+                textAlign = TextAlign.Center,
+            )
+        }
+    }
+}
+
+@Composable
+private fun AdvanceBlockingTab(
+    uiState: LimitsUiState,
+    viewModel: LimitsViewModel,
+    onRequestAccessibility: () -> Unit,
+    onAddChannelClicked: () -> Unit,
+) {
+    val scrollState = rememberScrollState()
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(scrollState),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        AdvancedFeedBlockingCard(
+            config = uiState.advancedBlockingConfig,
+            isAccessibilityEnabled = uiState.isAccessibilityEnabled,
+            onRequestAccessibility = onRequestAccessibility,
+            onToggleShorts = viewModel::onToggleShorts,
+            onToggleReels = viewModel::onToggleReels,
+            onToggleFocusOnly = viewModel::onToggleFocusOnly,
+        )
+
+        StudyModeCard(
+            config = uiState.studyModeConfig,
+            channels = uiState.studyChannels,
+            isAccessibilityEnabled = uiState.isAccessibilityEnabled,
+            onToggleStudyMode = viewModel::onToggleStudyMode,
+            onToggleFailClosed = viewModel::onToggleFailClosed,
+            onToggleChannel = viewModel::onToggleChannel,
+            onAddChannelClicked = onAddChannelClicked,
+            onRemoveChannelClicked = viewModel::onRemoveStudyChannel,
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
     }
 }
 
@@ -445,12 +567,13 @@ private fun PillTabItem(
     )
 
     Surface(
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(12.dp),
         color = tabBackground,
-        shadowElevation = if (selected) 2.dp else 0.dp,
+        shadowElevation = if (selected) 1.5.dp else 0.dp,
+        border = if (selected) BorderStroke(0.5.dp, FocusCardBorder) else null,
         modifier = modifier
-            .clip(RoundedCornerShape(16.dp))
-            .clickable { onClick() },
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick),
     ) {
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -461,7 +584,7 @@ private fun PillTabItem(
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
                 color = tabTextColor,
-                fontSize = 13.sp,
+                fontSize = 13.5.sp,
             )
         }
     }

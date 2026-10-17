@@ -9,10 +9,10 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface StudyModeDao {
-    @Query("SELECT * FROM study_channels ORDER BY channelTitle ASC")
+    @Query("SELECT * FROM study_channels WHERE isCuratedDefault = 0 ORDER BY channelTitle ASC")
     fun getAllChannels(): Flow<List<StudyChannelEntity>>
 
-    @Query("SELECT * FROM study_channels WHERE isAllowlisted = 1")
+    @Query("SELECT * FROM study_channels WHERE isAllowlisted = 1 AND isCuratedDefault = 0")
     fun getAllowlistedChannels(): Flow<List<StudyChannelEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

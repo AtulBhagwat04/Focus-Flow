@@ -42,7 +42,7 @@
     <string name="mode_break">Short Break</string>
 
     <!-- App Blocking & Limits -->
-    <string name="title_app_blocking">App Blocking &amp; Limits</string>
+    <string name="title_app_blocking">App Blocking</string>
     <string name="subtitle_app_blocking">Control distractions and set daily screen limits.</string>
     <string name="title_shorts_blocking">Shorts &amp; Reels Blocking</string>
     <string name="subtitle_shorts_blocking">Block infinite short-form feeds while keeping standard apps usable.</string>

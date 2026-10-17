@@ -36,11 +36,30 @@
     <string name="home_hero_start_btn">Start Focus</string>
     <string name="home_hero_min_label">min</string>
     <string name="home_hero_custom">Custom</string>
-    <string name="home_custom_dialog_title">Select Focus Duration</string>
+    <string name="home_custom_dialog_title">Set Custom Time</string>
+    <string name="home_custom_dialog_subtitle">Enter the time duration for your focus session.</string>
+    <string name="home_custom_dialog_hours">Hours</string>
+    <string name="home_custom_dialog_minutes">Minutes</string>
+    <string name="home_custom_dialog_start">Start Focus</string>
+    <string name="home_custom_dialog_close_cd">Close</string>
+    <string name="home_custom_dialog_inc_hours">Increase hours</string>
+    <string name="home_custom_dialog_dec_hours">Decrease hours</string>
+    <string name="home_custom_dialog_inc_minutes">Increase minutes</string>
+    <string name="home_custom_dialog_dec_minutes">Decrease minutes</string>
     <string name="home_custom_dialog_confirm">Set</string>
     <string name="home_custom_dialog_cancel">Cancel</string>
 
+    <!-- Active Session Strings -->
+    <string name="home_session_active_focusing">Focusing</string>
+    <string name="home_session_active_paused">Paused</string>
+    <string name="home_session_btn_pause">Pause</string>
+    <string name="home_session_btn_resume">Resume</string>
+    <string name="home_session_btn_end">End</string>
+    <string name="home_session_open_focus_screen">Focus Screen</string>
+    <string name="home_session_remaining">remaining</string>
+
     <string name="home_section_quick_actions">Quick Actions</string>
+    <string name="home_section_quick_actions_sub">Everything you need to stay focused.</string>
     <string name="home_action_see_all">See All</string>
     <string name="home_action_block_apps">Block Apps</string>
     <string name="home_action_block_apps_sub">Stay distraction free</string>

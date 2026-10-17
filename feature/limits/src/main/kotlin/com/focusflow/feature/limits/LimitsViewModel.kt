@@ -96,7 +96,7 @@ class LimitsViewModel @Inject constructor(
         AdvancedBlockingData(
             advancedConfig = advConfig,
             studyConfig = studyConfig,
-            studyChannels = channels,
+            studyChannels = channels.filter { !it.isCuratedDefault },
         )
     }
 
@@ -205,6 +205,13 @@ class LimitsViewModel @Inject constructor(
                 )
             )
             userMessage.value = "Added '$channelTitle' to Study Mode allowlist."
+        }
+    }
+
+    fun onRemoveStudyChannel(channelId: String) {
+        viewModelScope.launch {
+            studyModeRepository.removeChannel(channelId)
+            userMessage.value = "Removed channel from Study Mode allowlist."
         }
     }
 
