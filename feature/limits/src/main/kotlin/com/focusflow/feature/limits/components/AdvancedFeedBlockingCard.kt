@@ -42,7 +42,10 @@ import com.focusflow.core.designsystem.theme.FocusForestMintBadge
 import com.focusflow.core.designsystem.theme.FocusMutedText
 import com.focusflow.core.domain.blocking.model.AdvancedBlockingConfig
 
-private val SwitchTrackUnchecked = Color(0xFFE2EBE5)
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.ui.text.font.FontFamily
+
+private val SwitchTrackUnchecked = Color(0xFFDCE6DF)
 private val AlertBannerBg = Color(0xFFFFF9EE)
 private val AlertBannerBorder = Color(0xFFFFE0B2)
 private val AlertBannerText = Color(0xFF78350F)
@@ -63,9 +66,9 @@ fun AdvancedFeedBlockingCard(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        border = BorderStroke(1.dp, FocusCardBorder),
+        border = BorderStroke(1.dp, Color(0xFFE2EBE5)),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
     ) {
         Column(modifier = Modifier.padding(18.dp)) {
@@ -77,7 +80,7 @@ fun AdvancedFeedBlockingCard(
             }
 
             Spacer(modifier = Modifier.height(14.dp))
-            HorizontalDivider(color = FocusCardBorder, thickness = 1.dp)
+            HorizontalDivider(color = Color(0xFFEEF3EF), thickness = 1.dp)
             Spacer(modifier = Modifier.height(12.dp))
 
             FeedSwitchRow(
@@ -88,7 +91,7 @@ fun AdvancedFeedBlockingCard(
                 enabled = isAccessibilityEnabled,
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             FeedSwitchRow(
                 title = "Block Instagram Reels",
@@ -98,10 +101,10 @@ fun AdvancedFeedBlockingCard(
                 enabled = isAccessibilityEnabled,
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             FeedSwitchRow(
-                title = "Block Only During Focus Sessions",
+                title = "Only During Focus Sessions",
                 subtitle = "Allows feeds during leisure and breaks",
                 checked = config.blockDuringFocusOnly,
                 onCheckedChange = onToggleFocusOnly,
@@ -119,16 +122,16 @@ private fun FeedBlockingHeader() {
     ) {
         Box(
             modifier = Modifier
-                .size(44.dp)
-                .clip(RoundedCornerShape(13.dp))
-                .background(FocusForestMintBadge),
+                .size(46.dp)
+                .clip(RoundedCornerShape(14.dp))
+                .background(Color(0xFFDCEFE3)),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                imageVector = Icons.Default.PlayCircle,
+                imageVector = Icons.Filled.PlayArrow,
                 contentDescription = null,
                 tint = FocusForestGreenDeep,
-                modifier = Modifier.size(22.dp),
+                modifier = Modifier.size(24.dp),
             )
         }
 
@@ -137,13 +140,14 @@ private fun FeedBlockingHeader() {
         Column {
             Text(
                 text = "Shorts & Reels Blocking",
-                style = MaterialTheme.typography.titleMedium,
+                fontFamily = FontFamily.Serif,
                 fontWeight = FontWeight.Bold,
-                color = FocusDarkText,
+                fontSize = 17.5.sp,
+                color = Color(0xFF14291E),
             )
             Text(
                 text = "Gently exit fast-scrolling feeds without disabling apps",
-                style = MaterialTheme.typography.bodySmall,
+                fontSize = 12.5.sp,
                 color = FocusMutedText,
             )
         }
@@ -219,13 +223,14 @@ private fun FeedSwitchRow(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium,
-                color = if (enabled) FocusDarkText else FocusMutedText,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = if (enabled) Color(0xFF14291E) else FocusMutedText,
             )
+            Spacer(modifier = Modifier.height(1.dp))
             Text(
                 text = subtitle,
-                style = MaterialTheme.typography.bodySmall,
+                fontSize = 12.sp,
                 color = FocusMutedText,
             )
         }
@@ -238,9 +243,10 @@ private fun FeedSwitchRow(
             enabled = enabled,
             colors = SwitchDefaults.colors(
                 checkedThumbColor = Color.White,
-                checkedTrackColor = FocusForestGreen,
+                checkedTrackColor = FocusForestGreenDeep,
                 uncheckedTrackColor = SwitchTrackUnchecked,
                 uncheckedThumbColor = Color.White,
+                checkedBorderColor = Color.Transparent,
                 uncheckedBorderColor = Color.Transparent,
             ),
         )

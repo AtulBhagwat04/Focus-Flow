@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -33,6 +34,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -47,15 +49,11 @@ import com.focusflow.core.designsystem.theme.FocusForestMintBorder
 import com.focusflow.core.designsystem.theme.FocusMutedText
 import com.focusflow.feature.limits.AppLimitUiItem
 
-private val SwitchTrackUnchecked = Color(0xFFE2EBE5)
+private val SwitchTrackUnchecked = Color(0xFFDCE6DF)
 private val SwitchDisabledTrack = Color(0xFFEFEFEF)
 private val SwitchDisabledThumb = Color(0xFFCCCCCC)
-private val LimitButtonBgDefault = Color(0xFFF1F6F3)
+private val LimitButtonBgDefault = Color(0xFFEBF2ED)
 
-/**
- * Compact list item row representing an installed application for lazy loading.
- * Shows original icon, app name, limit configuration action, and block/unblock toggle.
- */
 @Composable
 fun AppLimitListItem(
     item: AppLimitUiItem,
@@ -65,24 +63,24 @@ fun AppLimitListItem(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        border = BorderStroke(1.dp, FocusCardBorder),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.5.dp),
+        border = BorderStroke(1.dp, Color(0xFFE2EBE5)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 10.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             InstalledAppIcon(
                 packageName = item.packageName,
                 appName = item.appName,
-                size = 42.dp,
+                size = 46.dp,
             )
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(14.dp))
 
             AppInfoColumn(
                 item = item,
@@ -114,12 +112,15 @@ private fun AppInfoColumn(
     Column(modifier = modifier) {
         Text(
             text = item.appName,
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.SemiBold,
-            color = FocusDarkText,
+            fontFamily = FontFamily.Serif,
+            fontWeight = FontWeight.Bold,
+            fontSize = 16.5.sp,
+            color = Color(0xFF14291E),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
+
+        Spacer(modifier = Modifier.height(2.dp))
 
         AppStatusSubtitle(item = item)
     }
@@ -134,12 +135,12 @@ private fun AppStatusSubtitle(item: AppLimitUiItem) {
                     imageVector = Icons.Default.Shield,
                     contentDescription = null,
                     tint = FocusForestGreen,
-                    modifier = Modifier.size(11.dp),
+                    modifier = Modifier.size(12.dp),
                 )
-                Spacer(modifier = Modifier.width(3.dp))
+                Spacer(modifier = Modifier.width(4.dp))
                 Text(
-                    text = "Safe List",
-                    fontSize = 11.sp,
+                    text = "Safe listed",
+                    fontSize = 12.5.sp,
                     color = FocusForestGreenDeep,
                     fontWeight = FontWeight.Medium,
                 )
@@ -148,26 +149,25 @@ private fun AppStatusSubtitle(item: AppLimitUiItem) {
         item.dailyTimeLimitMinutes != null -> {
             Text(
                 text = "${item.dailyTimeLimitMinutes}m daily cap",
-                style = MaterialTheme.typography.bodySmall,
+                fontSize = 12.5.sp,
                 color = FocusForestGreen,
-                fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
             )
         }
         item.blockDuringFocus -> {
             Text(
                 text = "Blocked in focus",
-                style = MaterialTheme.typography.bodySmall,
-                color = FocusMutedText,
-                fontSize = 12.sp,
+                fontSize = 12.5.sp,
+                color = FocusForestGreen,
+                fontWeight = FontWeight.Normal,
             )
         }
         else -> {
             Text(
                 text = "Allowed in focus",
-                style = MaterialTheme.typography.bodySmall,
-                color = FocusMutedText.copy(alpha = 0.7f),
-                fontSize = 12.sp,
+                fontSize = 12.5.sp,
+                color = FocusMutedText,
+                fontWeight = FontWeight.Normal,
             )
         }
     }
@@ -180,8 +180,8 @@ private fun LimitOptionButton(
 ) {
     val hasLimit = item.dailyTimeLimitMinutes != null || item.dailyLaunchLimit != null
     val bgColor = if (hasLimit) FocusForestMintBadge else LimitButtonBgDefault
-    val borderColor = if (hasLimit) FocusForestMintBorder.copy(alpha = 0.5f) else FocusCardBorder
-    val iconTint = if (hasLimit) FocusForestGreenDeep else FocusMutedText
+    val borderColor = if (hasLimit) FocusForestMintBorder.copy(alpha = 0.5f) else Color.Transparent
+    val iconTint = if (hasLimit) FocusForestGreenDeep else Color(0xFF2E533E)
 
     Surface(
         shape = CircleShape,
@@ -205,7 +205,7 @@ private fun LimitOptionButton(
                 imageVector = Icons.Outlined.Timer,
                 contentDescription = null,
                 tint = iconTint,
-                modifier = Modifier.size(19.dp),
+                modifier = Modifier.size(20.dp),
             )
         }
     }
@@ -229,9 +229,10 @@ private fun BlockToggleSwitch(
         enabled = !item.isSafeListed,
         colors = SwitchDefaults.colors(
             checkedThumbColor = Color.White,
-            checkedTrackColor = FocusForestGreen,
+            checkedTrackColor = FocusForestGreenDeep,
             uncheckedTrackColor = SwitchTrackUnchecked,
             uncheckedThumbColor = Color.White,
+            checkedBorderColor = Color.Transparent,
             uncheckedBorderColor = Color.Transparent,
             disabledUncheckedTrackColor = SwitchDisabledTrack,
             disabledUncheckedThumbColor = SwitchDisabledThumb,

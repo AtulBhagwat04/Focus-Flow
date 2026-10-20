@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
@@ -70,6 +71,7 @@ fun FocusFlowWaveAccent(
 fun FocusFlowLogo(
     modifier: Modifier = Modifier,
     fontSize: TextUnit = 22.sp,
+    fontFamily: FontFamily = FontFamily.Serif,
 ) {
     Row(
         modifier = modifier,
@@ -79,6 +81,7 @@ fun FocusFlowLogo(
         Text(
             text = "Focus",
             fontSize = fontSize,
+            fontFamily = fontFamily,
             fontWeight = FontWeight.Bold,
             color = FocusDarkText,
             letterSpacing = (-0.5).sp,
@@ -91,6 +94,7 @@ fun FocusFlowLogo(
             Text(
                 text = "Flow",
                 fontSize = fontSize,
+                fontFamily = fontFamily,
                 fontWeight = FontWeight.Bold,
                 color = FocusForestGreen,
                 letterSpacing = (-0.5).sp,

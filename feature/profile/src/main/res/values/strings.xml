@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Top app bar -->
+    <string name="profile_title">Profile</string>
+    <string name="profile_subtitle">Progress, rewards and data</string>
+
+    <!-- Account header card -->
+    <string name="profile_account_cd_avatar">Profile picture</string>
+    <string name="profile_account_cd_sync">Sync your progress</string>
+    <string name="profile_account_guest_name">Focus Explorer</string>
+    <string name="profile_account_default_name">FocusFlow User</string>
+    <string name="profile_account_guest_email">Progress is saved on this device</string>
+    <string name="profile_account_badge_guest">Guest account</string>
+    <string name="profile_account_badge_signed_in">Signed in</string>
+
+    <!-- Progress and achievements card -->
+    <string name="profile_gamification_title">Progress &amp; achievements</string>
+    <string name="profile_gamification_subtitle">Every focused minute earns rewards</string>
+    <string name="profile_stat_level">Level</string>
+    <string name="profile_stat_xp">Total XP</string>
+    <string name="profile_stat_streak">Streak</string>
+    <string name="profile_stat_coins">Coins</string>
+    <string name="profile_meta_total_focus">Total focus time</string>
+    <string name="profile_meta_longest_streak">Longest streak</string>
+    <plurals name="profile_streak_days">
+        <item quantity="one">%d day</item>
+        <item quantity="other">%d days</item>
+    </plurals>
+    <string name="profile_focus_hours_minutes">%1$dh %2$dm</string>
+    <string name="profile_focus_minutes">%1$dm</string>
+
+    <!-- Tools and settings card -->
+    <string name="profile_tools_title">Tools &amp; settings</string>
+    <string name="profile_tools_subtitle">Everything else you can tune</string>
+    <string name="profile_link_blocking_title">App blocking &amp; limits</string>
+    <string name="profile_link_blocking_subtitle">Blocked apps, schedules and Study Mode</string>
+    <string name="profile_link_health_title">Device health</string>
+    <string name="profile_link_health_subtitle">Permissions and background reliability</string>
+
+    <!-- Privacy pledge card -->
+    <string name="profile_privacy_title">Privacy &amp; local-first pledge</string>
+    <string name="profile_privacy_subtitle">Your digital habits stay yours</string>
+    <string name="profile_privacy_section_local">Stays 100% on this device</string>
+    <string name="profile_privacy_item_usage_title">Per-app usage &amp; app timers</string>
+    <string name="profile_privacy_item_usage_detail">Stored in a local database. Never transmitted or logged.</string>
+    <string name="profile_privacy_item_rules_title">Blocking rules &amp; safe list</string>
+    <string name="profile_privacy_item_rules_detail">Evaluated locally by the on-device rules engine in real time.</string>
+    <string name="profile_privacy_item_content_title">Zero screen-content inspection</string>
+    <string name="profile_privacy_item_content_detail">No on-screen text, chats or media are ever read, stored or sent.</string>
+    <string name="profile_privacy_section_cloud">Encrypted cloud sync (optional)</string>
+    <string name="profile_privacy_item_xp_title">XP, streaks &amp; focus totals</string>
+    <string name="profile_privacy_item_xp_detail">Backed up anonymously under strict security rules.</string>
+
+    <!-- Data and account card -->
+    <string name="profile_data_title">Data &amp; account</string>
+    <string name="profile_data_subtitle">Export or erase your records at any time</string>
+    <string name="profile_data_export">Export my data</string>
+    <string name="profile_data_exporting">Preparing export\u2026</string>
+    <string name="profile_data_sign_out">Sign out</string>
+    <string name="profile_data_delete">Delete account &amp; cloud data</string>
+
+    <!-- Footer -->
+    <string name="profile_footer_tagline">Made for calmer, deeper focus</string>
+
+    <!-- Dialogs -->
+    <string name="profile_delete_dialog_title">Delete account &amp; data?</string>
+    <string name="profile_delete_dialog_body">This permanently deletes your remote profile, streaks and cloud progress. Local focus rules and statistics on this device can also be cleared. This cannot be undone.</string>
+    <string name="profile_delete_dialog_confirm">Delete permanently</string>
+    <string name="profile_delete_dialog_cancel">Cancel</string>
+    <string name="profile_export_dialog_title">Exported data (JSON)</string>
+    <string name="profile_export_dialog_copy">Copy to clipboard</string>
+    <string name="profile_export_dialog_close">Close</string>
+</resources>

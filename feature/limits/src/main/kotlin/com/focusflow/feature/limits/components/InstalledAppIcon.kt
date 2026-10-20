@@ -19,9 +19,11 @@ import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -88,16 +90,49 @@ internal suspend fun loadAppIconBitmap(context: Context, packageName: String): I
     }
 }
 
+private val MONOGRAM_PALETTE = listOf(
+    Color(0xFFC22323), // Dark Crimson Red (AbhiBus style)
+    Color(0xFFE50914), // Bright Red (Airtel style)
+    Color(0xFFE6A467), // Warm Amber (Amazon style)
+    Color(0xFF4C3B84), // Deep Purple (Apna style)
+    Color(0xFF1DB954), // Forest Vibrant Green (App Market style)
+    Color(0xFF4285F4), // Royal Blue (Assistant style)
+    Color(0xFF0F9D58), // Emerald
+    Color(0xFFDB4437), // Coral
+    Color(0xFF673AB7), // Violet
+    Color(0xFF00897B), // Teal
+    Color(0xFFE65100), // Tangerine
+    Color(0xFF3F51B5), // Indigo
+)
+
+private fun getMonogram(appName: String): String {
+    val trimmed = appName.trim()
+    if (trimmed.isEmpty()) return "A"
+    val words = trimmed.split(Regex("\\s+")).filter { it.isNotEmpty() }
+    return if (words.size >= 2) {
+        val first = words[0].first()
+        val second = words[1].first()
+        "$first$second"
+    } else {
+        trimmed.take(2)
+    }
+}
+
+private fun getMonogramColor(key: String): Color {
+    val index = kotlin.math.abs(key.hashCode()) % MONOGRAM_PALETTE.size
+    return MONOGRAM_PALETTE[index]
+}
+
 /**
  * Renders an installed app's system icon with in-memory caching and asynchronous loading.
- * Shows an initial letter badge as a smooth fallback while loading or if unavailable.
+ * Shows a brand-colored monogram badge as a smooth, instant fallback while loading or if unavailable.
  */
 @Composable
 fun InstalledAppIcon(
     packageName: String,
     appName: String,
     modifier: Modifier = Modifier,
-    size: Dp = 44.dp,
+    size: Dp = 46.dp,
 ) {
     val context = LocalContext.current
     val initialCached = AppIconCache.get(packageName)
@@ -113,29 +148,33 @@ fun InstalledAppIcon(
     Box(
         modifier = modifier
             .size(size)
-            .clip(RoundedCornerShape(12.dp)),
+            .clip(RoundedCornerShape(14.dp)),
         contentAlignment = Alignment.Center,
     ) {
         if (iconBitmap != null) {
             Image(
                 bitmap = iconBitmap,
                 contentDescription = "$appName icon",
-                modifier = Modifier.size(size),
+                modifier = Modifier
+                    .size(size)
+                    .clip(RoundedCornerShape(14.dp)),
             )
         } else {
-            val initial = appName.trim().firstOrNull()?.uppercaseChar()?.toString() ?: "A"
+            val monogram = getMonogram(appName)
+            val bgColor = getMonogramColor(packageName.ifEmpty { appName })
             Box(
                 modifier = Modifier
                     .size(size)
-                    .background(FocusForestMintBadge),
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(bgColor),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = initial,
-                    style = MaterialTheme.typography.titleMedium,
+                    text = monogram,
+                    fontFamily = FontFamily.Serif,
                     fontWeight = FontWeight.Bold,
-                    color = FocusForestGreenDeep,
-                    fontSize = 17.sp,
+                    color = Color.White,
+                    fontSize = if (monogram.length > 1) 16.sp else 18.sp,
                 )
             }
         }

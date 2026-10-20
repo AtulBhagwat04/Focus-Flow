@@ -14,54 +14,54 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.focusflow.core.designsystem.theme.FocusDarkText
-import com.focusflow.core.designsystem.theme.FocusForestGreenDeep
+import com.focusflow.core.designsystem.theme.FocusForestGreen
 
 /**
- * Frosted translucent quote card floating over the scenic lake background.
+ * Motivational quote displayed gracefully below the Focus Time title.
  */
 @Composable
 fun ScenicQuoteCard(
     quote: String,
     modifier: Modifier = Modifier,
 ) {
-    Surface(
+    Row(
         modifier = modifier
-            .fillMaxWidth(0.90f),
-        shape = RoundedCornerShape(22.dp),
-        color = Color(0xF2FBF9F6), // Soft warm off-white translucent frost
-        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.90f)),
-        shadowElevation = 4.dp,
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center,
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 18.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center,
-        ) {
-            Text(
-                text = "“",
-                fontSize = 26.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = FocusForestGreenDeep,
-                modifier = Modifier.padding(bottom = 2.dp),
-            )
+        Text(
+            text = "“",
+            fontFamily = FontFamily.Serif,
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold,
+            color = FocusForestGreen,
+            modifier = Modifier.padding(end = 4.dp),
+        )
 
-            Spacer(modifier = Modifier.width(10.dp))
+        Text(
+            text = quote.replace("\n", " "),
+            fontFamily = FontFamily.Serif,
+            fontSize = 13.5.sp,
+            fontWeight = FontWeight.Medium,
+            color = Color(0xFF264734),
+            textAlign = TextAlign.Center,
+            lineHeight = 18.sp,
+        )
 
-            Text(
-                text = quote,
-                fontSize = 12.5.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = FocusDarkText,
-                textAlign = TextAlign.Start,
-                lineHeight = 16.sp,
-            )
-        }
+        Text(
+            text = "”",
+            fontFamily = FontFamily.Serif,
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold,
+            color = FocusForestGreen,
+            modifier = Modifier.padding(start = 4.dp),
+        )
     }
 }
