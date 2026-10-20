@@ -234,11 +234,6 @@ class BlockerOverlayManager @Inject constructor(
     }
 }
 
-/**
- * Full-screen calm focus blocking UI modeled after mindful digital wellbeing aesthetics.
- * Displays the dynamic blocked application icon, radiating accents, restriction badge,
- * contextual reason, supportive motivational message card, and mindful exit actions.
- */
 @Composable
 internal fun BlockerOverlayContent(
     packageName: String,
