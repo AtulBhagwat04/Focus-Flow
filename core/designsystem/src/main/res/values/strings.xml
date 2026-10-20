@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="core_custom_dialog_title">Set Custom Time</string>
+    <string name="core_custom_dialog_subtitle">Enter the time duration for your focus session.</string>
+    <string name="core_custom_dialog_hours">Hours</string>
+    <string name="core_custom_dialog_minutes">Minutes</string>
+    <string name="core_custom_dialog_start">Start Focus</string>
+    <string name="core_custom_dialog_confirm">Set Duration</string>
+    <string name="core_custom_dialog_cancel">Cancel</string>
+    <string name="core_custom_dialog_close_cd">Close</string>
+    <string name="core_custom_dialog_inc_hours">Increase hours</string>
+    <string name="core_custom_dialog_dec_hours">Decrease hours</string>
+    <string name="core_custom_dialog_inc_minutes">Increase minutes</string>
+    <string name="core_custom_dialog_dec_minutes">Decrease minutes</string>
+</resources>

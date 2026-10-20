@@ -2,9 +2,20 @@ package com.focusflow.app.navigation
 
 import android.app.Activity
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,6 +23,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -50,11 +62,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -177,77 +196,19 @@ fun AppNavHost(
         containerColor = Color.Transparent,
         bottomBar = {
             if (showBottomBar) {
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
-                    color = Color.White.copy(alpha = 0.95f),
-                    shadowElevation = 8.dp,
-                    border = BorderStroke(1.dp, FocusCardBorder),
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .navigationBarsPadding()
-                            .padding(horizontal = 12.dp, vertical = 6.dp),
-                        horizontalArrangement = Arrangement.SpaceAround,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        topLevelDestinations.forEach { destination ->
-                            val selected = currentDestination?.hierarchy
-                                ?.any { it.route == destination.route } == true
-
-                            Column(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .clickable(
-                                        interactionSource = null,
-                                        indication = ripple(bounded = false, radius = 28.dp),
-                                    ) {
-                                        navController.navigate(destination.route) {
-                                            popUpTo(navController.graph.findStartDestination().id) {
-                                                saveState = true
-                                            }
-                                            launchSingleTop = true
-                                            restoreState    = true
-                                        }
-                                    }
-                                    .padding(vertical = 2.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center,
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(16.dp))
-                                        .background(
-                                            if (selected) Color(0xFFD6EFE1) else Color.Transparent
-                                        )
-                                        .padding(horizontal = 16.dp, vertical = 4.dp),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    Icon(
-                                        imageVector = if (selected) destination.selectedIcon
-                                                      else destination.unselectedIcon,
-                                        contentDescription = null,
-                                        tint = if (selected) FocusForestGreenDeep else FocusNavInactive,
-                                        modifier = Modifier.size(24.dp),
-                                    )
-                                }
-
-                                Spacer(modifier = Modifier.height(2.dp))
-
-                                Text(
-                                    text = stringResource(destination.labelRes),
-                                    fontSize = 11.5.sp,
-                                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                                    color = if (selected) FocusForestGreenDeep else FocusNavInactive,
-                                    maxLines = 1,
-                                    softWrap = false,
-                                )
+                FocusFlowBottomBar(
+                    destinations = topLevelDestinations,
+                    currentDestination = currentDestination,
+                    onNavigateToDestination = { destination ->
+                        navController.navigate(destination.route) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
                             }
+                            launchSingleTop = true
+                            restoreState = true
                         }
-                    }
-                }
+                    },
+                )
             }
         },
     ) { innerPadding ->
@@ -365,8 +326,181 @@ fun AppNavHost(
             composable(ROUTE_PROFILE) {
                 ProfileScreen(
                     onBack = { navController.popBackStack() },
+                    onNavigateToLimits = { navController.navigate(ROUTE_LIMITS) },
+                    onNavigateToPermissionHealth = {
+                        navController.navigate(ROUTE_PERMISSION_HEALTH)
+                    },
                 )
             }
         }
     }
 }
+
+// ─── Custom Bottom Navigation Bar ────────────────────────────────────────────
+
+/**
+ * Bottom navigation bar matching the design reference:
+ * - Docked to bottom with elegant rounded top corners.
+ * - Active tab renders as an expanded pill containing both icon and label text.
+ * - Inactive tabs display only their icons (labels hidden).
+ * - Smooth spring transitions for expanding/collapsing pills and fading text.
+ * - Preserves the FocusFlow forest green color tokens and contrast.
+ */
+@Composable
+private fun FocusFlowBottomBar(
+    destinations: List<TopLevelDestination>,
+    currentDestination: NavDestination?,
+    onNavigateToDestination: (TopLevelDestination) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    FocusFlowBottomBarContent(
+        destinations = destinations,
+        isRouteSelected = { route ->
+            currentDestination?.hierarchy?.any { it.route == route } == true
+        },
+        onNavigateToDestination = onNavigateToDestination,
+        modifier = modifier,
+    )
+}
+
+@Composable
+private fun FocusFlowBottomBarContent(
+    destinations: List<TopLevelDestination>,
+    isRouteSelected: (String) -> Boolean,
+    onNavigateToDestination: (TopLevelDestination) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        color = Color.White.copy(alpha = 0.98f),
+        shadowElevation = 10.dp,
+        border = BorderStroke(1.dp, Color(0xFFE2EBE5).copy(alpha = 0.7f)),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(horizontal = 16.dp, vertical = 10.dp),
+            horizontalArrangement = Arrangement.SpaceAround,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            destinations.forEach { destination ->
+                val selected = isRouteSelected(destination.route)
+                FocusNavBarItem(
+                    destination = destination,
+                    selected = selected,
+                    onClick = { onNavigateToDestination(destination) },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun FocusNavBarItem(
+    destination: TopLevelDestination,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val label = stringResource(destination.labelRes)
+    val backgroundColor by animateColorAsState(
+        targetValue = if (selected) FocusForestGreenDeep else Color.Transparent,
+        animationSpec = spring(
+            dampingRatio = 0.85f,
+            stiffness = Spring.StiffnessMediumLow,
+        ),
+        label = "pill_background",
+    )
+    val contentColor by animateColorAsState(
+        targetValue = if (selected) Color.White else FocusNavInactive,
+        animationSpec = spring(
+            dampingRatio = 0.85f,
+            stiffness = Spring.StiffnessMediumLow,
+        ),
+        label = "pill_content_color",
+    )
+
+    Surface(
+        shape = RoundedCornerShape(24.dp),
+        color = backgroundColor,
+        modifier = modifier
+            .defaultMinSize(minWidth = 48.dp, minHeight = 44.dp)
+            .clip(RoundedCornerShape(24.dp))
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = ripple(
+                    bounded = true,
+                    color = if (selected) Color.White.copy(alpha = 0.25f) else FocusForestGreenDeep.copy(alpha = 0.15f),
+                ),
+                onClick = onClick,
+            )
+            .semantics {
+                role = Role.Tab
+                this.selected = selected
+                contentDescription = label
+            },
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(
+                    horizontal = if (selected) 16.dp else 12.dp,
+                    vertical = 10.dp,
+                )
+                .animateContentSize(
+                    animationSpec = spring(
+                        dampingRatio = 0.8f,
+                        stiffness = Spring.StiffnessMediumLow,
+                    ),
+                ),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            Icon(
+                imageVector = if (selected) destination.selectedIcon else destination.unselectedIcon,
+                contentDescription = null,
+                tint = contentColor,
+                modifier = Modifier.size(22.dp),
+            )
+            AnimatedVisibility(
+                visible = selected,
+                enter = fadeIn(animationSpec = tween(180, delayMillis = 60)) + expandHorizontally(
+                    animationSpec = spring(
+                        dampingRatio = 0.8f,
+                        stiffness = Spring.StiffnessMediumLow,
+                    ),
+                ),
+                exit = fadeOut(animationSpec = tween(120)) + shrinkHorizontally(
+                    animationSpec = spring(
+                        dampingRatio = 0.8f,
+                        stiffness = Spring.StiffnessMediumLow,
+                    ),
+                ),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = label,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        maxLines = 1,
+                        softWrap = false,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFFE0E8E3)
+@Composable
+private fun FocusFlowBottomBarPreview() {
+    FocusFlowBottomBarContent(
+        destinations = topLevelDestinations,
+        isRouteSelected = { it == ROUTE_HOME },
+        onNavigateToDestination = {},
+    )
+}
+

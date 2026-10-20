@@ -50,3 +50,8 @@ val FocusMutedText           = Color(0xFF5A6E65)
 val FocusCardBorder          = Color(0xFFEDF2EF)
 val FocusInactiveIcon        = Color(0xFF64748B)
 val FocusNavInactive         = Color(0xFF8B9D95)
+
+// ─── Brand surface tokens (FocusFlow Brand UI) ───────────────────────────────
+// Shared so features never hard-code screen/tile backgrounds.
+val FocusScreenBackground    = Color(0xFFF7FAF8)
+val FocusTileSurface         = Color(0xFFF4F8F5)

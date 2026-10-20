@@ -200,6 +200,32 @@ class TimerViewModelTest {
     }
 
     @Test
+    fun selectDurationMinutes_predefinedChips_updatesStateCorrectly() = runTest {
+        runCurrent()
+
+        // 25 min preset
+        viewModel.onSelectDurationMinutes(25)
+        runCurrent()
+        assertEquals(25, viewModel.uiState.value.selectedDurationMinutes)
+        assertEquals(25 * 60 * 1000L, viewModel.uiState.value.remainingMs)
+        assertEquals("25:00", viewModel.uiState.value.formattedDisplayTime)
+
+        // 50 min preset
+        viewModel.onSelectDurationMinutes(50)
+        runCurrent()
+        assertEquals(50, viewModel.uiState.value.selectedDurationMinutes)
+        assertEquals(50 * 60 * 1000L, viewModel.uiState.value.remainingMs)
+        assertEquals("50:00", viewModel.uiState.value.formattedDisplayTime)
+
+        // 100 min preset
+        viewModel.onSelectDurationMinutes(100)
+        runCurrent()
+        assertEquals(100, viewModel.uiState.value.selectedDurationMinutes)
+        assertEquals(100 * 60 * 1000L, viewModel.uiState.value.remainingMs)
+        assertEquals("1:40:00", viewModel.uiState.value.formattedDisplayTime)
+    }
+
+    @Test
     fun toggleBlockApps_updatesBlockAppsFlag() = runTest {
         runCurrent()
         assertTrue(viewModel.uiState.value.isBlockAppsEnabled)

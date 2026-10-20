@@ -25,6 +25,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Pause
@@ -34,6 +35,7 @@ import androidx.compose.material.icons.outlined.GraphicEq
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Spa
+import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
@@ -63,6 +65,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -70,9 +73,9 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.focusflow.core.designsystem.R as DesignR
+import com.focusflow.core.designsystem.component.CustomDurationDialog
 import com.focusflow.core.designsystem.component.FocusFlowActionButton
 import com.focusflow.core.designsystem.component.FocusFlowAppBar
-import com.focusflow.core.designsystem.component.FocusFlowLogo
 import com.focusflow.core.designsystem.theme.FocusCardBorder
 import com.focusflow.core.designsystem.theme.FocusDarkText
 import com.focusflow.core.designsystem.theme.FocusFlowTheme
@@ -83,13 +86,12 @@ import com.focusflow.core.designsystem.theme.FocusMutedText
 import com.focusflow.feature.timer.components.AmbientSoundDialog
 import com.focusflow.feature.timer.components.BlockAppsCard
 import com.focusflow.feature.timer.components.CompletionDialog
-import com.focusflow.feature.timer.components.CustomDurationDialog
-import com.focusflow.feature.timer.components.DurationPresetsRow
 import com.focusflow.feature.timer.components.FocusDialDisplay
 import com.focusflow.feature.timer.components.ScenicQuoteCard
+import com.focusflow.feature.timer.components.TimerPresetChips
 
-private val START_BUTTON_HEIGHT = 54.dp
-private val BUTTON_CORNER_RADIUS = 27.dp
+private val START_BUTTON_HEIGHT = 56.dp
+private val BUTTON_CORNER_RADIUS = 28.dp
 
 @Composable
 fun TimerScreen(
@@ -167,9 +169,6 @@ fun TimerScreenContent(
             modifier = Modifier.fillMaxSize(),
         ) {
             FocusFlowAppBar(
-                titleContent = {
-                    FocusFlowLogo(fontSize = 22.sp)
-                },
                 actions = {
                     FocusFlowActionButton(
                         icon = Icons.Outlined.Spa,
@@ -236,89 +235,85 @@ fun TimerScreenContent(
                     .padding(horizontal = 20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(4.dp))
 
-            // ── Title & Subtitle ─────────────────────────────────────────────
-            Text(
-                text = stringResource(R.string.timer_screen_title),
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                color = FocusDarkText,
-                letterSpacing = (-0.5).sp,
-                modifier = Modifier.semantics { heading() },
-            )
+                // ── Title & Quote ─────────────────────────────────────────────
+                Text(
+                    text = stringResource(R.string.timer_screen_title),
+                    fontSize = 30.sp,
+                    fontFamily = FontFamily.Serif,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF14291E),
+                    letterSpacing = (-0.5).sp,
+                    modifier = Modifier.semantics { heading() },
+                )
 
-            Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(4.dp))
 
-            Text(
-                text = stringResource(R.string.timer_screen_subtitle),
-                fontSize = 13.5.sp,
-                fontWeight = FontWeight.Normal,
-                color = FocusMutedText,
-            )
+                // Motivational quote positioned directly below Focus Time text
+                ScenicQuoteCard(
+                    quote = uiState.quote,
+                    modifier = Modifier.fillMaxWidth(),
+                )
 
-            Spacer(modifier = Modifier.height(28.dp))
+                Spacer(modifier = Modifier.height(14.dp))
 
-            // ── Main Circular Focus Dial ─────────────────────────────────────
-            FocusDialDisplay(
-                formattedTime = uiState.formattedDisplayTime,
-                statusLabel = when {
-                    uiState.isPaused -> stringResource(R.string.timer_session_paused)
-                    uiState.isRunning -> stringResource(R.string.timer_session_running)
-                    else -> stringResource(R.string.timer_session_label)
-                },
-                isActive = uiState.isActive,
-                progressFraction = uiState.progress,
-                selectedDurationMinutes = uiState.selectedDurationMinutes,
-            )
+                // ── Main Circular Focus Dial (complete circle = 1 hr, swiping enabled)
+                FocusDialDisplay(
+                    formattedTime = uiState.formattedDisplayTime,
+                    statusLabel = when {
+                        uiState.isPaused -> stringResource(R.string.timer_session_paused)
+                        uiState.isRunning -> stringResource(R.string.timer_session_running)
+                        else -> stringResource(R.string.timer_session_label)
+                    },
+                    isActive = uiState.isActive,
+                    progressFraction = uiState.progress,
+                    selectedDurationMinutes = uiState.selectedDurationMinutes,
+                    onDurationChange = callbacks.onSelectDurationMinutes,
+                    onCustomTimeClick = {
+                        if (!uiState.isActive) {
+                            showCustomDurationDialog = true
+                        }
+                    },
+                )
 
-            Spacer(modifier = Modifier.height(28.dp))
+                Spacer(modifier = Modifier.height(14.dp))
 
-            // ── Primary Action Button ("Start Focus" / Pause / Resume / Finish)
-            TimerActionButtons(
-                uiState = uiState,
-                callbacks = callbacks,
-                modifier = Modifier.fillMaxWidth(),
-            )
+                // ── Predefined Timer Chips (25, 50, 100) below Circular Dial ─────
+                TimerPresetChips(
+                    selectedMinutes = uiState.selectedDurationMinutes,
+                    onSelectMinutes = callbacks.onSelectDurationMinutes,
+                    enabled = !uiState.isActive,
+                )
 
-            Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-            // ── Duration Presets Selector (25m, 50m, 90m, Custom) ────────────
-            DurationPresetsRow(
-                selectedMinutes = uiState.selectedDurationMinutes,
-                enabled = !uiState.isActive,
-                onSelectMinutes = callbacks.onSelectDurationMinutes,
-                onCustomClicked = { showCustomDurationDialog = true },
-                modifier = Modifier.fillMaxWidth(),
-            )
+                // ── Primary Action Button ("Start Focus" / Pause / Resume / Finish)
+                TimerActionButtons(
+                    uiState = uiState,
+                    callbacks = callbacks,
+                    modifier = Modifier.fillMaxWidth(),
+                )
 
-            Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
-            // ── Block Apps Card with Toggle & Chevron ────────────────────────
-            BlockAppsCard(
-                isEnabled = uiState.isBlockAppsEnabled,
-                onToggle = callbacks.onToggleBlockApps,
-                onNavigateToLimits = onNavigateToLimits,
-                modifier = Modifier.fillMaxWidth(),
-            )
+                // ── Refined Block Apps Card ──────────────────────────────────────
+                BlockAppsCard(
+                    isEnabled = uiState.isBlockAppsEnabled,
+                    onToggle = callbacks.onToggleBlockApps,
+                    onNavigateToLimits = onNavigateToLimits,
+                    modifier = Modifier.fillMaxWidth(),
+                )
 
-            Spacer(modifier = Modifier.height(28.dp))
-
-            // ── Frosted Motivational Quote Card Over Scenic Lake ─────────────
-            ScenicQuoteCard(
-                quote = uiState.quote,
-                modifier = Modifier.padding(bottom = 12.dp),
-            )
-
-            // ── Bottom Spacing for floating navigation bar ───────────────────
-            Spacer(
-                modifier = Modifier
-                    .navigationBarsPadding()
-                    .height(88.dp)
-            )
+                // ── Bottom Spacing for floating navigation bar ───────────────────
+                Spacer(
+                    modifier = Modifier
+                        .navigationBarsPadding()
+                        .height(72.dp)
+                )
+            }
         }
     }
-}
 
     // ── Dialogs ──────────────────────────────────────────────────────────────
     if (showCustomDurationDialog) {
@@ -368,10 +363,10 @@ private fun TimerActionButtons(
                 // Wide Primary Pill: "▶ Start Focus"
                 Surface(
                     modifier = Modifier
-                        .fillMaxWidth(0.72f)
+                        .fillMaxWidth()
                         .height(START_BUTTON_HEIGHT)
                         .shadow(
-                            elevation = 5.dp,
+                            elevation = 6.dp,
                             shape = RoundedCornerShape(BUTTON_CORNER_RADIUS),
                             ambientColor = Color(0x301B4E36),
                             spotColor = Color(0x401B4E36),
@@ -404,7 +399,7 @@ private fun TimerActionButtons(
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = stringResource(R.string.timer_start_focus),
-                            fontSize = 16.sp,
+                            fontSize = 17.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White,
                         )

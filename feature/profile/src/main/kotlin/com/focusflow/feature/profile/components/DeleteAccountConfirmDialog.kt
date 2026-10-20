@@ -6,6 +6,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import com.focusflow.core.designsystem.theme.FocusDarkText
+import com.focusflow.core.designsystem.theme.FocusError
+import com.focusflow.core.designsystem.theme.FocusMutedText
+import com.focusflow.feature.profile.R
 
 @Composable
 fun DeleteAccountConfirmDialog(
@@ -14,31 +21,36 @@ fun DeleteAccountConfirmDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
+        containerColor = Color.White,
+        titleContentColor = FocusDarkText,
+        textContentColor = FocusMutedText,
         title = {
             Text(
-                text = "Delete Account & Data?",
+                text = stringResource(R.string.profile_delete_dialog_title),
                 style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
             )
         },
         text = {
             Text(
-                text = "This will permanently delete your remote profile, streaks, and reset cloud progress. Local focus rules and statistics on this device can also be cleared. This action cannot be undone.",
+                text = stringResource(R.string.profile_delete_dialog_body),
                 style = MaterialTheme.typography.bodyMedium,
             )
         },
         confirmButton = {
             TextButton(
                 onClick = onConfirm,
-                colors = ButtonDefaults.textButtonColors(
-                    contentColor = MaterialTheme.colorScheme.error,
-                ),
+                colors = ButtonDefaults.textButtonColors(contentColor = FocusError),
             ) {
-                Text("Delete Permanently")
+                Text(text = stringResource(R.string.profile_delete_dialog_confirm))
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
+            TextButton(
+                onClick = onDismiss,
+                colors = ButtonDefaults.textButtonColors(contentColor = FocusMutedText),
+            ) {
+                Text(text = stringResource(R.string.profile_delete_dialog_cancel))
             }
         },
     )

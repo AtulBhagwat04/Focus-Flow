@@ -79,8 +79,10 @@ import com.focusflow.feature.limits.components.AppLimitListItem
 import com.focusflow.feature.limits.components.EditLimitDialog
 import com.focusflow.feature.limits.components.StudyModeCard
 
-private val ScreenBackground = Color(0xFFF7FAF8)
-private val TabBarBackground = Color(0xFFEFF4F1)
+import androidx.compose.ui.text.font.FontFamily
+
+private val ScreenBackground = Color(0xFFF3F7F4)
+private val TabBarBackground = Color(0xFFE5EDE8)
 
 @Composable
 fun LimitsScreen(
@@ -145,7 +147,7 @@ fun LimitsScreen(
                 .padding(innerPadding)
                 .padding(horizontal = 20.dp),
         ) {
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             SummaryMetricsRow(
                 totalCount = uniqueApps.size,
@@ -232,10 +234,28 @@ private fun LimitsTopBar(
         )
     } else {
         FocusFlowAppBar(
-            title = "App Blocking & Limits",
-            subtitle = "Distraction control & screen limits",
             onBack = onBack,
             containerColor = ScreenBackground,
+            titleContent = {
+                Column(verticalArrangement = Arrangement.Center) {
+                    Text(
+                        text = "App Blocking & Limits",
+                        fontFamily = FontFamily.Serif,
+                        fontSize = 21.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF14291E),
+                        letterSpacing = (-0.3).sp,
+                        maxLines = 1,
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = "Distraction control & screen limits",
+                        fontSize = 12.5.sp,
+                        color = FocusMutedText,
+                        maxLines = 1,
+                    )
+                }
+            },
             actions = {
                 FocusFlowActionButton(
                     icon = Icons.Default.Search,
@@ -321,48 +341,48 @@ private fun SummaryMetricsRow(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        border = BorderStroke(1.dp, FocusCardBorder),
+        border = BorderStroke(1.dp, Color(0xFFE2EBE5)),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            horizontalArrangement = Arrangement.SpaceAround,
             verticalAlignment = Alignment.CenterVertically,
         ) {
             SummaryMetric(
                 count = totalCount.toString(),
-                label = "Apps Found",
-                color = FocusDarkText,
+                label = "Apps found",
+                color = Color(0xFF14291E),
             )
 
             Box(
                 modifier = Modifier
-                    .height(28.dp)
+                    .height(32.dp)
                     .width(1.dp)
-                    .background(FocusCardBorder),
+                    .background(Color(0xFFE2EBE5)),
             )
 
             SummaryMetric(
                 count = blockedCount.toString(),
-                label = "Blocked in Focus",
-                color = FocusForestGreen,
+                label = "Blocked in focus",
+                color = Color(0xFF2E6B4D),
             )
 
             Box(
                 modifier = Modifier
-                    .height(28.dp)
+                    .height(32.dp)
                     .width(1.dp)
-                    .background(FocusCardBorder),
+                    .background(Color(0xFFE2EBE5)),
             )
 
             SummaryMetric(
                 count = safeCount.toString(),
-                label = "Safe Listed",
-                color = FocusForestGreenDeep,
+                label = "Safe listed",
+                color = Color(0xFF14291E),
             )
         }
     }
@@ -374,12 +394,11 @@ private fun RefinedSegmentedTabs(
     onTabSelected: (Int) -> Unit,
 ) {
     Surface(
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(26.dp),
         color = TabBarBackground,
-        border = BorderStroke(1.dp, FocusCardBorder),
         modifier = Modifier
             .fillMaxWidth()
-            .height(48.dp),
+            .height(50.dp),
     ) {
         Row(
             modifier = Modifier
@@ -395,7 +414,7 @@ private fun RefinedSegmentedTabs(
 
             PillTabItem(
                 selected = selectedTab == 1,
-                title = "Advance Blocking",
+                title = "Advanced Blocking",
                 onClick = { onTabSelected(1) },
                 modifier = Modifier.weight(1f),
             )
@@ -414,7 +433,7 @@ private fun BlockAndLimitTab(
         EmptyAppsState(searchQuery = searchQuery)
     } else {
         LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
             modifier = Modifier.fillMaxSize(),
         ) {
             items(
@@ -431,7 +450,7 @@ private fun BlockAndLimitTab(
             }
 
             item {
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(96.dp))
             }
         }
     }
@@ -468,8 +487,9 @@ private fun EmptyAppsState(searchQuery: String) {
 
             Text(
                 text = if (searchQuery.isNotBlank()) "No matching apps found" else "Loading installed apps...",
-                style = MaterialTheme.typography.titleMedium,
+                fontFamily = FontFamily.Serif,
                 fontWeight = FontWeight.Bold,
+                fontSize = 17.sp,
                 color = FocusDarkText,
             )
 
@@ -481,7 +501,7 @@ private fun EmptyAppsState(searchQuery: String) {
                 } else {
                     "Retrieving launcher applications on this device."
                 },
-                style = MaterialTheme.typography.bodySmall,
+                fontSize = 13.sp,
                 color = FocusMutedText,
                 textAlign = TextAlign.Center,
             )
@@ -523,7 +543,7 @@ private fun AdvanceBlockingTab(
             onRemoveChannelClicked = viewModel::onRemoveStudyChannel,
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(96.dp))
     }
 }
 
@@ -536,16 +556,17 @@ private fun SummaryMetric(
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             text = count,
-            style = MaterialTheme.typography.titleMedium,
+            fontFamily = FontFamily.Serif,
             fontWeight = FontWeight.Bold,
             color = color,
-            fontSize = 17.sp,
+            fontSize = 24.sp,
         )
+        Spacer(modifier = Modifier.height(2.dp))
         Text(
             text = label,
-            style = MaterialTheme.typography.labelSmall,
+            fontSize = 12.sp,
             color = FocusMutedText,
-            fontSize = 11.sp,
+            fontWeight = FontWeight.Normal,
         )
     }
 }
@@ -562,17 +583,17 @@ private fun PillTabItem(
         label = "tab_bg",
     )
     val tabTextColor by animateColorAsState(
-        targetValue = if (selected) FocusForestGreenDeep else FocusMutedText,
+        targetValue = if (selected) FocusForestGreenDeep else Color(0xFF5A6F62),
         label = "tab_text",
     )
 
     Surface(
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(22.dp),
         color = tabBackground,
-        shadowElevation = if (selected) 1.5.dp else 0.dp,
-        border = if (selected) BorderStroke(0.5.dp, FocusCardBorder) else null,
+        shadowElevation = if (selected) 2.dp else 0.dp,
+        border = if (selected) BorderStroke(0.5.dp, Color(0xFFD6E2DB)) else null,
         modifier = modifier
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(22.dp))
             .clickable(onClick = onClick),
     ) {
         Box(
@@ -581,7 +602,6 @@ private fun PillTabItem(
         ) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.labelMedium,
                 fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
                 color = tabTextColor,
                 fontSize = 13.5.sp,

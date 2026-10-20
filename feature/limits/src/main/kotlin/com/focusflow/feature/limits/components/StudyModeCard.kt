@@ -49,7 +49,9 @@ import com.focusflow.core.designsystem.theme.FocusMutedText
 import com.focusflow.core.domain.blocking.model.StudyChannel
 import com.focusflow.core.domain.blocking.model.StudyModeConfig
 
-private val SwitchTrackUnchecked = Color(0xFFE2EBE5)
+import androidx.compose.ui.text.font.FontFamily
+
+private val SwitchTrackUnchecked = Color(0xFFDCE6DF)
 private val EmptyStateBg = Color(0xFFF7FAF8)
 private val AddButtonBg = Color(0xFFF1F6F3)
 
@@ -71,9 +73,9 @@ fun StudyModeCard(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        border = BorderStroke(1.dp, FocusCardBorder),
+        border = BorderStroke(1.dp, Color(0xFFE2EBE5)),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
     ) {
         Column(modifier = Modifier.padding(18.dp)) {
@@ -85,7 +87,7 @@ fun StudyModeCard(
 
             if (config.isEnabled) {
                 Spacer(modifier = Modifier.height(14.dp))
-                HorizontalDivider(color = FocusCardBorder, thickness = 1.dp)
+                HorizontalDivider(color = Color(0xFFEEF3EF), thickness = 1.dp)
                 Spacer(modifier = Modifier.height(12.dp))
 
                 StrictModeRow(
@@ -94,7 +96,7 @@ fun StudyModeCard(
                 )
 
                 Spacer(modifier = Modifier.height(14.dp))
-                HorizontalDivider(color = FocusCardBorder, thickness = 1.dp)
+                HorizontalDivider(color = Color(0xFFEEF3EF), thickness = 1.dp)
                 Spacer(modifier = Modifier.height(12.dp))
 
                 ChannelsSection(
@@ -125,16 +127,16 @@ private fun StudyModeHeader(
         ) {
             Box(
                 modifier = Modifier
-                    .size(44.dp)
-                    .clip(RoundedCornerShape(13.dp))
-                    .background(FocusForestMintBadge),
+                    .size(46.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(Color(0xFFDCEFE3)),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     imageVector = Icons.Default.School,
                     contentDescription = null,
                     tint = FocusForestGreenDeep,
-                    modifier = Modifier.size(22.dp),
+                    modifier = Modifier.size(24.dp),
                 )
             }
 
@@ -143,17 +145,20 @@ private fun StudyModeHeader(
             Column {
                 Text(
                     text = "YouTube Study Mode",
-                    style = MaterialTheme.typography.titleMedium,
+                    fontFamily = FontFamily.Serif,
                     fontWeight = FontWeight.Bold,
-                    color = FocusDarkText,
+                    fontSize = 17.5.sp,
+                    color = Color(0xFF14291E),
                 )
                 Text(
                     text = "Permit approved educational creators only",
-                    style = MaterialTheme.typography.bodySmall,
+                    fontSize = 12.5.sp,
                     color = FocusMutedText,
                 )
             }
         }
+
+        Spacer(modifier = Modifier.width(8.dp))
 
         Switch(
             checked = isEnabled,
@@ -161,7 +166,7 @@ private fun StudyModeHeader(
             enabled = isAccessibilityEnabled,
             colors = SwitchDefaults.colors(
                 checkedThumbColor = Color.White,
-                checkedTrackColor = FocusForestGreen,
+                checkedTrackColor = FocusForestGreenDeep,
                 uncheckedTrackColor = SwitchTrackUnchecked,
                 uncheckedThumbColor = Color.White,
                 uncheckedBorderColor = Color.Transparent,
@@ -183,13 +188,13 @@ private fun StrictModeRow(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = "Strict Mode (Fail-Closed)",
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Medium,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
                 color = FocusDarkText,
             )
             Text(
                 text = "Block video immediately if creator cannot be verified",
-                style = MaterialTheme.typography.bodySmall,
+                fontSize = 12.sp,
                 color = FocusMutedText,
             )
         }
@@ -201,7 +206,7 @@ private fun StrictModeRow(
             onCheckedChange = onToggle,
             colors = SwitchDefaults.colors(
                 checkedThumbColor = Color.White,
-                checkedTrackColor = FocusForestGreen,
+                checkedTrackColor = FocusForestGreenDeep,
                 uncheckedTrackColor = SwitchTrackUnchecked,
                 uncheckedThumbColor = Color.White,
                 uncheckedBorderColor = Color.Transparent,
