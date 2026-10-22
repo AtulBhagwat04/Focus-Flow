@@ -163,6 +163,7 @@ fun AppNavHost(
     viewModel: AppNavViewModel = hiltViewModel(),
 ) {
     val currentUser by viewModel.currentUser.collectAsStateWithLifecycle()
+    val activeTask by viewModel.activeTask.collectAsStateWithLifecycle()
     val navController = rememberNavController()
 
     val isUserSignedInAtStartup = remember { viewModel.isUserSignedInAtStartup }
@@ -188,8 +189,12 @@ fun AppNavHost(
     val currentRoute = currentDestination?.route
     val isFullscreenRoute = currentRoute == ROUTE_LOGIN || currentRoute == ROUTE_ONBOARDING
     val isScenicEdgeToEdgeRoute =
-        isFullscreenRoute || currentRoute == ROUTE_HOME || currentRoute == ROUTE_FOCUS
-    val showBottomBar = !isFullscreenRoute
+        isFullscreenRoute || currentRoute == ROUTE_HOME || currentRoute == ROUTE_FOCUS || currentRoute == ROUTE_PROFILE
+    val isFocusingByTask = currentRoute == ROUTE_FOCUS && activeTask != null
+    val showBottomBar = !isFullscreenRoute &&
+        currentRoute != ROUTE_LIMITS &&
+        currentRoute != ROUTE_PROFILE &&
+        !isFocusingByTask
 
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
@@ -370,28 +375,35 @@ private fun FocusFlowBottomBarContent(
     onNavigateToDestination: (TopLevelDestination) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-        color = Color.White.copy(alpha = 0.98f),
-        shadowElevation = 10.dp,
-        border = BorderStroke(1.dp, Color(0xFFE2EBE5).copy(alpha = 0.7f)),
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .navigationBarsPadding()
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        contentAlignment = Alignment.Center,
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .navigationBarsPadding()
-                .padding(horizontal = 16.dp, vertical = 10.dp),
-            horizontalArrangement = Arrangement.SpaceAround,
-            verticalAlignment = Alignment.CenterVertically,
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(40.dp),
+            color = Color.White.copy(alpha = 0.98f),
+            shadowElevation = 10.dp,
+            border = BorderStroke(1.2.dp, Color(0xFFE2EBE5).copy(alpha = 0.85f)),
         ) {
-            destinations.forEach { destination ->
-                val selected = isRouteSelected(destination.route)
-                FocusNavBarItem(
-                    destination = destination,
-                    selected = selected,
-                    onClick = { onNavigateToDestination(destination) },
-                )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 10.dp, vertical = 10.dp),
+                horizontalArrangement = Arrangement.SpaceAround,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                destinations.forEach { destination ->
+                    val selected = isRouteSelected(destination.route)
+                    FocusNavBarItem(
+                        destination = destination,
+                        selected = selected,
+                        onClick = { onNavigateToDestination(destination) },
+                    )
+                }
             }
         }
     }
@@ -405,29 +417,10 @@ private fun FocusNavBarItem(
     modifier: Modifier = Modifier,
 ) {
     val label = stringResource(destination.labelRes)
-    val backgroundColor by animateColorAsState(
-        targetValue = if (selected) FocusForestGreenDeep else Color.Transparent,
-        animationSpec = spring(
-            dampingRatio = 0.85f,
-            stiffness = Spring.StiffnessMediumLow,
-        ),
-        label = "pill_background",
-    )
-    val contentColor by animateColorAsState(
-        targetValue = if (selected) Color.White else FocusNavInactive,
-        animationSpec = spring(
-            dampingRatio = 0.85f,
-            stiffness = Spring.StiffnessMediumLow,
-        ),
-        label = "pill_content_color",
-    )
 
-    Surface(
-        shape = RoundedCornerShape(24.dp),
-        color = backgroundColor,
+    Box(
         modifier = modifier
-            .defaultMinSize(minWidth = 48.dp, minHeight = 44.dp)
-            .clip(RoundedCornerShape(24.dp))
+            .clip(RoundedCornerShape(28.dp))
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = ripple(
@@ -441,54 +434,46 @@ private fun FocusNavBarItem(
                 this.selected = selected
                 contentDescription = label
             },
+        contentAlignment = Alignment.Center,
     ) {
-        Row(
-            modifier = Modifier
-                .padding(
-                    horizontal = if (selected) 16.dp else 12.dp,
-                    vertical = 10.dp,
-                )
-                .animateContentSize(
-                    animationSpec = spring(
-                        dampingRatio = 0.8f,
-                        stiffness = Spring.StiffnessMediumLow,
-                    ),
-                ),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center,
-        ) {
-            Icon(
-                imageVector = if (selected) destination.selectedIcon else destination.unselectedIcon,
-                contentDescription = null,
-                tint = contentColor,
-                modifier = Modifier.size(22.dp),
-            )
-            AnimatedVisibility(
-                visible = selected,
-                enter = fadeIn(animationSpec = tween(180, delayMillis = 60)) + expandHorizontally(
-                    animationSpec = spring(
-                        dampingRatio = 0.8f,
-                        stiffness = Spring.StiffnessMediumLow,
-                    ),
-                ),
-                exit = fadeOut(animationSpec = tween(120)) + shrinkHorizontally(
-                    animationSpec = spring(
-                        dampingRatio = 0.8f,
-                        stiffness = Spring.StiffnessMediumLow,
-                    ),
-                ),
+        if (selected) {
+            Surface(
+                shape = RoundedCornerShape(28.dp),
+                color = FocusForestGreenDeep,
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Spacer(modifier = Modifier.width(8.dp))
+                Row(
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center,
+                ) {
+                    Icon(
+                        imageVector = destination.selectedIcon,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp),
+                    )
+                    Spacer(modifier = Modifier.width(9.dp))
                     Text(
                         text = label,
-                        fontSize = 13.sp,
+                        fontSize = 14.5.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
                         maxLines = 1,
                         softWrap = false,
                     )
                 }
+            }
+        } else {
+            Box(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = destination.unselectedIcon,
+                    contentDescription = null,
+                    tint = FocusNavInactive,
+                    modifier = Modifier.size(26.dp),
+                )
             }
         }
     }

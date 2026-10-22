@@ -21,6 +21,11 @@ service cloud.firestore {
         allow read, write: if isOwner(userId);
       }
 
+      // Tasks subcollection
+      match /tasks/{taskId} {
+        allow read, write: if isOwner(userId);
+      }
+
       // Settings and backup subcollection
       match /settings/{settingId} {
         allow read, write: if isOwner(userId);

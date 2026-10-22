@@ -2,12 +2,14 @@ package com.focusflow.feature.timer
 
 import com.focusflow.core.domain.model.AmbientSound
 import com.focusflow.core.domain.model.FocusSession
+import com.focusflow.core.domain.model.FocusTask
 import com.focusflow.core.domain.model.SessionMode
 import com.focusflow.core.domain.model.SessionState
 import com.focusflow.core.domain.model.SubjectTag
 
 data class TimerUiState(
     val session: FocusSession? = null,
+    val activeTask: FocusTask? = null,
     val selectedMode: SessionMode = SessionMode.Pomodoro(),
     val selectedTag: SubjectTag? = null,
     val availableTags: List<SubjectTag> = emptyList(),

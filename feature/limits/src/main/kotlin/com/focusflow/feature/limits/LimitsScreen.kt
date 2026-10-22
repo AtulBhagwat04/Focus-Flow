@@ -24,6 +24,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -34,8 +36,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -54,8 +54,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -282,53 +286,104 @@ private fun LimitsSearchAppBar(
         modifier = Modifier.fillMaxWidth(),
         color = ScreenBackground,
     ) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .statusBarsPadding()
-                .height(64.dp)
-                .padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
+                .statusBarsPadding(),
         ) {
-            FocusFlowBackButton(onClick = onCloseSearch, contentDescription = "Close search")
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(64.dp)
+                    .padding(horizontal = 20.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                FocusFlowBackButton(
+                    onClick = onCloseSearch,
+                    contentDescription = "Close search",
+                )
 
-            Spacer(modifier = Modifier.width(10.dp))
+                Spacer(modifier = Modifier.width(12.dp))
 
-            OutlinedTextField(
-                value = query,
-                onValueChange = onQueryChange,
-                placeholder = {
-                    Text(
-                        text = "Search installed apps...",
-                        color = FocusMutedText.copy(alpha = 0.7f),
-                        fontSize = 14.sp,
-                    )
-                },
-                trailingIcon = {
-                    if (query.isNotEmpty()) {
-                        IconButton(onClick = { onQueryChange("") }) {
-                            Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = "Clear search",
-                                tint = FocusMutedText,
-                                modifier = Modifier.size(18.dp),
-                            )
+                Surface(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(42.dp),
+                    shape = RoundedCornerShape(21.dp),
+                    color = Color.White,
+                    border = BorderStroke(1.dp, Color(0xFFD6E2DB)),
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = null,
+                            tint = FocusForestGreen,
+                            modifier = Modifier.size(18.dp),
+                        )
+
+                        Spacer(modifier = Modifier.width(10.dp))
+
+                        BasicTextField(
+                            value = query,
+                            onValueChange = onQueryChange,
+                            singleLine = true,
+                            textStyle = TextStyle(
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Normal,
+                                color = Color(0xFF14291E),
+                            ),
+                            cursorBrush = SolidColor(FocusForestGreen),
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Text,
+                                imeAction = ImeAction.Search,
+                            ),
+                            modifier = Modifier
+                                .weight(1f)
+                                .focusRequester(focusRequester),
+                            decorationBox = { innerTextField ->
+                                Box(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    contentAlignment = Alignment.CenterStart,
+                                ) {
+                                    if (query.isEmpty()) {
+                                        Text(
+                                            text = "Search installed apps...",
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Normal,
+                                            color = FocusMutedText.copy(alpha = 0.7f),
+                                        )
+                                    }
+                                    innerTextField()
+                                }
+                            },
+                        )
+
+                        if (query.isNotEmpty()) {
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Box(
+                                modifier = Modifier
+                                    .size(22.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFFE5EDE8))
+                                    .clickable { onQueryChange("") },
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Clear search",
+                                    tint = FocusForestGreenDeep,
+                                    modifier = Modifier.size(13.dp),
+                                )
+                            }
                         }
                     }
-                },
-                shape = RoundedCornerShape(16.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = FocusForestMintBorder,
-                    unfocusedBorderColor = FocusCardBorder,
-                    focusedContainerColor = Color.White,
-                    unfocusedContainerColor = Color.White,
-                    cursorColor = FocusForestGreen,
-                ),
-                singleLine = true,
-                modifier = Modifier
-                    .weight(1f)
-                    .focusRequester(focusRequester),
-            )
+                }
+            }
         }
     }
 }
@@ -450,7 +505,7 @@ private fun BlockAndLimitTab(
             }
 
             item {
-                Spacer(modifier = Modifier.height(96.dp))
+                Spacer(modifier = Modifier.height(24.dp))
             }
         }
     }
@@ -543,7 +598,7 @@ private fun AdvanceBlockingTab(
             onRemoveChannelClicked = viewModel::onRemoveStudyChannel,
         )
 
-        Spacer(modifier = Modifier.height(96.dp))
+        Spacer(modifier = Modifier.height(24.dp))
     }
 }
 

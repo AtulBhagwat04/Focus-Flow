@@ -21,4 +21,10 @@
     <string name="timer_cd_ambient_sound">Ambient sound selector</string>
     <string name="timer_cd_more_options">More options</string>
     <string name="timer_cd_block_apps_toggle">Toggle app blocking during focus</string>
+    <string name="timer_active_task_label">Focusing on Task</string>
+    <string name="timer_task_status_ready">Ready</string>
+    <string name="timer_task_status_focusing">Focusing</string>
+    <string name="timer_task_status_paused">Paused</string>
+    <string name="timer_task_progress_format">%1$s of %2$dm completed (%3$d%%)</string>
+    <string name="timer_task_cd_clear">Clear active task</string>
 </resources>

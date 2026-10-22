@@ -120,6 +120,6 @@ ehthumbs.db
 .agents/skills/token-budget/
 .agents/skills/verifier/
 model_capabilities.yaml
-data/
+/data/
 skills-lock.json
 scratch/

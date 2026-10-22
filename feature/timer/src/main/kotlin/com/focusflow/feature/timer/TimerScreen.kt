@@ -83,6 +83,7 @@ import com.focusflow.core.designsystem.theme.FocusForestGreen
 import com.focusflow.core.designsystem.theme.FocusForestGreenDeep
 import com.focusflow.core.designsystem.theme.FocusForestMintBg
 import com.focusflow.core.designsystem.theme.FocusMutedText
+import com.focusflow.feature.timer.components.ActiveTaskFocusCard
 import com.focusflow.feature.timer.components.AmbientSoundDialog
 import com.focusflow.feature.timer.components.BlockAppsCard
 import com.focusflow.feature.timer.components.CompletionDialog
@@ -116,6 +117,7 @@ fun TimerScreen(
             onSelectDurationMinutes = viewModel::onSelectDurationMinutes,
             onToggleBlockApps = viewModel::onToggleBlockApps,
             onAbortClicked = viewModel::onAbortClicked,
+            onClearActiveTask = viewModel::onClearActiveTask,
         ),
         onNavigateToLimits = onNavigateToLimits,
         onNavigateToSettings = onNavigateToSettings,
@@ -263,15 +265,17 @@ fun TimerScreenContent(
                     formattedTime = uiState.formattedDisplayTime,
                     statusLabel = when {
                         uiState.isPaused -> stringResource(R.string.timer_session_paused)
-                        uiState.isRunning -> stringResource(R.string.timer_session_running)
+                        uiState.isRunning -> if (uiState.activeTask != null) uiState.activeTask.title else stringResource(R.string.timer_session_running)
+                        uiState.activeTask != null -> uiState.activeTask.title
                         else -> stringResource(R.string.timer_session_label)
                     },
                     isActive = uiState.isActive,
                     progressFraction = uiState.progress,
                     selectedDurationMinutes = uiState.selectedDurationMinutes,
+                    isCustomTimeEnabled = !uiState.isActive && uiState.activeTask == null,
                     onDurationChange = callbacks.onSelectDurationMinutes,
                     onCustomTimeClick = {
-                        if (!uiState.isActive) {
+                        if (!uiState.isActive && uiState.activeTask == null) {
                             showCustomDurationDialog = true
                         }
                     },
@@ -279,14 +283,30 @@ fun TimerScreenContent(
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                // ── Predefined Timer Chips (25, 50, 100) below Circular Dial ─────
-                TimerPresetChips(
-                    selectedMinutes = uiState.selectedDurationMinutes,
-                    onSelectMinutes = callbacks.onSelectDurationMinutes,
-                    enabled = !uiState.isActive,
-                )
+                // ── Predefined Timer Chips (25, 50, 100) below Circular Dial (hidden when focusing by task)
+                if (uiState.activeTask == null) {
+                    TimerPresetChips(
+                        selectedMinutes = uiState.selectedDurationMinutes,
+                        onSelectMinutes = callbacks.onSelectDurationMinutes,
+                        enabled = !uiState.isActive,
+                    )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+
+                // ── Active Task Focus Card directly above Start Focus button ──
+                if (uiState.activeTask != null) {
+                    ActiveTaskFocusCard(
+                        task = uiState.activeTask,
+                        isRunning = uiState.isRunning,
+                        isPaused = uiState.isPaused,
+                        onClearTask = callbacks.onClearActiveTask,
+                        canClear = !uiState.isActive,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
+                }
 
                 // ── Primary Action Button ("Start Focus" / Pause / Resume / Finish)
                 TimerActionButtons(
@@ -305,11 +325,11 @@ fun TimerScreenContent(
                     modifier = Modifier.fillMaxWidth(),
                 )
 
-                // ── Bottom Spacing for floating navigation bar ───────────────────
+                // ── Bottom Spacing for navigation ───────────────────────────────
                 Spacer(
                     modifier = Modifier
                         .navigationBarsPadding()
-                        .height(72.dp)
+                        .height(if (uiState.activeTask != null) 24.dp else 88.dp)
                 )
             }
         }

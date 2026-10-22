@@ -8,4 +8,8 @@ data class ProfileActions(
     val onDeleteRequested: () -> Unit,
     val onNavigateToLimits: () -> Unit,
     val onNavigateToPermissionHealth: () -> Unit,
+    val onToggleReminders: (Boolean) -> Unit = {},
+    val onSelectAppearance: (String) -> Unit = {},
+    val onUpdateWeeklyGoal: (Int) -> Unit = {},
+    val onUpdateDisplayName: (String) -> Unit = {},
 )
