@@ -158,4 +158,36 @@
 
     <!-- Google OAuth Web Client ID -->
     <string name="google_web_client_id" translatable="false">283378510664-j9g5edh93hpgtvt6i0qo74kk2qm7pjap.apps.googleusercontent.com</string>
+
+    <!-- Tasks Screen (Matching Reference Mockup) -->
+    <string name="tasks_title">Daily Tasks</string>
+    <string name="tasks_subtitle">Plan it, focus on it, finish it.</string>
+    <string name="tasks_chip_today">Today</string>
+    <string name="tasks_summary_completed_format">%1$d of %2$d completed</string>
+    <string name="tasks_summary_planned_today_hours">%1$dh %2$dm of focus planned today</string>
+    <string name="tasks_summary_planned_today_mins">%1$dm of focus planned today</string>
+    <string name="tasks_summary_planned_empty">No focus planned today</string>
+    <string name="tasks_section_up_next">Up next</string>
+    <string name="tasks_count_left_format">%1$d tasks left</string>
+    <string name="tasks_count_left_singular">1 task left</string>
+    <string name="tasks_section_completed">Completed</string>
+    <string name="tasks_count_done_format">%1$d done</string>
+    <string name="tasks_session_duration_format">%1$d min focus session</string>
+    <string name="tasks_cd_start_focus">Start focus session for %1$s</string>
+    <string name="tasks_cd_mark_completed">Mark %1$s as completed</string>
+    <string name="tasks_cd_mark_incomplete">Mark %1$s as not completed</string>
+    <string name="tasks_cd_add_task">Add new focus task</string>
+    <string name="tasks_dialog_title">Create Focus Task</string>
+    <string name="tasks_dialog_input_label">Task title</string>
+    <string name="tasks_dialog_input_placeholder">Enter task name…</string>
+    <string name="tasks_dialog_duration_label">Focus Duration</string>
+    <string name="tasks_dialog_btn_add">Create Task</string>
+    <string name="tasks_dialog_btn_cancel">Cancel</string>
+    <string name="tasks_dialog_preset_25">25 min</string>
+    <string name="tasks_dialog_preset_50">50 min</string>
+    <string name="tasks_dialog_preset_100">100 min</string>
+    <string name="tasks_dialog_custom">Custom</string>
+    <string name="tasks_dialog_min_unit">min</string>
+    <string name="tasks_sheet_close">Close</string>
+    <string name="tasks_sheet_clear_input">Clear input</string>
 </resources>

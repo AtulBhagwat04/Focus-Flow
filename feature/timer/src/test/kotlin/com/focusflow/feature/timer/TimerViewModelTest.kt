@@ -125,9 +125,87 @@ class TimerViewModelTest {
         override fun now(): Long = 1_000_000L
     }
 
+    private class FakeTaskRepository : com.focusflow.core.domain.repository.TaskRepository {
+        val tasksFlow = MutableStateFlow<List<com.focusflow.core.domain.model.FocusTask>>(emptyList())
+        val activeTaskFlow = MutableStateFlow<com.focusflow.core.domain.model.FocusTask?>(null)
+
+        override val tasks: Flow<List<com.focusflow.core.domain.model.FocusTask>> = tasksFlow
+        override val activeTask: Flow<com.focusflow.core.domain.model.FocusTask?> = activeTaskFlow
+
+        override suspend fun getTasks(): List<com.focusflow.core.domain.model.FocusTask> = tasksFlow.value
+
+        override suspend fun addTask(title: String, durationMinutes: Int): com.focusflow.core.domain.model.FocusTask {
+            val task = com.focusflow.core.domain.model.FocusTask(
+                id = "task-${tasksFlow.value.size + 1}",
+                title = title,
+                durationMinutes = durationMinutes,
+            )
+            tasksFlow.value = tasksFlow.value + task
+            return task
+        }
+
+        override suspend fun toggleTaskCompleted(taskId: String): com.focusflow.core.domain.model.FocusTask? {
+            var updatedTask: com.focusflow.core.domain.model.FocusTask? = null
+            tasksFlow.value = tasksFlow.value.map { task ->
+                if (task.id == taskId) {
+                    val toggled = task.copy(isCompleted = !task.isCompleted)
+                    updatedTask = toggled
+                    toggled
+                } else task
+            }
+            return updatedTask
+        }
+
+        override suspend fun selectTaskForFocus(taskId: String): com.focusflow.core.domain.model.FocusTask? {
+            val target = tasksFlow.value.find { it.id == taskId } ?: return null
+            activeTaskFlow.value = target
+            return target
+        }
+
+        override suspend fun recordFocusProgress(taskId: String, additionalSeconds: Int): com.focusflow.core.domain.model.FocusTask? {
+            var updatedTask: com.focusflow.core.domain.model.FocusTask? = null
+            tasksFlow.value = tasksFlow.value.map { task ->
+                if (task.id == taskId) {
+                    val updated = task.copy(
+                        completedSeconds = task.completedSeconds + additionalSeconds
+                    )
+                    updatedTask = updated
+                    updated
+                } else task
+            }
+            if (activeTaskFlow.value?.id == taskId && updatedTask != null) {
+                activeTaskFlow.value = updatedTask
+            }
+            return updatedTask
+        }
+
+        override suspend fun completeTask(taskId: String): com.focusflow.core.domain.model.FocusTask? {
+            var updatedTask: com.focusflow.core.domain.model.FocusTask? = null
+            tasksFlow.value = tasksFlow.value.map { task ->
+                if (task.id == taskId) {
+                    val completed = task.copy(
+                        isCompleted = true,
+                        completedSeconds = task.durationMinutes * 60
+                    )
+                    updatedTask = completed
+                    completed
+                } else task
+            }
+            if (activeTaskFlow.value?.id == taskId) {
+                activeTaskFlow.value = null
+            }
+            return updatedTask
+        }
+
+        override suspend fun clearActiveTask() {
+            activeTaskFlow.value = null
+        }
+    }
+
     private lateinit var sessionRepository: FakeFocusSessionRepository
     private lateinit var tagRepository: FakeSubjectTagRepository
     private lateinit var audioPlayer: FakeAudioPlayer
+    private lateinit var taskRepository: FakeTaskRepository
     private lateinit var clock: FakeClock
     private lateinit var viewModel: TimerViewModel
 
@@ -137,8 +215,9 @@ class TimerViewModelTest {
         sessionRepository = FakeFocusSessionRepository()
         tagRepository = FakeSubjectTagRepository()
         audioPlayer = FakeAudioPlayer()
+        taskRepository = FakeTaskRepository()
         clock = FakeClock()
-        viewModel = TimerViewModel(sessionRepository, tagRepository, audioPlayer, clock)
+        viewModel = TimerViewModel(sessionRepository, tagRepository, audioPlayer, clock, taskRepository)
     }
 
     @After
@@ -170,6 +249,9 @@ class TimerViewModelTest {
         assertTrue(state.isActive)
         assertTrue(audioPlayer.playingState.value)
         assertEquals(AmbientSound.RAIN, audioPlayer.soundState.value)
+
+        viewModel.onAbortClicked()
+        runCurrent()
     }
 
     @Test
@@ -238,4 +320,60 @@ class TimerViewModelTest {
         runCurrent()
         assertTrue(viewModel.uiState.value.isBlockAppsEnabled)
     }
+
+    @Test
+    fun activeTask_autoManagesFocusDuration_whenSelected() = runTest {
+        runCurrent()
+        val task = com.focusflow.core.domain.model.FocusTask(
+            id = "task-1",
+            title = "Design System Review",
+            durationMinutes = 15,
+            completedSeconds = 300,
+        )
+        taskRepository.activeTaskFlow.value = task
+        runCurrent()
+
+        val state = viewModel.uiState.value
+        assertEquals("Design System Review", state.activeTask?.title)
+        assertEquals(15, state.selectedDurationMinutes)
+        assertEquals(15 * 60 * 1000L, state.remainingMs)
+        assertEquals(0.333f, state.activeTask?.progressFraction ?: 0f, 0.01f)
+    }
+
+    @Test
+    fun clearActiveTask_resetsActiveTask() = runTest {
+        runCurrent()
+        val task = com.focusflow.core.domain.model.FocusTask(
+            id = "task-2",
+            title = "Write Unit Tests",
+            durationMinutes = 30,
+        )
+        taskRepository.activeTaskFlow.value = task
+        runCurrent()
+        assertNotNull(viewModel.uiState.value.activeTask)
+
+        viewModel.onClearActiveTask()
+        runCurrent()
+        org.junit.Assert.assertNull(viewModel.uiState.value.activeTask)
+    }
+
+    @Test
+    fun completeSession_completesActiveTask() = runTest {
+        runCurrent()
+        val task = taskRepository.addTask("Focus Sprint", 25)
+        taskRepository.selectTaskForFocus(task.id)
+        runCurrent()
+
+        viewModel.onStartClicked()
+        runCurrent()
+
+        viewModel.onCompleteClicked()
+        runCurrent()
+
+        // Active task was completed
+        org.junit.Assert.assertNull(viewModel.uiState.value.activeTask)
+        val completedTask = taskRepository.getTasks().first { it.id == task.id }
+        assertTrue(completedTask.isCompleted)
+    }
 }
+

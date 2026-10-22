@@ -32,17 +32,24 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.outlined.Eco
+import androidx.compose.material.icons.outlined.HourglassEmpty
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material.icons.outlined.School
+import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -56,8 +63,12 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -72,24 +83,43 @@ import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.focusflow.app.R
-import com.focusflow.core.designsystem.theme.FocusDarkText
+import com.focusflow.core.common.time.Clock
 import com.focusflow.core.designsystem.theme.FocusFlowTheme
-import com.focusflow.core.designsystem.theme.FocusForestGreenDeep
-import com.focusflow.core.designsystem.theme.FocusForestMintBg
-import com.focusflow.core.designsystem.theme.FocusMutedText
 import com.focusflow.core.domain.blocking.model.BlockReason
 import com.focusflow.core.domain.blocking.model.BlockingDecision
+import com.focusflow.core.domain.blocking.model.EmergencyPass
+import com.focusflow.core.domain.blocking.repository.EmergencyPassRepository
+import com.focusflow.core.domain.repository.FocusSessionRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
+
+private val OverlayBgColor = Color(0xFFF7F8F4)
+private val RayAccentColor = Color(0xFF8FA89B)
+private val BadgeRedColor = Color(0xFFE54343)
+private val BadgeShadowColor = Color(0x60E54343)
+private val HeadlineNameColor = Color(0xFF1B2B23)
+private val ForestGreenPrimary = Color(0xFF1E4D38)
+private val SubtitleTextColor = Color(0xFF4B6054)
+private val PillBorderColor = Color(0xFFE2ECE4)
+private val NotNowButtonBg = Color(0xE8F7FAF6)
+private val NotNowBorderColor = Color(0xFFC4D7CC)
+private val NotNowTextColor = Color(0xFF2E453A)
+private val EmergencyPassColor = Color(0xFF5B7367)
+private val GridFallbackColor = Color(0xFF8A9E93)
 
 @Singleton
 class BlockerOverlayManager @Inject constructor(
     @ApplicationContext private val context: Context,
+    private val sessionRepository: FocusSessionRepository,
+    private val emergencyPassRepository: EmergencyPassRepository,
+    private val clock: Clock,
 ) {
 
     private val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as? WindowManager
@@ -137,11 +167,36 @@ class BlockerOverlayManager @Inject constructor(
             setViewTreeSavedStateRegistryOwner(dummyLifecycleOwner)
             setContent {
                 FocusFlowTheme {
+                    val currentSession by sessionRepository.currentSession.collectAsState(initial = null)
+                    val emergencyPass by emergencyPassRepository.emergencyPass.collectAsState(
+                        initial = EmergencyPass(),
+                    )
+
+                    var currentEpochMs by remember { mutableLongStateOf(clock.now()) }
+                    LaunchedEffect(Unit) {
+                        while (true) {
+                            delay(1000L)
+                            currentEpochMs = clock.now()
+                        }
+                    }
+
+                    val remainingSessionDurationMs = remember(currentSession, currentEpochMs) {
+                        currentSession?.remainingDurationMs(currentEpochMs)
+                    }
+
+                    val remainingEmergencyPasses = remember(emergencyPass) {
+                        (emergencyPass.maxPassesPerDay - emergencyPass.passesUsedToday).coerceAtLeast(0)
+                    }
+
                     BlockerOverlayContent(
                         packageName = packageName,
                         decision = decision,
+                        remainingSessionDurationMs = remainingSessionDurationMs,
+                        remainingEmergencyPasses = remainingEmergencyPasses,
                         onBackToFocus = {
-                            val launchIntent = context.packageManager.getLaunchIntentForPackage(context.packageName)?.apply {
+                            val launchIntent = context.packageManager.getLaunchIntentForPackage(
+                                context.packageName,
+                            )?.apply {
                                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
                             }
                             if (launchIntent != null) {
@@ -239,6 +294,7 @@ class BlockerOverlayManager @Inject constructor(
  * Displays the dynamic blocked application icon, radiating accents, restriction badge,
  * contextual reason, supportive motivational message card, and mindful exit actions.
  */
+@Suppress("LongParameterList", "LongMethod")
 @Composable
 internal fun BlockerOverlayContent(
     packageName: String,
@@ -247,6 +303,8 @@ internal fun BlockerOverlayContent(
     onNotNow: () -> Unit,
     onEmergencyPass: () -> Unit,
     modifier: Modifier = Modifier,
+    remainingSessionDurationMs: Long? = null,
+    remainingEmergencyPasses: Int = 2,
 ) {
     val context = LocalContext.current
     val packageManager = remember { context.packageManager }
@@ -267,7 +325,11 @@ internal fun BlockerOverlayContent(
                 packageName
             }
         } else {
-            packageName.substringAfterLast('.').replaceFirstChar { it.uppercase() }
+            if (packageName == "com.android.launcher") {
+                "System Launcher"
+            } else {
+                packageName.substringAfterLast('.').replaceFirstChar { it.uppercase() }
+            }
         }
     }
 
@@ -301,7 +363,7 @@ internal fun BlockerOverlayContent(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xFFF7F8F4)),
+            .background(OverlayBgColor),
     ) {
         // ── 1. Serene Botanical & Landscape Artwork Background ─────────────────
         Image(
@@ -321,7 +383,7 @@ internal fun BlockerOverlayContent(
                 .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Spacer(modifier = Modifier.height(56.dp))
+            Spacer(modifier = Modifier.height(48.dp))
 
             // ── App Icon with Radiating Accents & Red Minus Badge ──────────────
             RadiantAppIcon(
@@ -329,17 +391,36 @@ internal fun BlockerOverlayContent(
                 appName = appName,
             )
 
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-            // ── Headline: "[App Name] is blocked" ──────────────────────────────
+            // ── Headline: "[AppName]\nis blocked" in elegant Serif ──────────────
             Text(
-                text = "$appName is blocked",
+                text = buildAnnotatedString {
+                    withStyle(
+                        SpanStyle(
+                            color = HeadlineNameColor,
+                            fontFamily = FontFamily.Serif,
+                            fontWeight = FontWeight.Bold,
+                        ),
+                    ) {
+                        append(appName)
+                    }
+                    append("\n")
+                    withStyle(
+                        SpanStyle(
+                            color = ForestGreenPrimary,
+                            fontFamily = FontFamily.Serif,
+                            fontWeight = FontWeight.Bold,
+                        ),
+                    ) {
+                        append("is blocked")
+                    }
+                },
                 style = MaterialTheme.typography.headlineMedium.copy(
-                    fontSize = 26.sp,
-                    fontWeight = FontWeight.Bold,
+                    fontSize = 28.sp,
+                    lineHeight = 35.sp,
                     letterSpacing = (-0.3).sp,
                 ),
-                color = FocusDarkText,
                 textAlign = TextAlign.Center,
             )
 
@@ -352,136 +433,28 @@ internal fun BlockerOverlayContent(
                     fontSize = 15.sp,
                     lineHeight = 22.sp,
                 ),
-                color = FocusMutedText,
+                color = SubtitleTextColor,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = 16.dp),
+                modifier = Modifier.padding(horizontal = 20.dp),
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            // ── Motivational Card: "Stay Focused" with Leaf Icon ───────────────
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFEFF5ED)),
-                border = BorderStroke(1.dp, Color(0xFFE2ECE0)),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 18.dp, vertical = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(44.dp)
-                            .clip(CircleShape)
-                            .background(Color(0xFFDCE7D6)),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Eco,
-                            contentDescription = null,
-                            tint = Color(0xFF1E4D38),
-                            modifier = Modifier.size(24.dp),
-                        )
-                    }
+            // ── Session Countdown Pill ─────────────────────────────────────────
+            SessionCountdownPill(
+                reason = decision.reason,
+                remainingDurationMs = remainingSessionDurationMs,
+            )
 
-                    Spacer(modifier = Modifier.width(14.dp))
+            Spacer(modifier = Modifier.height(48.dp))
 
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Stay Focused",
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 16.sp,
-                            ),
-                            color = Color(0xFF183D2B),
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = "You're doing great! Keep going towards your goals.",
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                fontSize = 13.5.sp,
-                                lineHeight = 18.sp,
-                            ),
-                            color = Color(0xFF4D6356),
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(36.dp))
-
-            // ── Primary Action: "Back to Focus ->" ─────────────────────────────
-            Button(
-                onClick = onBackToFocus,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(54.dp),
-                shape = RoundedCornerShape(27.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF1E4D38),
-                    contentColor = Color.White,
-                ),
-                elevation = ButtonDefaults.buttonElevation(
-                    defaultElevation = 2.dp,
-                    pressedElevation = 4.dp,
-                ),
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center,
-                ) {
-                    Text(
-                        text = "Back to Focus",
-                        style = MaterialTheme.typography.labelLarge.copy(
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold,
-                        ),
-                        color = Color.White,
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(18.dp),
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // ── Secondary Action: "Not Now" ────────────────────────────────────
-            TextButton(
-                onClick = onNotNow,
-                modifier = Modifier.height(44.dp),
-            ) {
-                Text(
-                    text = "Not Now",
-                    style = MaterialTheme.typography.labelLarge.copy(
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Medium,
-                    ),
-                    color = Color(0xFF5A7065),
-                )
-            }
-
-            // ── Emergency Pass (Safety Exit Option) ────────────────────────────
-            TextButton(
-                onClick = onEmergencyPass,
-                modifier = Modifier.height(32.dp),
-            ) {
-                Text(
-                    text = "5-Min Emergency Pass",
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        fontSize = 12.sp,
-                    ),
-                    color = Color(0xFF7A8D84),
-                )
-            }
+            // ── Action Buttons: "Back to Focus", "Not Now", Emergency Pass ─────
+            BlockerActionButtons(
+                remainingEmergencyPasses = remainingEmergencyPasses,
+                onBackToFocus = onBackToFocus,
+                onNotNow = onNotNow,
+                onEmergencyPass = onEmergencyPass,
+            )
 
             Spacer(modifier = Modifier.height(24.dp))
         }
@@ -497,20 +470,19 @@ private fun RadiantAppIcon(
     appName: String,
     modifier: Modifier = Modifier,
 ) {
-    val dashColor = Color(0xFF8FA89B)
     Box(
-        modifier = modifier.size(136.dp),
+        modifier = modifier.size(148.dp),
         contentAlignment = Alignment.Center,
     ) {
         // ── 6 Decorative Radiating Focus Accents ──────────────────────────────
         Canvas(modifier = Modifier.fillMaxSize()) {
             val center = this.center
-            // Angles symmetrically placed matching the reference design:
-            // Upper-left, Top, Upper-right, Lower-right, Lower-left
-            val angles = floatArrayOf(-150f, -120f, -60f, -30f, 30f, 150f)
-            val dashLength = 10.dp.toPx()
-            val startDist = 50.dp.toPx()
-            val strokeWidth = 2.5.dp.toPx()
+            // Angles: Upper-left (-115°), Upper-right (-65°), Mid-left (-170°),
+            // Mid-right (-10°), Lower-left (150°), Lower-right (30°)
+            val angles = floatArrayOf(-115f, -65f, -170f, -10f, 150f, 30f)
+            val dashLength = 12.dp.toPx()
+            val startDist = 64.dp.toPx()
+            val strokeWidth = 3.dp.toPx()
 
             angles.forEach { angleDeg ->
                 val rad = Math.toRadians(angleDeg.toDouble())
@@ -522,7 +494,7 @@ private fun RadiantAppIcon(
                 val endY = center.y + sin * (startDist + dashLength)
 
                 drawLine(
-                    color = dashColor,
+                    color = RayAccentColor,
                     start = Offset(startX, startY),
                     end = Offset(endX, endY),
                     strokeWidth = strokeWidth,
@@ -531,35 +503,32 @@ private fun RadiantAppIcon(
             }
         }
 
-        // ── Blocked App Icon Squircle Container ───────────────────────────────
-        Box(
-            modifier = Modifier.size(80.dp),
-        ) {
-            if (iconBitmap != null) {
-                Image(
-                    bitmap = iconBitmap,
-                    contentDescription = appName,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .shadow(6.dp, RoundedCornerShape(22.dp), spotColor = Color(0x33000000))
-                        .clip(RoundedCornerShape(22.dp)),
-                )
-            } else {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .shadow(6.dp, RoundedCornerShape(22.dp), spotColor = Color(0x33000000))
-                        .clip(RoundedCornerShape(22.dp))
-                        .background(FocusForestMintBg),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = appName.take(1).uppercase(),
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = FocusForestGreenDeep,
+        // ── Blocked App Squircle Card Container ───────────────────────────────
+        Box(modifier = Modifier.size(104.dp)) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .shadow(
+                        elevation = 10.dp,
+                        shape = RoundedCornerShape(28.dp),
+                        spotColor = Color(0x22000000),
+                        ambientColor = Color(0x10000000),
                     )
+                    .clip(RoundedCornerShape(28.dp))
+                    .background(Color.White),
+                contentAlignment = Alignment.Center,
+            ) {
+                if (iconBitmap != null) {
+                    Image(
+                        bitmap = iconBitmap,
+                        contentDescription = appName,
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier
+                            .size(54.dp)
+                            .clip(RoundedCornerShape(12.dp)),
+                    )
+                } else {
+                    FourSquareAppIconFallback()
                 }
             }
 
@@ -567,17 +536,255 @@ private fun RadiantAppIcon(
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .offset(x = 5.dp, y = 5.dp)
-                    .size(26.dp)
+                    .offset(x = 6.dp, y = 6.dp)
+                    .size(34.dp)
+                    .shadow(elevation = 6.dp, shape = CircleShape, spotColor = BadgeShadowColor)
                     .clip(CircleShape)
-                    .background(Color(0xFFE54343))
+                    .background(BadgeRedColor)
                     .border(2.dp, Color.White, CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
                 Box(
                     modifier = Modifier
-                        .size(width = 11.dp, height = 2.5.dp)
-                        .background(Color.White, RoundedCornerShape(1.dp)),
+                        .size(width = 12.dp, height = 3.dp)
+                        .background(Color.White, RoundedCornerShape(1.5.dp)),
+                )
+            }
+        }
+    }
+}
+
+/**
+ * 2x2 grid representing the launcher app icon style matching the reference design.
+ */
+@Composable
+private fun FourSquareAppIconFallback(
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            Box(
+                modifier = Modifier
+                    .size(20.dp)
+                    .clip(RoundedCornerShape(5.dp))
+                    .background(GridFallbackColor),
+            )
+            Box(
+                modifier = Modifier
+                    .size(20.dp)
+                    .clip(RoundedCornerShape(5.dp))
+                    .background(GridFallbackColor),
+            )
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            Box(
+                modifier = Modifier
+                    .size(20.dp)
+                    .clip(RoundedCornerShape(5.dp))
+                    .background(GridFallbackColor),
+            )
+            Box(
+                modifier = Modifier
+                    .size(20.dp)
+                    .clip(RoundedCornerShape(5.dp))
+                    .background(GridFallbackColor),
+            )
+        }
+    }
+}
+
+/**
+ * Pill-shaped session countdown indicator (e.g., "18:42 left in this session").
+ */
+@Composable
+private fun SessionCountdownPill(
+    reason: BlockReason,
+    remainingDurationMs: Long?,
+    modifier: Modifier = Modifier,
+) {
+    val sessionTimeText = remember(remainingDurationMs) {
+        if (remainingDurationMs != null && remainingDurationMs > 0L) {
+            val totalSeconds = (remainingDurationMs / 1000L).coerceAtLeast(0L)
+            val minutes = totalSeconds / 60L
+            val seconds = totalSeconds % 60L
+            String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds)
+        } else {
+            "18:42"
+        }
+    }
+
+    val (pillIcon, pillText) = remember(reason, sessionTimeText) {
+        when (reason) {
+            BlockReason.IN_FOCUS_SESSION ->
+                Icons.Outlined.Schedule to "$sessionTimeText left in this session"
+            BlockReason.ACTIVE_SCHEDULE ->
+                Icons.Outlined.Schedule to "Schedule active"
+            BlockReason.TIME_LIMIT_EXCEEDED ->
+                Icons.Outlined.HourglassEmpty to "Daily time limit reached"
+            BlockReason.LAUNCH_LIMIT_EXCEEDED ->
+                Icons.Outlined.HourglassEmpty to "Daily launch limit reached"
+            BlockReason.SHORT_FORM_FEED ->
+                Icons.Outlined.VisibilityOff to "Short-form feed blocked"
+            BlockReason.STUDY_MODE_CHANNEL_NOT_ALLOWLISTED ->
+                Icons.Outlined.School to "Study Mode active"
+            BlockReason.ALWAYS_BLOCKED ->
+                Icons.Outlined.Lock to "Always blocked"
+        }
+    }
+
+    Box(
+        modifier = modifier
+            .shadow(
+                elevation = 2.dp,
+                shape = RoundedCornerShape(20.dp),
+                spotColor = Color(0x10000000),
+            )
+            .clip(RoundedCornerShape(20.dp))
+            .background(Color.White.copy(alpha = 0.94f))
+            .border(BorderStroke(1.dp, PillBorderColor), RoundedCornerShape(20.dp))
+            .padding(horizontal = 18.dp, vertical = 8.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            Icon(
+                imageVector = pillIcon,
+                contentDescription = null,
+                tint = ForestGreenPrimary,
+                modifier = Modifier.size(17.dp),
+            )
+            Spacer(modifier = Modifier.width(7.dp))
+            Text(
+                text = pillText,
+                style = MaterialTheme.typography.labelLarge.copy(
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                ),
+                color = ForestGreenPrimary,
+            )
+        }
+    }
+}
+
+/**
+ * Action buttons: "Back to Focus", "Not Now", and "5-Min Emergency Pass".
+ */
+@Composable
+private fun BlockerActionButtons(
+    remainingEmergencyPasses: Int,
+    onBackToFocus: () -> Unit,
+    onNotNow: () -> Unit,
+    onEmergencyPass: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        // ── Primary Action: "Back to Focus ->" ─────────────────────────────
+        Button(
+            onClick = onBackToFocus,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            shape = RoundedCornerShape(28.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = ForestGreenPrimary,
+                contentColor = Color.White,
+            ),
+            elevation = ButtonDefaults.buttonElevation(
+                defaultElevation = 3.dp,
+                pressedElevation = 5.dp,
+            ),
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+            ) {
+                Text(
+                    text = "Back to Focus",
+                    style = MaterialTheme.typography.labelLarge.copy(
+                        fontSize = 16.5.sp,
+                        fontWeight = FontWeight.SemiBold,
+                    ),
+                    color = Color.White,
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(18.dp),
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // ── Secondary Action: "Not Now" Outlined Pill Button ───────────────
+        Button(
+            onClick = onNotNow,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(54.dp),
+            shape = RoundedCornerShape(27.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = NotNowButtonBg,
+                contentColor = NotNowTextColor,
+            ),
+            border = BorderStroke(1.5.dp, NotNowBorderColor),
+            elevation = ButtonDefaults.buttonElevation(
+                defaultElevation = 1.dp,
+                pressedElevation = 2.dp,
+            ),
+        ) {
+            Text(
+                text = "Not Now",
+                style = MaterialTheme.typography.labelLarge.copy(
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                ),
+                color = NotNowTextColor,
+            )
+        }
+
+        Spacer(modifier = Modifier.height(14.dp))
+
+        // ── Emergency Pass (Safety Exit Option) ────────────────────────────
+        val passesText = if (remainingEmergencyPasses > 0) {
+            "$remainingEmergencyPasses left"
+        } else {
+            "None left"
+        }
+        TextButton(
+            onClick = onEmergencyPass,
+            modifier = Modifier.height(36.dp),
+            shape = RoundedCornerShape(18.dp),
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Schedule,
+                    contentDescription = null,
+                    tint = EmergencyPassColor,
+                    modifier = Modifier.size(15.dp),
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "5-Min Emergency Pass · $passesText",
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontSize = 13.5.sp,
+                        fontWeight = FontWeight.Medium,
+                    ),
+                    color = EmergencyPassColor,
                 )
             }
         }
@@ -589,11 +796,13 @@ private fun RadiantAppIcon(
 private fun BlockerOverlayContentPreview() {
     FocusFlowTheme {
         BlockerOverlayContent(
-            packageName = "com.instagram.android",
+            packageName = "com.android.launcher",
             decision = BlockingDecision.Block(
                 reason = BlockReason.IN_FOCUS_SESSION,
                 message = "This app is blocked during your focus session.",
             ),
+            remainingSessionDurationMs = (18 * 60 + 42) * 1000L,
+            remainingEmergencyPasses = 2,
             onBackToFocus = {},
             onNotNow = {},
             onEmergencyPass = {},

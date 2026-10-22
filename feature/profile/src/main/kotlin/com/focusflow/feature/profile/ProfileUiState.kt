@@ -11,4 +11,10 @@ data class ProfileUiState(
     val isExporting: Boolean = false,
     val message: String? = null,
     val isLoading: Boolean = false,
+    val weeklyFocusMinutes: Long = 750L,
+    val completedSessionsCount: Int = 18,
+    val weeklyGoalHours: Int = 16,
+    val blockedAppsCount: Int = 77,
+    val remindersEnabled: Boolean = true,
+    val appearanceTheme: String = "Light",
 )

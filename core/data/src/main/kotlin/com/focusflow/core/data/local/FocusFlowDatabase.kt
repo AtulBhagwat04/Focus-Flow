@@ -7,6 +7,7 @@ import com.focusflow.core.data.local.dao.FocusSessionDao
 import com.focusflow.core.data.local.dao.SocialDao
 import com.focusflow.core.data.local.dao.StudyModeDao
 import com.focusflow.core.data.local.dao.SubjectTagDao
+import com.focusflow.core.data.local.dao.TaskDao
 import com.focusflow.core.data.local.dao.UsageDao
 import com.focusflow.core.data.local.entity.AppLimitEntity
 import com.focusflow.core.data.local.entity.AppUsageEntity
@@ -20,6 +21,7 @@ import com.focusflow.core.data.local.entity.LeaderboardEntryEntity
 import com.focusflow.core.data.local.entity.RoomEntity
 import com.focusflow.core.data.local.entity.StudyChannelEntity
 import com.focusflow.core.data.local.entity.SubjectTagEntity
+import com.focusflow.core.data.local.entity.TaskEntity
 import com.focusflow.core.data.local.entity.UserEssentialAppEntity
 
 @Database(
@@ -37,8 +39,9 @@ import com.focusflow.core.data.local.entity.UserEssentialAppEntity
         FriendEntity::class,
         LeaderboardEntryEntity::class,
         StudyChannelEntity::class,
+        TaskEntity::class,
     ],
-    version = 5,
+    version = 6,
     exportSchema = false,
 )
 abstract class FocusFlowDatabase : RoomDatabase() {
@@ -48,4 +51,5 @@ abstract class FocusFlowDatabase : RoomDatabase() {
     abstract fun blockingDao(): BlockingDao
     abstract fun socialDao(): SocialDao
     abstract fun studyModeDao(): StudyModeDao
+    abstract fun taskDao(): TaskDao
 }

@@ -17,4 +17,5 @@ data class TimerUiCallbacks(
     val onSelectDurationMinutes: (Int) -> Unit = {},
     val onToggleBlockApps: (Boolean) -> Unit = {},
     val onAbortClicked: () -> Unit = {},
+    val onClearActiveTask: () -> Unit = {},
 )

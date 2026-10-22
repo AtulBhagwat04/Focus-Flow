@@ -42,6 +42,12 @@ abstract class DataModule {
 
     @Binds
     @Singleton
+    abstract fun bindTaskRepository(
+        impl: com.focusflow.core.data.repository.OfflineTaskRepository,
+    ): com.focusflow.core.domain.repository.TaskRepository
+
+    @Binds
+    @Singleton
     abstract fun bindUsageStatsRepository(
         impl: com.focusflow.core.data.repository.OfflineUsageStatsRepository,
     ): com.focusflow.core.domain.usage.repository.UsageStatsRepository
@@ -206,6 +212,12 @@ abstract class DataModule {
             database: FocusFlowDatabase,
         ): com.focusflow.core.data.local.dao.StudyModeDao =
             database.studyModeDao()
+
+        @Provides
+        fun provideTaskDao(
+            database: FocusFlowDatabase,
+        ): com.focusflow.core.data.local.dao.TaskDao =
+            database.taskDao()
 
         @Provides
         @Singleton

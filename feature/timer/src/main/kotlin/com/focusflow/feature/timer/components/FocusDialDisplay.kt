@@ -92,6 +92,7 @@ fun FocusDialDisplay(
     progressFraction: Float,
     selectedDurationMinutes: Int,
     modifier: Modifier = Modifier,
+    isCustomTimeEnabled: Boolean = true,
     onDurationChange: (Int) -> Unit = {},
     onCustomTimeClick: () -> Unit = {},
 ) {
@@ -148,13 +149,17 @@ fun FocusDialDisplay(
             .size(DIAL_SIZE)
             .semantics {
                 contentDescription = if (!isActive) {
-                    "$selectedDurationMinutes minutes focus session. Drag dial ring to adjust duration, or tap timer to customize."
+                    if (isCustomTimeEnabled) {
+                        "$selectedDurationMinutes minutes focus session. Drag dial ring to adjust duration, or tap timer to customize."
+                    } else {
+                        "$selectedDurationMinutes minutes task focus session."
+                    }
                 } else {
                     "$statusLabel: $formattedTime"
                 }
             }
-            .pointerInput(isActive) {
-                if (isActive) return@pointerInput
+            .pointerInput(isActive, isCustomTimeEnabled) {
+                if (isActive || !isCustomTimeEnabled) return@pointerInput
                 awaitEachGesture {
                     val down = awaitFirstDown(requireUnconsumed = false)
                     val center = Offset(size.width / 2f, size.height / 2f)
@@ -276,7 +281,7 @@ fun FocusDialDisplay(
             val knobY = (center.y + radius * sin(knobAngleRad)).toFloat()
 
             // Subtle glow ring when idle to indicate draggable control on the ring, expanding when dragged
-            if (!isActive) {
+            if (!isActive && isCustomTimeEnabled) {
                 drawCircle(
                     color = FocusForestGreen.copy(alpha = if (isDragging) 0.28f else 0.16f),
                     radius = knobRadiusPx + (if (isDragging) 6.dp.toPx() else 4.dp.toPx()),
@@ -314,13 +319,13 @@ fun FocusDialDisplay(
             modifier = Modifier
                 .clip(RoundedCornerShape(20.dp))
                 .clickable(
-                    enabled = !isActive,
+                    enabled = !isActive && isCustomTimeEnabled,
                     indication = null,
                     interactionSource = remember { MutableInteractionSource() },
                     onClick = onCustomTimeClick,
                 )
                 .semantics {
-                    if (!isActive) {
+                    if (!isActive && isCustomTimeEnabled) {
                         role = Role.Button
                         contentDescription = "Timer: $displayDigits. Tap to customize time."
                     }
@@ -344,7 +349,7 @@ fun FocusDialDisplay(
                 textAlign = TextAlign.Center,
             )
 
-            if (!isActive) {
+            if (!isActive && isCustomTimeEnabled) {
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = "Tap to customize",

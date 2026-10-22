@@ -6,11 +6,13 @@ import com.focusflow.core.common.time.Clock
 import com.focusflow.core.domain.audio.AmbientAudioPlayer
 import com.focusflow.core.domain.model.AmbientSound
 import com.focusflow.core.domain.model.FocusSession
+import com.focusflow.core.domain.model.FocusTask
 import com.focusflow.core.domain.model.SessionMode
 import com.focusflow.core.domain.model.SessionState
 import com.focusflow.core.domain.model.SubjectTag
 import com.focusflow.core.domain.repository.FocusSessionRepository
 import com.focusflow.core.domain.repository.SubjectTagRepository
+import com.focusflow.core.domain.repository.TaskRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -31,6 +33,7 @@ class TimerViewModel @Inject constructor(
     private val subjectTagRepository: SubjectTagRepository,
     private val ambientAudioPlayer: AmbientAudioPlayer,
     private val clock: Clock,
+    private val taskRepository: TaskRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TimerUiState())
@@ -42,20 +45,46 @@ class TimerViewModel @Inject constructor(
         observeData()
     }
 
+    private data class ObservedTimerData(
+        val session: FocusSession?,
+        val tags: List<SubjectTag>,
+        val sound: AmbientSound,
+        val task: FocusTask?,
+    )
+
     private fun observeData() {
         combine(
             focusSessionRepository.currentSession,
             subjectTagRepository.getAllTags(),
             ambientAudioPlayer.currentSound,
-        ) { session, tags, sound ->
-            Triple(session, tags, sound)
-        }.onEach { (session, tags, sound) ->
+            taskRepository.activeTask,
+        ) { session, tags, sound, task ->
+            ObservedTimerData(session, tags, sound, task)
+        }.onEach { (session, tags, sound, activeTask) ->
             _uiState.update { current ->
                 val now = clock.now()
                 val selectedTag = current.selectedTag ?: tags.firstOrNull()
+
+                // If a task is active and session is not yet active, auto-manage focus duration
+                val mode = when {
+                    session != null -> session.mode
+                    activeTask != null && !current.isActive -> {
+                        val durationMs = activeTask.durationMinutes * 60 * 1000L
+                        if (activeTask.durationMinutes == 25) {
+                            SessionMode.Pomodoro(durationMs)
+                        } else {
+                            SessionMode.Custom(durationMs)
+                        }
+                    }
+                    else -> current.selectedMode
+                }
+
                 val targetDuration = session?.targetDurationMs
-                    ?: (current.selectedMode as? SessionMode.Pomodoro)?.workDurationMs
-                    ?: DEFAULT_COUNTDOWN_MS
+                    ?: when (mode) {
+                        is SessionMode.Pomodoro -> mode.workDurationMs
+                        is SessionMode.Custom -> mode.durationMs
+                        else -> DEFAULT_COUNTDOWN_MS
+                    }
 
                 val isRunning = session?.state == SessionState.RUNNING
                 val isPaused = session?.state == SessionState.PAUSED
@@ -65,10 +94,11 @@ class TimerViewModel @Inject constructor(
 
                 current.copy(
                     session = session,
+                    activeTask = activeTask,
                     availableTags = tags,
                     selectedTag = selectedTag,
                     selectedSound = sound,
-                    selectedMode = session?.mode ?: current.selectedMode,
+                    selectedMode = mode,
                     elapsedMs = elapsed,
                     remainingMs = remaining,
                     progress = progress,
@@ -78,7 +108,9 @@ class TimerViewModel @Inject constructor(
             }
 
             if (session?.state == SessionState.RUNNING) {
-                startTicker(session)
+                if (tickerJob?.isActive != true) {
+                    startTicker(session)
+                }
             } else {
                 stopTicker()
             }
@@ -101,6 +133,12 @@ class TimerViewModel @Inject constructor(
                         remainingMs = remaining,
                         progress = progress,
                     )
+                }
+
+                // Record progress to active task every second
+                val currentTask = _uiState.value.activeTask
+                if (currentTask != null) {
+                    taskRepository.recordFocusProgress(currentTask.id, 1)
                 }
 
                 if (session.isTargetReached(now)) {
@@ -148,6 +186,10 @@ class TimerViewModel @Inject constructor(
 
     fun onCompleteClicked() {
         viewModelScope.launch {
+            val activeTaskId = _uiState.value.activeTask?.id
+            if (activeTaskId != null) {
+                taskRepository.completeTask(activeTaskId)
+            }
             val completed = focusSessionRepository.completeSession()
             ambientAudioPlayer.stop()
             stopTicker()
@@ -160,6 +202,12 @@ class TimerViewModel @Inject constructor(
                     )
                 }
             }
+        }
+    }
+
+    fun onClearActiveTask() {
+        viewModelScope.launch {
+            taskRepository.clearActiveTask()
         }
     }
 

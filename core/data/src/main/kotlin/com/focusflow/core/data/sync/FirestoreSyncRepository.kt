@@ -8,6 +8,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.focusflow.core.data.local.dao.FocusSessionDao
 import com.focusflow.core.data.local.dao.SubjectTagDao
+import com.focusflow.core.data.local.dao.TaskDao
 import com.focusflow.core.data.local.dao.UsageDao
 import com.focusflow.core.domain.auth.repository.AuthRepository
 import com.focusflow.core.domain.sync.model.SyncResult
@@ -32,6 +33,7 @@ class FirestoreSyncRepository @Inject constructor(
     private val focusSessionDao: FocusSessionDao,
     private val subjectTagDao: SubjectTagDao,
     private val usageDao: UsageDao,
+    private val taskDao: TaskDao,
     private val authRepository: AuthRepository,
 ) : SyncRepository {
 
@@ -50,7 +52,7 @@ class FirestoreSyncRepository @Inject constructor(
 
         WorkManager.getInstance(context).enqueueUniqueWork(
             SYNC_WORK_NAME,
-            ExistingWorkPolicy.KEEP,
+            ExistingWorkPolicy.REPLACE,
             request,
         )
     }
@@ -86,6 +88,27 @@ class FirestoreSyncRepository @Inject constructor(
                 if (duration > 0) totalFocusMs += duration
             }
 
+            // Sync tasks to Firestore
+            val tasks = taskDao.getAllTasks()
+            for (task in tasks) {
+                val docRef = firestore.collection("users")
+                    .document(user.uid)
+                    .collection("tasks")
+                    .document(task.id)
+
+                val data = mapOf(
+                    "id" to task.id,
+                    "title" to task.title,
+                    "durationMinutes" to task.durationMinutes,
+                    "completedSeconds" to task.completedSeconds,
+                    "isCompleted" to task.isCompleted,
+                    "isCurrentFocus" to task.isCurrentFocus,
+                    "createdAtEpochMs" to task.createdAtEpochMs,
+                    "updatedAtEpochMs" to task.updatedAtEpochMs,
+                )
+                batch.set(docRef, data, SetOptions.merge())
+            }
+
             batch.commit().await()
 
             // Update user summary doc
@@ -112,6 +135,7 @@ class FirestoreSyncRepository @Inject constructor(
         return try {
             val sessions = focusSessionDao.getHistoricalSessions(EXPORT_SESSION_LIMIT).first()
             val tags = subjectTagDao.getAllTags().first()
+            val tasks = taskDao.getAllTasks()
             val user = authRepository.currentUser.first()
 
             val sessionsJson = sessions.joinToString(",", "[", "]") { s ->
@@ -120,12 +144,16 @@ class FirestoreSyncRepository @Inject constructor(
             val tagsJson = tags.joinToString(",", "[", "]") { t ->
                 """{"id":"${t.id}","name":"${t.name}","color":"${t.colorHex}"}"""
             }
+            val tasksJson = tasks.joinToString(",", "[", "]") { t ->
+                """{"id":"${t.id}","title":"${t.title}","durationMinutes":${t.durationMinutes},"isCompleted":${t.isCompleted}}"""
+            }
 
             val export = """
             {
               "exportTimestamp": ${System.currentTimeMillis()},
               "userId": "${user?.uid ?: "anonymous"}",
               "tags": $tagsJson,
+              "tasks": $tasksJson,
               "sessions": $sessionsJson
             }
             """.trimIndent()
