@@ -40,12 +40,40 @@ interface FocusSessionDao {
         """
         SELECT COALESCE(SUM(completedAtEpochMs - startedAtEpochMs - totalPausedDurationMs), 0)
         FROM focus_sessions
-        WHERE state = 'COMPLETED'
+        WHERE (state = 'COMPLETED' OR (state = 'ABORTED' AND completedAtEpochMs IS NOT NULL AND completedAtEpochMs > startedAtEpochMs))
           AND startedAtEpochMs >= :startEpochMs
           AND startedAtEpochMs < :endEpochMs
         """
     )
     fun observeFocusDurationBetween(startEpochMs: Long, endEpochMs: Long): Flow<Long>
+
+    @Query(
+        """
+        SELECT * FROM focus_sessions 
+        WHERE (state = 'COMPLETED' OR (state = 'ABORTED' AND completedAtEpochMs IS NOT NULL AND completedAtEpochMs > startedAtEpochMs))
+          AND startedAtEpochMs >= :startEpochMs
+          AND startedAtEpochMs < :endEpochMs
+        ORDER BY startedAtEpochMs ASC
+        """
+    )
+    fun observeCompletedSessionsBetween(startEpochMs: Long, endEpochMs: Long): Flow<List<FocusSessionEntity>>
+
+    @Query(
+        """
+        SELECT COUNT(*) FROM focus_sessions 
+        WHERE (state = 'COMPLETED' OR (state = 'ABORTED' AND completedAtEpochMs IS NOT NULL AND completedAtEpochMs > startedAtEpochMs))
+        """
+    )
+    fun observeCompletedSessionCount(): Flow<Int>
+
+    @Query(
+        """
+        SELECT * FROM focus_sessions 
+        WHERE (state = 'COMPLETED' OR (state = 'ABORTED' AND completedAtEpochMs IS NOT NULL AND completedAtEpochMs > startedAtEpochMs))
+        ORDER BY startedAtEpochMs DESC
+        """
+    )
+    fun observeAllCompletedSessions(): Flow<List<FocusSessionEntity>>
 
     @Query("DELETE FROM focus_sessions WHERE id = :id")
     suspend fun deleteSession(id: String)

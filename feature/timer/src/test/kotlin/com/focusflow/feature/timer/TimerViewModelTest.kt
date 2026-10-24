@@ -87,6 +87,15 @@ class TimerViewModelTest {
         }
 
         override fun getSessionHistory(limit: Int): Flow<List<FocusSession>> = flowOf(emptyList())
+
+        override fun observeFocusDurationBetween(startEpochMs: Long, endEpochMs: Long): Flow<Long> = flowOf(0L)
+
+        override fun observeCompletedSessionsBetween(startEpochMs: Long, endEpochMs: Long): Flow<List<FocusSession>> =
+            flowOf(emptyList())
+
+        override fun observeCompletedSessionCount(): Flow<Int> = flowOf(0)
+
+        override fun observeAllCompletedSessions(): Flow<List<FocusSession>> = flowOf(emptyList())
     }
 
     private class FakeSubjectTagRepository : SubjectTagRepository {

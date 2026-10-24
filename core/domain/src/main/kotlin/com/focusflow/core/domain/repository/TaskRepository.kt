@@ -49,6 +49,11 @@ interface TaskRepository {
     suspend fun clearActiveTask()
 
     /**
+     * Updates an existing task's title and focus duration.
+     */
+    suspend fun updateTask(taskId: String, title: String, durationMinutes: Int): FocusTask? = null
+
+    /**
      * Deletes a task by ID.
      */
     suspend fun deleteTask(taskId: String) = Unit

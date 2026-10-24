@@ -79,23 +79,25 @@ fun ActiveTaskFocusCard(
         label = "pulse_alpha",
     )
 
+    val clearTaskCd = stringResource(R.string.timer_task_cd_clear)
+
     Surface(
         modifier = modifier
             .fillMaxWidth()
             .shadow(
-                elevation = 2.dp,
-                shape = RoundedCornerShape(18.dp),
+                elevation = 3.dp,
+                shape = RoundedCornerShape(22.dp),
                 ambientColor = Color(0x101B4E36),
                 spotColor = Color(0x1A1B4E36),
             ),
-        shape = RoundedCornerShape(18.dp),
-        color = Color(0xFFF3F8F5),
-        border = BorderStroke(1.2.dp, Color(0xFFCEE2D5)),
+        shape = RoundedCornerShape(22.dp),
+        color = Color.White,
+        border = BorderStroke(1.2.dp, Color(0xFFCCE3D5)),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(horizontal = 16.dp, vertical = 13.dp),
         ) {
             // Header Row: Label + Status Pill + Clear Button
             Row(
@@ -126,9 +128,10 @@ fun ActiveTaskFocusCard(
                         shape = RoundedCornerShape(12.dp),
                         color = when {
                             isRunning -> FocusForestGreenDeep
-                            isPaused -> Color(0xFFE2A03F)
+                            isPaused -> Color(0xFFD97706)
                             else -> FocusForestMintBadge
                         },
+                        border = if (!isRunning && !isPaused) BorderStroke(1.dp, Color(0xFFBAE6CD)) else null,
                     ) {
                         Row(
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
@@ -150,7 +153,7 @@ fun ActiveTaskFocusCard(
                                     else -> stringResource(R.string.timer_task_status_ready)
                                 },
                                 fontFamily = OutfitFontFamily,
-                                fontSize = 11.sp,
+                                fontSize = 11.5.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = if (isRunning || isPaused) Color.White else FocusForestGreenDeep,
                             )
@@ -161,24 +164,25 @@ fun ActiveTaskFocusCard(
                         Spacer(modifier = Modifier.width(8.dp))
                         Box(
                             modifier = Modifier
-                                .size(24.dp)
+                                .size(26.dp)
                                 .clip(CircleShape)
+                                .background(Color(0xFFF1F6F3))
                                 .clickable(
-                                    indication = ripple(bounded = true),
+                                    indication = ripple(bounded = true, radius = 13.dp),
                                     interactionSource = null,
                                     onClick = onClearTask,
                                 )
                                 .semantics {
                                     role = Role.Button
-                                    contentDescription = "Clear active task"
+                                    contentDescription = clearTaskCd
                                 },
                             contentAlignment = Alignment.Center,
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Close,
                                 contentDescription = null,
-                                tint = FocusMutedText,
-                                modifier = Modifier.size(15.dp),
+                                tint = Color(0xFF2E483A),
+                                modifier = Modifier.size(14.dp),
                             )
                         }
                     }
@@ -192,8 +196,8 @@ fun ActiveTaskFocusCard(
                 text = task.title,
                 fontFamily = FontFamily.Serif,
                 fontWeight = FontWeight.Bold,
-                fontSize = 16.sp,
-                color = FocusDarkText,
+                fontSize = 16.5.sp,
+                color = Color(0xFF14291E),
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -203,10 +207,10 @@ fun ActiveTaskFocusCard(
                 progress = { task.progressFraction },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(6.dp)
+                    .height(7.dp)
                     .clip(CircleShape),
                 color = FocusForestGreenDeep,
-                trackColor = Color(0xFFDCE9E0),
+                trackColor = Color(0xFFE2EBE5),
             )
 
             Spacer(modifier = Modifier.height(6.dp))
@@ -220,15 +224,16 @@ fun ActiveTaskFocusCard(
                 Text(
                     text = "${task.formattedCompletedTime} completed",
                     fontFamily = OutfitFontFamily,
-                    fontSize = 11.5.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = FocusForestGreen,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = FocusForestGreenDeep,
                 )
                 Text(
                     text = "${task.durationMinutes}m target (${(task.progressFraction * 100).toInt()}%)",
                     fontFamily = OutfitFontFamily,
-                    fontSize = 11.5.sp,
-                    color = FocusMutedText,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color(0xFF4A5D52),
                 )
             }
         }

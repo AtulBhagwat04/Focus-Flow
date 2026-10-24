@@ -2,40 +2,64 @@ package com.focusflow.feature.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.focusflow.core.common.time.Clock
 import com.focusflow.core.domain.auth.model.UserAccount
 import com.focusflow.core.domain.auth.model.UserProfile
 import com.focusflow.core.domain.auth.repository.AuthRepository
 import com.focusflow.core.domain.blocking.repository.BlockRuleRepository
+import com.focusflow.core.domain.repository.FocusSessionRepository
+import com.focusflow.core.domain.repository.UserPreferencesRepository
 import com.focusflow.core.domain.sync.model.SyncResult
 import com.focusflow.core.domain.sync.repository.SyncRepository
+import com.focusflow.core.domain.model.FocusSession
+import com.focusflow.core.domain.model.SessionState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import java.time.DayOfWeek
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.temporal.TemporalAdjusters
 import javax.inject.Inject
-
-private const val DEFAULT_WEEKLY_MINUTES = 750L
-private const val DEFAULT_SESSIONS_COUNT = 18
-private const val DEFAULT_WEEKLY_GOAL_HOURS = 16
-private const val DEFAULT_BLOCKED_APPS = 77
 
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val syncRepository: SyncRepository,
     private val blockRuleRepository: BlockRuleRepository,
+    private val focusSessionRepository: FocusSessionRepository,
+    private val userPreferencesRepository: UserPreferencesRepository,
+    private val clock: Clock,
 ) : ViewModel() {
 
     private val exportedData = MutableStateFlow<String?>(null)
     private val isExporting = MutableStateFlow(false)
     private val userMessage = MutableStateFlow<String?>(null)
-    private val remindersEnabled = MutableStateFlow(true)
-    private val appearanceTheme = MutableStateFlow("Light")
-    private val weeklyGoalHours = MutableStateFlow(DEFAULT_WEEKLY_GOAL_HOURS)
     private val customDisplayName = MutableStateFlow<String?>(null)
+    private val tickNow = MutableStateFlow(clock.now())
+    private var tickerJob: Job? = null
+
+    private fun updateTicker(isRunning: Boolean) {
+        if (isRunning && tickerJob == null) {
+            tickerJob = viewModelScope.launch {
+                while (isActive) {
+                    delay(1000L)
+                    tickNow.value = clock.now()
+                }
+            }
+        } else if (!isRunning && tickerJob != null) {
+            tickerJob?.cancel()
+            tickerJob = null
+        }
+    }
 
     val uiState: StateFlow<ProfileUiState> = combine(
         combine(
@@ -49,22 +73,90 @@ class ProfileViewModel @Inject constructor(
         },
         combine(
             userMessage,
-            remindersEnabled,
-            appearanceTheme,
-            weeklyGoalHours,
+            userPreferencesRepository.getRemindersEnabled(),
+            userPreferencesRepository.getAppearanceTheme(),
+            userPreferencesRepository.getWeeklyGoalHours(),
             blockRuleRepository.observeAllRules(),
         ) { message, reminders, appearance, goal, rules ->
             ProfileSettingsData(message, reminders, appearance, goal, rules.size)
         },
-        customDisplayName,
-    ) { base, settings, customName ->
-        val effectiveAccount = if (customName != null && base.user != null) {
-            base.user.copy(displayName = customName)
-        } else if (customName != null) {
-            UserAccount(uid = "local", displayName = customName, isAnonymous = false)
+        combine(
+            focusSessionRepository.currentSession,
+            focusSessionRepository.observeAllCompletedSessions(),
+            customDisplayName,
+            tickNow,
+        ) { activeSession, completedSessions, customName, now ->
+            val isRunning = activeSession?.state == SessionState.RUNNING
+            updateTicker(isRunning)
+
+            val zoneId = ZoneId.systemDefault()
+            val today = LocalDate.ofInstant(Instant.ofEpochMilli(now), zoneId)
+            val monday = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+            val startOfWeekMs = monday.atStartOfDay(zoneId).toInstant().toEpochMilli()
+            val endOfWeekMs = monday.plusWeeks(1).atStartOfDay(zoneId).toInstant().toEpochMilli()
+
+            val thisWeekSessions = completedSessions.filter {
+                it.startedAtEpochMs in startOfWeekMs until endOfWeekMs
+            }
+            var totalWeekMs = thisWeekSessions.sumOf { s ->
+                s.elapsedDurationMs(now).coerceAtLeast(0L)
+            }
+            if (activeSession != null && activeSession.state.isActive) {
+                totalWeekMs += activeSession.elapsedDurationMs(now).coerceAtLeast(0L)
+            }
+
+            val totalWeekMinutes = totalWeekMs / 60_000L
+            val weeklyHours = totalWeekMinutes / 60L
+            val weeklyMins = totalWeekMinutes % 60L
+            val weeklyFocusFormatted = when {
+                weeklyHours > 0L && weeklyMins > 0L -> "${weeklyHours}h ${weeklyMins}m"
+                weeklyHours > 0L -> "${weeklyHours}h"
+                weeklyMins > 0L -> "${weeklyMins}m"
+                totalWeekMs > 0L -> "<1m"
+                else -> "0m"
+            }
+
+            val sessionDates = completedSessions.map {
+                LocalDate.ofInstant(Instant.ofEpochMilli(it.startedAtEpochMs), zoneId)
+            }.toSet()
+
+            var streak = 0
+            var checkDate = if (sessionDates.contains(today)) {
+                today
+            } else if (sessionDates.contains(today.minusDays(1))) {
+                today.minusDays(1)
+            } else {
+                null
+            }
+
+            while (checkDate != null && sessionDates.contains(checkDate)) {
+                streak++
+                checkDate = checkDate.minusDays(1)
+            }
+
+            val totalXp = completedSessions.sumOf { it.xpEarned.toLong() }
+
+            ProfileStatsData(
+                weeklyFocusMinutes = totalWeekMinutes,
+                weeklyFocusFormatted = weeklyFocusFormatted,
+                completedSessionsCount = completedSessions.size,
+                streakDays = streak,
+                totalXp = totalXp,
+                customDisplayName = customName,
+            )
+        },
+    ) { base, settings, stats ->
+        val effectiveAccount = if (stats.customDisplayName != null && base.user != null) {
+            base.user.copy(displayName = stats.customDisplayName)
+        } else if (stats.customDisplayName != null) {
+            UserAccount(uid = "local", displayName = stats.customDisplayName, isAnonymous = false)
         } else {
             base.user
         }
+
+        val effectiveXp = maxOf(base.profile?.xp ?: 0L, stats.totalXp)
+        val effectiveLevel = maxOf(base.profile?.level ?: 1, 1 + (effectiveXp / 1000L).toInt())
+        val effectiveStreak = maxOf(base.profile?.currentStreakDays ?: 0, stats.streakDays)
 
         ProfileUiState(
             account = effectiveAccount,
@@ -74,10 +166,14 @@ class ProfileViewModel @Inject constructor(
             isExporting = base.exporting,
             message = settings.message,
             isLoading = false,
-            weeklyFocusMinutes = base.profile?.totalFocusMinutes?.takeIf { it > 0 } ?: DEFAULT_WEEKLY_MINUTES,
-            completedSessionsCount = DEFAULT_SESSIONS_COUNT,
+            weeklyFocusMinutes = stats.weeklyFocusMinutes,
+            weeklyFocusFormatted = stats.weeklyFocusFormatted,
+            completedSessionsCount = stats.completedSessionsCount,
+            currentStreakDays = effectiveStreak,
+            level = effectiveLevel,
+            xp = effectiveXp,
             weeklyGoalHours = settings.goal,
-            blockedAppsCount = if (settings.rulesCount > 0) settings.rulesCount else DEFAULT_BLOCKED_APPS,
+            blockedAppsCount = settings.rulesCount,
             remindersEnabled = settings.reminders,
             appearanceTheme = settings.appearance,
         )
@@ -150,15 +246,21 @@ class ProfileViewModel @Inject constructor(
     }
 
     fun onToggleReminders(enabled: Boolean) {
-        remindersEnabled.value = enabled
+        viewModelScope.launch {
+            userPreferencesRepository.setRemindersEnabled(enabled)
+        }
     }
 
     fun onSelectAppearance(theme: String) {
-        appearanceTheme.value = theme
+        viewModelScope.launch {
+            userPreferencesRepository.setAppearanceTheme(theme)
+        }
     }
 
     fun onUpdateWeeklyGoal(hours: Int) {
-        weeklyGoalHours.value = hours
+        viewModelScope.launch {
+            userPreferencesRepository.setWeeklyGoalHours(hours)
+        }
     }
 
     fun onUpdateDisplayName(name: String) {
@@ -181,4 +283,13 @@ private data class ProfileSettingsData(
     val appearance: String,
     val goal: Int,
     val rulesCount: Int,
+)
+
+private data class ProfileStatsData(
+    val weeklyFocusMinutes: Long,
+    val weeklyFocusFormatted: String,
+    val completedSessionsCount: Int,
+    val streakDays: Int,
+    val totalXp: Long,
+    val customDisplayName: String?,
 )

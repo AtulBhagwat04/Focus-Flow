@@ -295,7 +295,7 @@ private fun LimitsSearchAppBar(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(64.dp)
-                    .padding(horizontal = 20.dp),
+                    .padding(start = 12.dp, end = 20.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 FocusFlowBackButton(
@@ -303,7 +303,7 @@ private fun LimitsSearchAppBar(
                     contentDescription = "Close search",
                 )
 
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(8.dp))
 
                 Surface(
                     modifier = Modifier

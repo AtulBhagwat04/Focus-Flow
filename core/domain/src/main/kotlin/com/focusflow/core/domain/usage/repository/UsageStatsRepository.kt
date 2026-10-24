@@ -18,6 +18,11 @@ interface UsageStatsRepository {
     fun observeDateRangeUsage(startEpochDay: Long, endEpochDay: Long): Flow<List<DailyUsageStats>>
 
     /**
+     * Observes aggregated usage and focus time over a range of days [startEpochDay, endEpochDay] (inclusive).
+     */
+    fun observeRangeUsage(startEpochDay: Long, endEpochDay: Long): Flow<DailyUsageStats>
+
+    /**
      * Triggers a sync/re-calculation of usage stats from system usage events for the given day.
      */
     suspend fun refreshUsageForDay(epochDay: Long)

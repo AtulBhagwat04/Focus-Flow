@@ -28,6 +28,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.focusflow.core.designsystem.theme.FocusForestGreenDeep
 
+import com.focusflow.core.designsystem.theme.OutfitFontFamily
+
 /**
  * Predefined timer chips (25, 50, 100 min) with dynamic custom duration support.
  *
@@ -68,29 +70,30 @@ fun TimerPresetChips(
                         contentDescription = "$minutes minutes focus preset${if (isSelected) ", selected" else ""}"
                     },
                 shape = CircleShape,
-                color = if (isSelected) FocusForestGreenDeep else Color.White.copy(alpha = 0.90f),
+                color = if (isSelected) FocusForestGreenDeep else Color.White,
                 border = BorderStroke(
-                    width = 1.2.dp,
-                    color = if (isSelected) FocusForestGreenDeep else Color(0xFFBACEC3),
+                    width = 1.3.dp,
+                    color = if (isSelected) FocusForestGreenDeep else Color(0xFFCCE3D5),
                 ),
-                shadowElevation = if (isSelected) 3.dp else 0.dp,
+                shadowElevation = if (isSelected) 4.dp else 2.dp,
             ) {
                 Box(
-                    modifier = Modifier.padding(horizontal = 18.dp, vertical = 8.dp),
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.5.dp),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
                         text = "$minutes min",
-                        fontSize = 14.sp,
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
-                        color = if (isSelected) Color.White else Color(0xFF2A4235),
+                        fontFamily = OutfitFontFamily,
+                        fontSize = 14.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isSelected) Color.White else Color(0xFF14291E),
                         textAlign = TextAlign.Center,
                     )
                 }
             }
 
             if (index < displayList.size - 1) {
-                Spacer(modifier = Modifier.width(10.dp))
+                Spacer(modifier = Modifier.width(12.dp))
             }
         }
     }

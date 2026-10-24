@@ -20,6 +20,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.focusflow.core.designsystem.theme.FocusForestGreen
+import com.focusflow.core.designsystem.theme.FocusForestGreenDeep
 
 /**
  * Motivational quote displayed gracefully below the Focus Time title.
@@ -39,9 +40,9 @@ fun ScenicQuoteCard(
         Text(
             text = "“",
             fontFamily = FontFamily.Serif,
-            fontSize = 22.sp,
+            fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
-            color = FocusForestGreen,
+            color = FocusForestGreenDeep,
             modifier = Modifier.padding(end = 4.dp),
         )
 
@@ -49,8 +50,8 @@ fun ScenicQuoteCard(
             text = quote.replace("\n", " "),
             fontFamily = FontFamily.Serif,
             fontSize = 13.5.sp,
-            fontWeight = FontWeight.Medium,
-            color = Color(0xFF264734),
+            fontWeight = FontWeight.SemiBold,
+            color = Color(0xFF14291E),
             textAlign = TextAlign.Center,
             lineHeight = 18.sp,
         )
@@ -58,9 +59,9 @@ fun ScenicQuoteCard(
         Text(
             text = "”",
             fontFamily = FontFamily.Serif,
-            fontSize = 22.sp,
+            fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
-            color = FocusForestGreen,
+            color = FocusForestGreenDeep,
             modifier = Modifier.padding(start = 4.dp),
         )
     }

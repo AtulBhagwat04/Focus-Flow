@@ -20,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -84,7 +85,10 @@ fun FocusFlowAppBar(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(64.dp)
-                    .padding(horizontal = 20.dp),
+                    .padding(
+                        start = if (onBack != null || navigationIcon != null) 12.dp else 20.dp,
+                        end = 20.dp,
+                    ),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
@@ -95,10 +99,10 @@ fun FocusFlowAppBar(
                 ) {
                     if (navigationIcon != null) {
                         navigationIcon()
-                        Spacer(modifier = Modifier.width(14.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
                     } else if (onBack != null) {
                         FocusFlowBackButton(onClick = onBack)
-                        Spacer(modifier = Modifier.width(14.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
                     }
 
                     if (titleContent != null) {
@@ -151,40 +155,26 @@ fun FocusFlowAppBar(
 }
 
 /**
- * Signature FocusFlow circular back button.
+ * Signature FocusFlow back button (clean, frameless design).
  */
 @Composable
 fun FocusFlowBackButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     contentDescription: String = "Back",
-    containerColor: Color = FocusForestMintBg,
+    containerColor: Color = Color.Transparent,
     iconTint: Color = FocusForestGreenDeep,
 ) {
-    Surface(
-        shape = CircleShape,
-        color = containerColor,
-        border = BorderStroke(1.dp, FocusCardBorder),
-        modifier = modifier
-            .size(40.dp)
-            .clip(CircleShape)
-            .clickable(
-                indication = ripple(bounded = true, radius = 20.dp),
-                interactionSource = null,
-                onClick = onClick,
-            )
-            .semantics {
-                role = Role.Button
-            },
+    IconButton(
+        onClick = onClick,
+        modifier = modifier.size(40.dp),
     ) {
-        Box(contentAlignment = Alignment.Center) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = contentDescription,
-                tint = iconTint,
-                modifier = Modifier.size(20.dp),
-            )
-        }
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+            contentDescription = contentDescription,
+            tint = iconTint,
+            modifier = Modifier.size(24.dp),
+        )
     }
 }
 
