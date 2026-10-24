@@ -6,6 +6,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,6 +39,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -59,12 +61,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -77,7 +81,6 @@ import com.focusflow.feature.profile.components.DataExportDialog
 import com.focusflow.feature.profile.components.DeleteAccountConfirmDialog
 import java.util.Locale
 
-private val HeroBlobColor = Color(0xFFF3ECE0)
 private val DarkCharcoalText = Color(0xFF1B2B23)
 private val ForestGreenDeep = Color(0xFF1E4D38)
 private val ForestGreenMedium = Color(0xFF276A4E)
@@ -167,57 +170,72 @@ fun ProfileScreenContent(
     var showWeeklyGoalDialog by remember { mutableStateOf(false) }
     var showHelpFeedbackDialog by remember { mutableStateOf(false) }
 
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        containerColor = Color.Transparent,
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-    ) { innerPadding ->
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(FallbackScreenBg),
+    ) {
+        Image(
+            painter = painterResource(id = com.focusflow.core.designsystem.R.drawable.bg_home_screen),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize(),
+        )
+
+        // Soft Ambient Frost White Overlay for Unified Aesthetics & Content Legibility
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(FallbackScreenBg),
-        ) {
-            Image(
-                painter = painterResource(id = com.focusflow.core.designsystem.R.drawable.bg_home_screen),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize(),
-            )
+                .background(
+                    Brush.verticalGradient(
+                        0.0f to Color.White.copy(alpha = 0.20f),
+                        0.22f to Color(0xFFF7FAF8).copy(alpha = 0.65f),
+                        0.55f to Color(0xFFF7FAF8).copy(alpha = 0.88f),
+                        1.0f to Color(0xFFF7FAF8).copy(alpha = 0.95f),
+                    )
+                )
+        )
 
+        Scaffold(
+            modifier = Modifier.fillMaxSize(),
+            containerColor = Color.Transparent,
+            snackbarHost = { SnackbarHost(snackbarHostState) },
+            topBar = {
+                ProfileTopAppBar(onBack = onBack)
+            },
+        ) { innerPadding ->
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 20.dp, vertical = 8.dp)
+                    .padding(horizontal = 20.dp)
                     .navigationBarsPadding(),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                ProfileTopNavigation(onBack = onBack)
-
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(4.dp))
 
                 val name = uiState.account?.displayName?.takeIf { it.isNotBlank() } ?: "Atul Bhagwat"
-                val level = uiState.profile?.level ?: 3
-                val xp = uiState.profile?.xp ?: 750L
+                val level = uiState.level
+                val xp = uiState.xp
 
                 ProfileHeroHeader(
                     displayName = name,
                     initials = extractInitials(name),
                     level = level,
-                    progressFraction = ((xp % 1000L).toFloat() / 1000f).coerceIn(0.15f, 1f),
+                    progressFraction = ((xp % 1000L).toFloat() / 1000f).coerceIn(0f, 1f),
                     onEditProfile = { showEditProfileDialog = true },
                 )
 
-                Spacer(modifier = Modifier.height(18.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
                 ProfileStatsCard(
-                    totalFocusMinutes = uiState.weeklyFocusMinutes,
+                    weeklyFocusFormatted = uiState.weeklyFocusFormatted,
                     sessionsCount = uiState.completedSessionsCount,
-                    streakDays = uiState.profile?.currentStreakDays?.takeIf { it > 0 } ?: 5,
+                    streakDays = uiState.currentStreakDays,
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(14.dp))
 
                 ProfileSettingsCard(
                     weeklyGoalHours = uiState.weeklyGoalHours,
@@ -233,14 +251,14 @@ fun ProfileScreenContent(
 
                 ProfileSignOutButton(onSignOut = actions.onSignOut)
 
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(24.dp))
             }
         }
     }
 
     if (showEditProfileDialog) {
         EditProfileDialog(
-            currentName = uiState.account?.displayName ?: "Atul Bhagwat",
+            currentName = uiState.account?.displayName ?: stringResource(R.string.profile_account_default_name),
             onConfirm = { newName ->
                 showEditProfileDialog = false
                 actions.onUpdateDisplayName(newName)
@@ -272,36 +290,42 @@ fun ProfileScreenContent(
 }
 
 @Composable
-private fun ProfileTopNavigation(
+private fun ProfileTopAppBar(
     onBack: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
-    Row(
+    Box(
         modifier = modifier
             .fillMaxWidth()
-            .statusBarsPadding(),
-        horizontalArrangement = Arrangement.Start,
-        verticalAlignment = Alignment.CenterVertically,
+            .statusBarsPadding()
+            .padding(horizontal = 12.dp, vertical = 8.dp),
     ) {
         if (onBack != null) {
-            Surface(
-                shape = CircleShape,
-                color = Color.White.copy(alpha = 0.95f),
-                shadowElevation = 2.dp,
+            IconButton(
+                onClick = onBack,
                 modifier = Modifier
-                    .size(44.dp)
-                    .clickable { onBack() },
+                    .align(Alignment.CenterStart)
+                    .size(40.dp),
             ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back",
-                        tint = ForestGreenDeep,
-                        modifier = Modifier.size(20.dp),
-                    )
-                }
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = ForestGreenDeep,
+                    modifier = Modifier.size(24.dp),
+                )
             }
         }
+
+        Text(
+            text = "Profile",
+            style = MaterialTheme.typography.titleLarge.copy(
+                fontFamily = FontFamily.Serif,
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp,
+            ),
+            color = DarkCharcoalText,
+            modifier = Modifier.align(Alignment.Center),
+        )
     }
 }
 
@@ -314,66 +338,44 @@ private fun ProfileHeroHeader(
     onEditProfile: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box(
-        modifier = modifier
-            .size(280.dp)
-            .clip(CircleShape)
-            .background(HeroBlobColor),
-        contentAlignment = Alignment.Center,
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
+        ProfileAvatarRing(
+            initials = initials,
+            progressFraction = progressFraction,
+            onEditProfile = onEditProfile,
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        Text(
+            text = displayName,
+            style = MaterialTheme.typography.headlineSmall.copy(
+                fontFamily = FontFamily.Serif,
+                fontWeight = FontWeight.Bold,
+                fontSize = 22.sp,
+            ),
+            color = DarkCharcoalText,
+        )
+
+        Spacer(modifier = Modifier.height(6.dp))
+
+        Surface(
+            shape = RoundedCornerShape(14.dp),
+            color = MintBadgeBg,
+            border = BorderStroke(1.dp, Color(0xFFC7DBCB)),
         ) {
-            Spacer(modifier = Modifier.height(20.dp))
-
             Text(
-                text = "Profile",
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontFamily = FontFamily.Serif,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 22.sp,
+                text = "${getLevelTitle(level)} · Level $level",
+                style = MaterialTheme.typography.labelMedium.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 12.5.sp,
                 ),
-                color = DarkCharcoalText,
+                color = ForestGreenDeep,
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
             )
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            ProfileAvatarRing(
-                initials = initials,
-                progressFraction = progressFraction,
-                onEditProfile = onEditProfile,
-            )
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Text(
-                text = displayName,
-                style = MaterialTheme.typography.headlineSmall.copy(
-                    fontFamily = FontFamily.Serif,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 24.sp,
-                ),
-                color = DarkCharcoalText,
-            )
-
-            Spacer(modifier = Modifier.height(6.dp))
-
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(MintBadgeBg)
-                    .padding(horizontal = 14.dp, vertical = 4.dp),
-            ) {
-                Text(
-                    text = "${getLevelTitle(level)} · Level $level",
-                    style = MaterialTheme.typography.labelMedium.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 13.sp,
-                    ),
-                    color = ForestGreenDeep,
-                )
-            }
         }
     }
 }
@@ -386,7 +388,13 @@ private fun ProfileAvatarRing(
     modifier: Modifier = Modifier,
 ) {
     Box(
-        modifier = modifier.size(96.dp),
+        modifier = modifier
+            .size(96.dp)
+            .clickable(
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() },
+                onClick = onEditProfile,
+            ),
         contentAlignment = Alignment.Center,
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
@@ -434,54 +442,57 @@ private fun ProfileAvatarRing(
             )
         }
 
-        Box(
+        Surface(
+            shape = CircleShape,
+            color = AvatarBadgeBg,
+            border = BorderStroke(2.dp, Color.White),
+            shadowElevation = 2.dp,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .offset(x = 2.dp, y = 2.dp)
                 .size(30.dp)
-                .clip(CircleShape)
-                .background(AvatarBadgeBg)
-                .border(2.dp, Color.White, CircleShape)
                 .clickable(onClick = onEditProfile),
-            contentAlignment = Alignment.Center,
         ) {
-            Icon(
-                imageVector = Icons.Outlined.Edit,
-                contentDescription = "Edit Profile",
-                tint = ForestGreenDeep,
-                modifier = Modifier.size(16.dp),
-            )
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = Icons.Outlined.Edit,
+                    contentDescription = "Edit Profile",
+                    tint = ForestGreenDeep,
+                    modifier = Modifier.size(15.dp),
+                )
+            }
         }
     }
 }
 
 @Composable
 private fun ProfileStatsCard(
-    totalFocusMinutes: Long,
+    weeklyFocusFormatted: String,
     sessionsCount: Int,
     streakDays: Int,
     modifier: Modifier = Modifier,
 ) {
     Surface(
-        shape = RoundedCornerShape(24.dp),
-        color = Color.White,
+        shape = RoundedCornerShape(22.dp),
+        color = Color.White.copy(alpha = 0.98f),
+        border = BorderStroke(1.dp, Color(0xFFE2EBE5).copy(alpha = 0.85f)),
         shadowElevation = 2.dp,
         modifier = modifier.fillMaxWidth(),
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 18.dp, horizontal = 12.dp),
+                .padding(vertical = 16.dp, horizontal = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             StatColumn(
-                value = formatFocusDuration(totalFocusMinutes),
+                value = weeklyFocusFormatted,
                 label = "This week",
                 modifier = Modifier.weight(1f),
             )
             Box(
                 modifier = Modifier
-                    .height(36.dp)
+                    .height(34.dp)
                     .width(1.dp)
                     .background(StatDividerColor),
             )
@@ -492,7 +503,7 @@ private fun ProfileStatsCard(
             )
             Box(
                 modifier = Modifier
-                    .height(36.dp)
+                    .height(34.dp)
                     .width(1.dp)
                     .background(StatDividerColor),
             )
@@ -547,8 +558,9 @@ private fun ProfileSettingsCard(
     modifier: Modifier = Modifier,
 ) {
     Surface(
-        shape = RoundedCornerShape(24.dp),
-        color = Color.White,
+        shape = RoundedCornerShape(22.dp),
+        color = Color.White.copy(alpha = 0.98f),
+        border = BorderStroke(1.dp, Color(0xFFE2EBE5).copy(alpha = 0.85f)),
         shadowElevation = 2.dp,
         modifier = modifier.fillMaxWidth(),
     ) {
@@ -661,7 +673,7 @@ private fun SettingRow(
         modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 18.dp, vertical = 14.dp),
+            .padding(horizontal = 16.dp, vertical = 13.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
@@ -700,18 +712,15 @@ private fun ProfileSignOutButton(
     onSignOut: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Button(
+    Surface(
         onClick = onSignOut,
         modifier = modifier
             .fillMaxWidth()
-            .height(54.dp),
-        shape = RoundedCornerShape(27.dp),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = SignOutBg,
-            contentColor = SignOutText,
-        ),
+            .height(50.dp),
+        shape = RoundedCornerShape(25.dp),
+        color = SignOutBg,
         border = BorderStroke(1.dp, SignOutBorder),
-        elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp, pressedElevation = 2.dp),
+        shadowElevation = 0.5.dp,
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -721,13 +730,13 @@ private fun ProfileSignOutButton(
                 imageVector = Icons.AutoMirrored.Outlined.Logout,
                 contentDescription = null,
                 tint = SignOutText,
-                modifier = Modifier.size(20.dp),
+                modifier = Modifier.size(19.dp),
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = "Sign out",
                 style = MaterialTheme.typography.labelLarge.copy(
-                    fontSize = 16.sp,
+                    fontSize = 15.5.sp,
                     fontWeight = FontWeight.SemiBold,
                 ),
                 color = SignOutText,
@@ -745,26 +754,49 @@ private fun EditProfileDialog(
     var nameInput by remember { mutableStateOf(currentName) }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Edit Display Name") },
+        title = {
+            Text(
+                text = "Edit Display Name",
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontFamily = FontFamily.Serif,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 19.sp,
+                ),
+                color = DarkCharcoalText,
+            )
+        },
         text = {
             OutlinedTextField(
                 value = nameInput,
                 onValueChange = { nameInput = it },
                 label = { Text("Display Name") },
                 singleLine = true,
+                shape = RoundedCornerShape(14.dp),
                 modifier = Modifier.fillMaxWidth(),
             )
         },
         confirmButton = {
-            TextButton(onClick = { onConfirm(nameInput.trim()) }) {
-                Text("Save")
+            TextButton(
+                onClick = { onConfirm(nameInput.trim()) },
+                enabled = nameInput.isNotBlank(),
+            ) {
+                Text(
+                    text = "Save",
+                    color = if (nameInput.isNotBlank()) ForestGreenDeep else MutedLabelColor,
+                    fontWeight = FontWeight.Bold,
+                )
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(
+                    text = "Cancel",
+                    color = MutedLabelColor,
+                )
             }
         },
+        shape = RoundedCornerShape(22.dp),
+        containerColor = Color.White,
     )
 }
 
@@ -777,32 +809,70 @@ private fun WeeklyGoalDialog(
     val goals = listOf(10, 12, 14, 16, 20, 24, 30)
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Weekly Focus Goal") },
+        title = {
+            Text(
+                text = "Weekly Focus Goal",
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontFamily = FontFamily.Serif,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 19.sp,
+                ),
+                color = DarkCharcoalText,
+            )
+        },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 goals.forEach { goal ->
-                    Row(
+                    val isSelected = goal == currentGoal
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = if (isSelected) MintBadgeBg else Color.Transparent,
+                        border = if (isSelected) BorderStroke(1.dp, Color(0xFFC7DBCB)) else null,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { onSelectGoal(goal) }
-                            .padding(vertical = 10.dp, horizontal = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
+                            .clickable { onSelectGoal(goal) },
                     ) {
-                        Text(
-                            text = "${goal} hours / week",
-                            fontWeight = if (goal == currentGoal) FontWeight.Bold else FontWeight.Normal,
-                            color = if (goal == currentGoal) ForestGreenDeep else DarkCharcoalText,
-                        )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 10.dp, horizontal = 12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                text = "${goal} hours / week",
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                    fontSize = 14.5.sp,
+                                ),
+                                color = if (isSelected) ForestGreenDeep else DarkCharcoalText,
+                            )
+                            if (isSelected) {
+                                Text(
+                                    text = "Current",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 11.sp,
+                                    ),
+                                    color = ForestGreenMedium,
+                                )
+                            }
+                        }
                     }
                 }
             }
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Close")
+                Text(
+                    text = "Close",
+                    color = ForestGreenDeep,
+                    fontWeight = FontWeight.Bold,
+                )
             }
         },
+        shape = RoundedCornerShape(22.dp),
+        containerColor = Color.White,
     )
 }
 
@@ -816,7 +886,17 @@ private fun HelpFeedbackDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Help & Account Settings") },
+        title = {
+            Text(
+                text = "Help & Account Settings",
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontFamily = FontFamily.Serif,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 19.sp,
+                ),
+                color = DarkCharcoalText,
+            )
+        },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 DialogActionRow(text = "Sync Cloud Data", onClick = { onSync(); onDismiss() })
@@ -834,9 +914,15 @@ private fun HelpFeedbackDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Close")
+                Text(
+                    text = "Close",
+                    color = ForestGreenDeep,
+                    fontWeight = FontWeight.Bold,
+                )
             }
         },
+        shape = RoundedCornerShape(22.dp),
+        containerColor = Color.White,
     )
 }
 
@@ -846,21 +932,35 @@ private fun DialogActionRow(
     onClick: () -> Unit,
     textColor: Color = DarkCharcoalText,
 ) {
-    Row(
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = Color.Transparent,
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(vertical = 10.dp, horizontal = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
+            .clickable(onClick = onClick),
     ) {
-        Text(text = text, color = textColor, fontWeight = FontWeight.Medium)
-        Icon(
-            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-            contentDescription = null,
-            tint = ChevronTint,
-            modifier = Modifier.size(18.dp),
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 10.dp, horizontal = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = text,
+                color = textColor,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 14.sp,
+                ),
+            )
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                tint = ChevronTint,
+                modifier = Modifier.size(18.dp),
+            )
+        }
     }
 }
 
@@ -883,15 +983,13 @@ private fun extractInitials(name: String): String {
 }
 
 private fun formatFocusDuration(minutes: Long): String {
-    val effectiveMinutes = if (minutes > 0) minutes else 750L
-    val hours = effectiveMinutes / 60L
-    val mins = effectiveMinutes % 60L
-    return if (hours > 0 && mins > 0) {
-        "${hours}h ${mins}m"
-    } else if (hours > 0) {
-        "${hours}h"
-    } else {
-        "${mins}m"
+    val hours = minutes / 60L
+    val mins = minutes % 60L
+    return when {
+        hours > 0L && mins > 0L -> "${hours}h ${mins}m"
+        hours > 0L -> "${hours}h"
+        mins > 0L -> "${mins}m"
+        else -> "0m"
     }
 }
 

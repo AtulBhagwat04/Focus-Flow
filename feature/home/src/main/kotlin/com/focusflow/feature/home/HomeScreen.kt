@@ -98,7 +98,7 @@ import java.util.Locale
 import kotlin.math.cos
 import kotlin.math.hypot
 import kotlin.math.sin
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.focusflow.core.designsystem.component.CustomDurationDialog
 import com.focusflow.core.designsystem.component.FocusFlowActionButton
@@ -109,6 +109,7 @@ import com.focusflow.core.designsystem.theme.FocusForestGreenDeep
 import com.focusflow.core.designsystem.theme.FocusForestMintBg
 import com.focusflow.core.designsystem.theme.FocusForestMintBorder
 import com.focusflow.core.designsystem.theme.FocusMutedText
+import com.focusflow.core.designsystem.theme.OutfitFontFamily
 
 
 @Composable
@@ -534,9 +535,10 @@ private fun HeroFocusCard(
                             val remainingMinutes = ((sessionRemainingMs + 59_999L) / 60_000L).coerceAtLeast(0L)
                             Text(
                                 text = "$selectedDurationMinutes min • $remainingMinutes min ${stringResource(R.string.home_session_remaining)}",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Normal,
-                                color = Color(0xFF4A5D52),
+                                fontFamily = FontFamily.Serif,
+                                fontSize = 12.5.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color(0xFF234434),
                             )
                         }
 
@@ -579,21 +581,21 @@ private fun HeroFocusCard(
                         Surface(
                             modifier = Modifier
                                 .weight(1.4f)
-                                .height(42.dp)
+                                .height(44.dp)
                                 .shadow(
-                                    elevation = 3.dp,
-                                    shape = RoundedCornerShape(21.dp),
+                                    elevation = 4.dp,
+                                    shape = RoundedCornerShape(22.dp),
                                     ambientColor = Color(0x201B4E36),
                                     spotColor = Color(0x351B4E36),
                                 )
-                                .clip(RoundedCornerShape(21.dp))
+                                .clip(RoundedCornerShape(22.dp))
                                 .clickable(
                                     indication = ripple(bounded = true),
                                     interactionSource = null,
                                     onClick = if (isSessionRunning) onPauseFocus else onResumeFocus,
                                 )
                                 .semantics { role = Role.Button },
-                            shape = RoundedCornerShape(21.dp),
+                            shape = RoundedCornerShape(22.dp),
                             color = FocusForestGreenDeep,
                         ) {
                             Row(
@@ -611,28 +613,35 @@ private fun HeroFocusCard(
                                 Text(
                                     text = if (isSessionRunning) stringResource(R.string.home_session_btn_pause)
                                            else stringResource(R.string.home_session_btn_resume),
-                                    fontSize = 14.sp,
+                                    fontFamily = OutfitFontFamily,
+                                    fontSize = 14.5.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color.White,
                                 )
                             }
                         }
 
-                        // End Session
+                        // End Session (Solid White Pill with Forest Green contrast)
                         Surface(
                             modifier = Modifier
                                 .weight(1f)
-                                .height(42.dp)
-                                .clip(RoundedCornerShape(21.dp))
+                                .height(44.dp)
+                                .shadow(
+                                    elevation = 2.dp,
+                                    shape = RoundedCornerShape(22.dp),
+                                    ambientColor = Color(0x101B4E36),
+                                    spotColor = Color(0x1A1B4E36),
+                                )
+                                .clip(RoundedCornerShape(22.dp))
                                 .clickable(
                                     indication = ripple(bounded = true),
                                     interactionSource = null,
                                     onClick = onStopFocus,
                                 )
                                 .semantics { role = Role.Button },
-                            shape = RoundedCornerShape(21.dp),
+                            shape = RoundedCornerShape(22.dp),
                             color = Color.White,
-                            border = BorderStroke(1.2.dp, Color(0xFFCBD5E1)),
+                            border = BorderStroke(1.5.dp, Color(0xFFCCE3D5)),
                         ) {
                             Row(
                                 modifier = Modifier.fillMaxSize(),
@@ -642,15 +651,16 @@ private fun HeroFocusCard(
                                 Icon(
                                     imageVector = Icons.Filled.Close,
                                     contentDescription = null,
-                                    tint = Color(0xFF64748B),
+                                    tint = FocusForestGreenDeep,
                                     modifier = Modifier.size(16.dp),
                                 )
-                                Spacer(modifier = Modifier.width(4.dp))
+                                Spacer(modifier = Modifier.width(5.dp))
                                 Text(
                                     text = stringResource(R.string.home_session_btn_end),
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = Color(0xFF475569),
+                                    fontFamily = OutfitFontFamily,
+                                    fontSize = 14.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = FocusForestGreenDeep,
                                 )
                             }
                         }
@@ -725,14 +735,14 @@ private fun HeroFocusCard(
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(44.dp)
+                            .height(46.dp)
                             .shadow(
                                 elevation = 4.dp,
-                                shape = RoundedCornerShape(22.dp),
+                                shape = RoundedCornerShape(23.dp),
                                 ambientColor = Color(0x201B4E36),
                                 spotColor = Color(0x351B4E36),
                             )
-                            .clip(RoundedCornerShape(22.dp))
+                            .clip(RoundedCornerShape(23.dp))
                             .clickable(
                                 indication = ripple(bounded = true),
                                 interactionSource = null,
@@ -743,7 +753,7 @@ private fun HeroFocusCard(
                                 role = Role.Button
                                 contentDescription = startFocusActionLabel
                             },
-                        shape = RoundedCornerShape(22.dp),
+                        shape = RoundedCornerShape(23.dp),
                         color = FocusForestGreenDeep,
                     ) {
                         Row(
@@ -755,13 +765,13 @@ private fun HeroFocusCard(
                                 imageVector = Icons.Filled.PlayArrow,
                                 contentDescription = null,
                                 tint = Color.White,
-                                modifier = Modifier.size(18.dp),
+                                modifier = Modifier.size(19.dp),
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = startFocusActionLabel,
-                                fontFamily = FontFamily.Serif,
-                                fontSize = 15.sp,
+                                fontFamily = OutfitFontFamily,
+                                fontSize = 15.5.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White,
                             )
@@ -787,14 +797,14 @@ private fun DurationPill(
         label = "pill_bg",
     )
     val numberColor = if (isSelected) Color.White else Color(0xFF14291E)
-    val unitColor = if (isSelected) Color(0xD9FFFFFF) else Color(0xFF64748B)
-    val borderColor = if (isSelected) FocusForestGreenDeep else Color(0xFFE4ECE6)
+    val unitColor = if (isSelected) Color(0xD9FFFFFF) else FocusForestGreenDeep
+    val borderColor = if (isSelected) FocusForestGreenDeep else Color(0xFFCCE3D5)
 
     Surface(
         modifier = modifier
             .height(46.dp)
             .shadow(
-                elevation = if (isSelected) 3.dp else 1.dp,
+                elevation = if (isSelected) 3.dp else 2.dp,
                 shape = RoundedCornerShape(12.dp),
                 ambientColor = if (isSelected) Color(0x201B4E36) else Color(0x06000000),
                 spotColor = if (isSelected) Color(0x351B4E36) else Color(0x0C000000),
@@ -811,7 +821,7 @@ private fun DurationPill(
             },
         shape = RoundedCornerShape(12.dp),
         color = bgColor,
-        border = BorderStroke(1.dp, borderColor),
+        border = BorderStroke(1.2.dp, borderColor),
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -820,7 +830,7 @@ private fun DurationPill(
         ) {
             Text(
                 text = durationNumber,
-                fontFamily = FontFamily.Serif,
+                fontFamily = OutfitFontFamily,
                 fontSize = 15.5.sp,
                 fontWeight = FontWeight.Bold,
                 color = numberColor,
@@ -828,9 +838,9 @@ private fun DurationPill(
             )
             Text(
                 text = unitLabel,
-                fontFamily = FontFamily.Serif,
+                fontFamily = OutfitFontFamily,
                 fontSize = 10.sp,
-                fontWeight = FontWeight.Medium,
+                fontWeight = FontWeight.Bold,
                 color = unitColor,
                 lineHeight = 11.sp,
             )
@@ -851,14 +861,14 @@ private fun CustomPill(
         animationSpec = tween(durationMillis = 200),
         label = "custom_pill_bg",
     )
-    val borderColor = if (isSelected) FocusForestGreenDeep else Color(0xFFE4ECE6)
+    val borderColor = if (isSelected) FocusForestGreenDeep else Color(0xFFCCE3D5)
     val customCd = if (isSelected) "$customMinutes $unitLabel" else stringResource(R.string.home_hero_custom)
 
     Surface(
         modifier = modifier
             .height(46.dp)
             .shadow(
-                elevation = if (isSelected) 3.dp else 1.dp,
+                elevation = if (isSelected) 3.dp else 2.dp,
                 shape = RoundedCornerShape(12.dp),
                 ambientColor = if (isSelected) Color(0x201B4E36) else Color(0x06000000),
                 spotColor = if (isSelected) Color(0x351B4E36) else Color(0x0C000000),
@@ -875,7 +885,7 @@ private fun CustomPill(
             },
         shape = RoundedCornerShape(12.dp),
         color = bgColor,
-        border = BorderStroke(1.dp, borderColor),
+        border = BorderStroke(1.2.dp, borderColor),
     ) {
         if (isSelected) {
             Column(
@@ -885,7 +895,7 @@ private fun CustomPill(
             ) {
                 Text(
                     text = customMinutes.toString(),
-                    fontFamily = FontFamily.Serif,
+                    fontFamily = OutfitFontFamily,
                     fontSize = 15.5.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White,
@@ -893,9 +903,9 @@ private fun CustomPill(
                 )
                 Text(
                     text = unitLabel,
-                    fontFamily = FontFamily.Serif,
+                    fontFamily = OutfitFontFamily,
                     fontSize = 10.sp,
-                    fontWeight = FontWeight.Medium,
+                    fontWeight = FontWeight.Bold,
                     color = Color(0xD9FFFFFF),
                     lineHeight = 11.sp,
                 )
@@ -907,8 +917,8 @@ private fun CustomPill(
             ) {
                 Text(
                     text = stringResource(R.string.home_hero_custom),
-                    fontFamily = FontFamily.Serif,
-                    fontSize = 12.5.sp,
+                    fontFamily = OutfitFontFamily,
+                    fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF14291E),
                     textAlign = TextAlign.Center,
@@ -1323,10 +1333,12 @@ private fun WeeklyProgressCard(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.Bottom,
                     ) {
-                        val maxDailyHour = (dailyHours.maxOfOrNull { it.second } ?: 5f).coerceAtLeast(1f)
+                        val hasAnyFocus = dailyHours.any { it.second > 0f }
+                        val maxDailyHour = if (hasAnyFocus) (dailyHours.maxOf { it.second }).coerceAtLeast(0.5f) else 1f
                         dailyHours.forEach { (day, hours) ->
-                            val barHeightFraction = (hours / maxDailyHour).coerceIn(0.2f, 1f)
+                            val barHeightFraction = if (hours > 0f) (hours / maxDailyHour).coerceIn(0.18f, 1f) else 0.08f
                             val targetBarDp = (42 * barHeightFraction).dp
+                            val barColor = if (hours > 0f) Color(0xFF76A88E) else Color(0xFFE2E8F0)
 
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -1343,14 +1355,14 @@ private fun WeeklyProgressCard(
                                                 bottomEnd = 3.dp
                                             )
                                         )
-                                        .background(Color(0xFF76A88E)),
+                                        .background(barColor),
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
                                     text = day,
                                     fontSize = 10.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = Color(0xFF64748B),
+                                    fontWeight = if (hours > 0f) FontWeight.SemiBold else FontWeight.Medium,
+                                    color = if (hours > 0f) Color(0xFF0F172A) else Color(0xFF64748B),
                                 )
                             }
                         }

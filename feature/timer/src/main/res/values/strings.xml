@@ -27,4 +27,14 @@
     <string name="timer_task_status_paused">Paused</string>
     <string name="timer_task_progress_format">%1$s of %2$dm completed (%3$d%%)</string>
     <string name="timer_task_cd_clear">Clear active task</string>
+    <string name="timer_ambient_sound_playing">%1$s • Playing</string>
+    <string name="timer_ambient_sound_off">Off • Tap to play soothing audio</string>
+    <string name="timer_ambient_dialog_subtitle">Play soothing background sounds to enhance deep focus</string>
+    <string name="timer_done">Done</string>
+    <string name="timer_sound_desc_none">Silent focus without background audio</string>
+    <string name="timer_sound_desc_white_noise">Steady broadband masking interruptions</string>
+    <string name="timer_sound_desc_rain">Gentle raindrops washing away distractions</string>
+    <string name="timer_sound_desc_forest">Soothing woodland breeze and birds</string>
+    <string name="timer_sound_desc_stream">Calm mountain river flowing gently</string>
+    <string name="timer_sound_desc_coffee_shop">Warm ambient cafe murmur &amp; espresso</string>
 </resources>

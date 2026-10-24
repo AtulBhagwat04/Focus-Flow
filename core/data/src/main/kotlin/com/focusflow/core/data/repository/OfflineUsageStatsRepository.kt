@@ -75,6 +75,46 @@ class OfflineUsageStatsRepository @Inject constructor(
         }
     }
 
+    override fun observeRangeUsage(startEpochDay: Long, endEpochDay: Long): Flow<DailyUsageStats> {
+        val zoneId = ZoneId.systemDefault()
+        val startDate = LocalDate.ofEpochDay(startEpochDay)
+        val endDate = LocalDate.ofEpochDay(endEpochDay)
+        val startMs = startDate.atStartOfDay(zoneId).toInstant().toEpochMilli()
+        val endMs = endDate.plusDays(1).atStartOfDay(zoneId).toInstant().toEpochMilli()
+
+        val dailyFlow = usageDao.observeDateRangeUsage(startEpochDay, endEpochDay)
+        val appsFlow = usageDao.observeAppUsagesForDateRange(startEpochDay, endEpochDay)
+        val focusFlow = focusSessionDao.observeFocusDurationBetween(startMs, endMs)
+
+        return combine(dailyFlow, appsFlow, focusFlow) { dailyList, appEntities, focusDurationMs ->
+            val totalScreenTimeMs = dailyList.sumOf { it.totalScreenTimeMs }
+            val totalUnlocks = dailyList.sumOf { it.unlockCount }
+
+            val aggregatedApps = appEntities
+                .groupBy { it.packageName }
+                .map { (packageName, entries) ->
+                    val first = entries.first()
+                    AppUsageSummary(
+                        packageName = packageName,
+                        appName = first.appName,
+                        totalTimeForegroundMs = entries.sumOf { it.totalTimeForegroundMs },
+                        launchCount = entries.sumOf { it.launchCount },
+                        lastTimeUsedEpochMs = entries.maxOf { it.lastTimeUsedEpochMs },
+                        isSafeListed = entries.any { it.isSafeListed },
+                    )
+                }
+                .sortedByDescending { it.totalTimeForegroundMs }
+
+            DailyUsageStats(
+                epochDay = startEpochDay,
+                totalScreenTimeMs = totalScreenTimeMs,
+                totalFocusTimeMs = focusDurationMs,
+                unlockCount = totalUnlocks,
+                topApps = aggregatedApps,
+            )
+        }
+    }
+
     override suspend fun refreshUsageForDay(epochDay: Long) {
         val essentials = appListRepository.getUserEssentials().first()
         val raw = usageReader.readUsageForDay(epochDay, essentials)

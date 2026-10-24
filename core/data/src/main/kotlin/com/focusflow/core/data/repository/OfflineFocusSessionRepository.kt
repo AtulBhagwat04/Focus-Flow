@@ -89,4 +89,20 @@ class OfflineFocusSessionRepository @Inject constructor(
         focusSessionDao.getHistoricalSessions(limit).map { list ->
             list.map { it.asDomainModel() }
         }
+
+    override fun observeFocusDurationBetween(startEpochMs: Long, endEpochMs: Long): Flow<Long> =
+        focusSessionDao.observeFocusDurationBetween(startEpochMs, endEpochMs)
+
+    override fun observeCompletedSessionsBetween(startEpochMs: Long, endEpochMs: Long): Flow<List<FocusSession>> =
+        focusSessionDao.observeCompletedSessionsBetween(startEpochMs, endEpochMs).map { list ->
+            list.map { it.asDomainModel() }
+        }
+
+    override fun observeCompletedSessionCount(): Flow<Int> =
+        focusSessionDao.observeCompletedSessionCount()
+
+    override fun observeAllCompletedSessions(): Flow<List<FocusSession>> =
+        focusSessionDao.observeAllCompletedSessions().map { list ->
+            list.map { it.asDomainModel() }
+        }
 }

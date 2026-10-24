@@ -124,6 +124,12 @@ abstract class DataModule {
         impl: com.focusflow.core.data.repository.OfflineAdvancedBlockingRepository,
     ): com.focusflow.core.domain.blocking.repository.AdvancedBlockingRepository
 
+    @Binds
+    @Singleton
+    abstract fun bindUserPreferencesRepository(
+        impl: com.focusflow.core.data.repository.OfflineUserPreferencesRepository,
+    ): com.focusflow.core.domain.repository.UserPreferencesRepository
+
     companion object {
 
         @Provides

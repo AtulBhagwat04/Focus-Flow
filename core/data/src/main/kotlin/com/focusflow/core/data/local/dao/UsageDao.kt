@@ -27,6 +27,9 @@ interface UsageDao {
     @Query("SELECT * FROM app_usage WHERE epochDay = :epochDay ORDER BY totalTimeForegroundMs DESC")
     fun observeAppUsagesForDay(epochDay: Long): Flow<List<AppUsageEntity>>
 
+    @Query("SELECT * FROM app_usage WHERE epochDay >= :startEpochDay AND epochDay <= :endEpochDay ORDER BY totalTimeForegroundMs DESC")
+    fun observeAppUsagesForDateRange(startEpochDay: Long, endEpochDay: Long): Flow<List<AppUsageEntity>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAppUsages(entities: List<AppUsageEntity>)
 

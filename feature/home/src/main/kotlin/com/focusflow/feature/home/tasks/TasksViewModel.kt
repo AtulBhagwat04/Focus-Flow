@@ -50,4 +50,16 @@ class TasksViewModel @Inject constructor(
             taskRepository.addTask(title, durationMinutes)
         }
     }
+
+    fun onUpdateTask(taskId: String, title: String, durationMinutes: Int) {
+        viewModelScope.launch {
+            taskRepository.updateTask(taskId, title, durationMinutes)
+        }
+    }
+
+    fun onDeleteTask(taskId: String) {
+        viewModelScope.launch {
+            taskRepository.deleteTask(taskId)
+        }
+    }
 }

@@ -45,11 +45,33 @@ class OfflineFocusSessionRepositoryTest {
             sessions.value = sessions.value - id
         }
 
+        private fun isFinishedWithFocusTime(it: FocusSessionEntity): Boolean =
+            it.state == "COMPLETED" || (it.state == "ABORTED" && it.completedAtEpochMs != null && it.completedAtEpochMs > it.startedAtEpochMs)
+
         override fun observeFocusDurationBetween(startEpochMs: Long, endEpochMs: Long): Flow<Long> =
             sessions.map { map ->
                 map.values
-                    .filter { it.state == "COMPLETED" && it.startedAtEpochMs >= startEpochMs && it.startedAtEpochMs < endEpochMs }
+                    .filter { isFinishedWithFocusTime(it) && it.startedAtEpochMs >= startEpochMs && it.startedAtEpochMs < endEpochMs }
                     .sumOf { (it.completedAtEpochMs ?: it.startedAtEpochMs) - it.startedAtEpochMs - it.totalPausedDurationMs }
+            }
+
+        override fun observeCompletedSessionsBetween(startEpochMs: Long, endEpochMs: Long): Flow<List<FocusSessionEntity>> =
+            sessions.map { map ->
+                map.values
+                    .filter { isFinishedWithFocusTime(it) && it.startedAtEpochMs >= startEpochMs && it.startedAtEpochMs < endEpochMs }
+                    .sortedBy { it.startedAtEpochMs }
+            }
+
+        override fun observeCompletedSessionCount(): Flow<Int> =
+            sessions.map { map ->
+                map.values.count { isFinishedWithFocusTime(it) }
+            }
+
+        override fun observeAllCompletedSessions(): Flow<List<FocusSessionEntity>> =
+            sessions.map { map ->
+                map.values
+                    .filter { isFinishedWithFocusTime(it) }
+                    .sortedByDescending { it.startedAtEpochMs }
             }
     }
 

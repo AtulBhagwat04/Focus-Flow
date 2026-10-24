@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.outlined.CalendarToday
+import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -123,6 +124,8 @@ fun TasksScreen(
             viewModel.onStartFocus(task.id, onStartFocusOnTask)
         },
         onAddTask = viewModel::onAddTask,
+        onUpdateTask = viewModel::onUpdateTask,
+        onDeleteTask = viewModel::onDeleteTask,
         modifier = modifier,
     )
 }
@@ -134,9 +137,12 @@ fun TasksScreenContent(
     onToggleTask: (String) -> Unit,
     onStartFocus: (FocusTask) -> Unit,
     onAddTask: (String, Int) -> Unit,
+    onUpdateTask: (String, String, Int) -> Unit = { _, _, _ -> },
+    onDeleteTask: (String) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     var showAddTaskDialog by remember { mutableStateOf(false) }
+    var taskToEdit by remember { mutableStateOf<FocusTask?>(null) }
 
     val completedTasks = tasks.filter { it.isCompleted }
     val upNextTasks = tasks.filter { !it.isCompleted }
@@ -260,6 +266,7 @@ fun TasksScreenContent(
                         task = task,
                         onToggle = { onToggleTask(task.id) },
                         onFocus = { onStartFocus(task) },
+                        onEdit = { taskToEdit = task },
                     )
                 }
             }
@@ -278,6 +285,7 @@ fun TasksScreenContent(
                     CompletedTaskCard(
                         task = task,
                         onToggle = { onToggleTask(task.id) },
+                        onEdit = { taskToEdit = task },
                     )
                 }
             }
@@ -393,6 +401,21 @@ fun TasksScreenContent(
             onAddTask = { title, duration ->
                 onAddTask(title, duration)
                 showAddTaskDialog = false
+            },
+        )
+    }
+
+    taskToEdit?.let { task ->
+        EditTaskDialog(
+            task = task,
+            onDismiss = { taskToEdit = null },
+            onSave = { updatedTitle, updatedDuration ->
+                onUpdateTask(task.id, updatedTitle, updatedDuration)
+                taskToEdit = null
+            },
+            onDelete = {
+                onDeleteTask(task.id)
+                taskToEdit = null
             },
         )
     }
@@ -605,12 +628,14 @@ private fun UpNextTaskCard(
     task: FocusTask,
     onToggle: () -> Unit,
     onFocus: () -> Unit,
+    onEdit: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val borderColor = if (task.isCurrentFocus) FocusForestGreen else FocusCardBorder
     val borderWidth = if (task.isCurrentFocus) 1.2.dp else 1.dp
 
     Surface(
+        onClick = onEdit,
         modifier = modifier
             .fillMaxWidth()
             .shadow(
@@ -765,9 +790,11 @@ private fun UpNextTaskCard(
 private fun CompletedTaskCard(
     task: FocusTask,
     onToggle: () -> Unit,
+    onEdit: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Surface(
+        onClick = onEdit,
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
         color = FocusCompletedCardBg,
@@ -1200,6 +1227,509 @@ private fun AddTaskDialog(
     }
 }
 
+/**
+ * Dialog to edit an existing focus task or delete it.
+ * - Allows changing the title and duration (25m, 50m, 100m, or in-place custom).
+ * - Symmetrical Cancel and Save Changes buttons.
+ * - Prominent Delete icon button in header with confirmation dialog.
+ */
+@Composable
+private fun EditTaskDialog(
+    task: FocusTask,
+    onDismiss: () -> Unit,
+    onSave: (String, Int) -> Unit,
+    onDelete: () -> Unit,
+) {
+    var taskTitle by remember { mutableStateOf(task.title) }
+    val initialIsPreset = task.durationMinutes in listOf(25, 50, 100)
+    var selectedPreset by remember {
+        mutableIntStateOf(if (initialIsPreset) task.durationMinutes else 25)
+    }
+    var isCustomSelected by remember { mutableStateOf(!initialIsPreset) }
+    var customMinutesText by remember {
+        mutableStateOf(if (!initialIsPreset) task.durationMinutes.toString() else "30")
+    }
+    val customFocusRequester = remember { FocusRequester() }
+    var showDeleteConfirm by remember { mutableStateOf(false) }
+
+    val effectiveDuration = if (isCustomSelected) {
+        val parsed = customMinutesText.toIntOrNull()
+        if (parsed != null && parsed > 0) parsed.coerceAtMost(360) else 0
+    } else {
+        selectedPreset
+    }
+
+    LaunchedEffect(isCustomSelected) {
+        if (isCustomSelected) {
+            customFocusRequester.requestFocus()
+        }
+    }
+
+    if (showDeleteConfirm) {
+        DeleteTaskConfirmDialog(
+            onDismiss = { showDeleteConfirm = false },
+            onConfirm = {
+                showDeleteConfirm = false
+                onDelete()
+            },
+        )
+    }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+    ) {
+        CompositionLocalProvider(LocalContentColor provides FocusDarkText) {
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 22.dp)
+                    .shadow(
+                        elevation = 16.dp,
+                        shape = RoundedCornerShape(26.dp),
+                        ambientColor = Color(0x18000000),
+                        spotColor = Color(0x28000000),
+                    ),
+                shape = RoundedCornerShape(26.dp),
+                color = Color.White,
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 22.dp, vertical = 22.dp),
+                ) {
+                    // Header row: Icon badge, Title, and Delete action button
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Surface(
+                            shape = CircleShape,
+                            color = FocusForestMintBg,
+                            modifier = Modifier.size(44.dp),
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Timer,
+                                    contentDescription = null,
+                                    tint = FocusForestGreenDeep,
+                                    modifier = Modifier.size(24.dp),
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.width(14.dp))
+
+                        Text(
+                            text = stringResource(R.string.tasks_dialog_edit_title),
+                            fontFamily = FontFamily.Serif,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp,
+                            color = FocusDarkText,
+                            letterSpacing = (-0.4).sp,
+                            modifier = Modifier.weight(1f),
+                        )
+
+                        // Delete button (soft red circular background)
+                        Surface(
+                            shape = CircleShape,
+                            color = Color(0xFFFEE2E2),
+                            modifier = Modifier.size(38.dp),
+                        ) {
+                            IconButton(
+                                onClick = { showDeleteConfirm = true },
+                                modifier = Modifier.fillMaxSize(),
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.DeleteOutline,
+                                    contentDescription = stringResource(R.string.tasks_dialog_btn_delete),
+                                    tint = Color(0xFFDC2626),
+                                    modifier = Modifier.size(20.dp),
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // 1. Task Title Input (auto-adjusts according to content up to 3 lines, max 80 chars)
+                    Text(
+                        text = stringResource(R.string.tasks_dialog_input_label).uppercase(),
+                        fontFamily = OutfitFontFamily,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.8.sp,
+                        color = FocusMutedText,
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    OutlinedTextField(
+                        value = taskTitle,
+                        onValueChange = { input ->
+                            if (input.length <= 80) {
+                                taskTitle = input
+                            }
+                        },
+                        placeholder = {
+                            Text(
+                                text = stringResource(R.string.tasks_dialog_input_placeholder),
+                                fontFamily = OutfitFontFamily,
+                                fontSize = 14.sp,
+                                color = Color(0xFF7E9489),
+                            )
+                        },
+                        minLines = 1,
+                        maxLines = 3,
+                        textStyle = TextStyle(
+                            fontFamily = OutfitFontFamily,
+                            fontSize = 14.5.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = FocusDarkText,
+                        ),
+                        trailingIcon = {
+                            if (taskTitle.isNotEmpty()) {
+                                IconButton(onClick = { taskTitle = "" }) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Close,
+                                        contentDescription = stringResource(R.string.tasks_sheet_clear_input),
+                                        tint = FocusMutedText,
+                                        modifier = Modifier.size(17.dp),
+                                    )
+                                }
+                            }
+                        },
+                        shape = RoundedCornerShape(14.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = FocusDarkText,
+                            unfocusedTextColor = FocusDarkText,
+                            focusedContainerColor = Color(0xFFFAFCFA),
+                            unfocusedContainerColor = Color(0xFFF5FAF7),
+                            focusedBorderColor = FocusForestGreenDeep,
+                            unfocusedBorderColor = Color(0xFFD6E4DB),
+                            cursorColor = FocusForestGreenDeep,
+                            focusedPlaceholderColor = Color(0xFF7E9489),
+                            unfocusedPlaceholderColor = Color(0xFF7E9489),
+                        ),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // 2. Focus Duration Header
+                    Text(
+                        text = stringResource(R.string.tasks_dialog_duration_label).uppercase(),
+                        fontFamily = OutfitFontFamily,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.8.sp,
+                        color = FocusMutedText,
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // 3. Duration Options: 3 Presets (25, 50, 100 min) + In-Place Custom Input
+                    val presets = listOf(25, 50, 100)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        presets.forEach { preset ->
+                            val isSelected = !isCustomSelected && selectedPreset == preset
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = if (isSelected) FocusForestGreenDeep else Color(0xFFF1F6F3),
+                                border = BorderStroke(
+                                    1.dp,
+                                    if (isSelected) FocusForestGreenDeep else Color(0xFFDCE7E1),
+                                ),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(42.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .clickable {
+                                        isCustomSelected = false
+                                        selectedPreset = preset
+                                    },
+                            ) {
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Text(
+                                        text = "${preset}m",
+                                        fontSize = 12.5.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (isSelected) Color.White else FocusDarkText,
+                                    )
+                                }
+                            }
+                        }
+
+                        // 4th Slot: In-place Custom Option / Input
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (isCustomSelected) Color.White else Color(0xFFF1F6F3),
+                            border = BorderStroke(
+                                if (isCustomSelected) 1.5.dp else 1.dp,
+                                if (isCustomSelected) FocusForestGreenDeep else Color(0xFFDCE7E1),
+                            ),
+                            modifier = Modifier
+                                .weight(1.25f)
+                                .height(42.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable {
+                                    if (!isCustomSelected) {
+                                        isCustomSelected = true
+                                    }
+                                },
+                        ) {
+                            if (!isCustomSelected) {
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.tasks_dialog_custom),
+                                        fontSize = 12.5.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = FocusDarkText,
+                                    )
+                                }
+                            } else {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(horizontal = 6.dp),
+                                    horizontalArrangement = Arrangement.Center,
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    BasicTextField(
+                                        value = customMinutesText,
+                                        onValueChange = { input ->
+                                            val digits = input.filter { it.isDigit() }
+                                            if (digits.length <= 3) {
+                                                customMinutesText = digits
+                                            }
+                                        },
+                                        singleLine = true,
+                                        keyboardOptions = KeyboardOptions(
+                                            keyboardType = KeyboardType.Number,
+                                            imeAction = ImeAction.Done,
+                                        ),
+                                        textStyle = TextStyle(
+                                            fontFamily = OutfitFontFamily,
+                                            fontSize = 13.5.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            textAlign = TextAlign.Center,
+                                            color = FocusForestGreenDeep,
+                                        ),
+                                        cursorBrush = SolidColor(FocusForestGreenDeep),
+                                        modifier = Modifier
+                                            .focusRequester(customFocusRequester)
+                                            .widthIn(min = 18.dp, max = 34.dp),
+                                        decorationBox = { innerTextField ->
+                                            Box(contentAlignment = Alignment.Center) {
+                                                if (customMinutesText.isEmpty()) {
+                                                    Text(
+                                                        text = "0",
+                                                        fontSize = 13.5.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = Color(0xFFA5B8AD),
+                                                    )
+                                                }
+                                                innerTextField()
+                                            }
+                                        },
+                                    )
+                                    Text(
+                                        text = "m",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = FocusForestGreenDeep,
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    // 4. Action Buttons (Cancel + Save Changes - equal 1f size)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        // Cancel Button
+                        Surface(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(46.dp)
+                                .clip(RoundedCornerShape(14.dp))
+                                .clickable(
+                                    indication = ripple(bounded = true),
+                                    interactionSource = null,
+                                    onClick = onDismiss,
+                                ),
+                            shape = RoundedCornerShape(14.dp),
+                            color = Color.White,
+                            border = BorderStroke(1.2.dp, Color(0xFFCBD5E1)),
+                        ) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.tasks_dialog_btn_cancel),
+                                    fontFamily = FontFamily.Serif,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp,
+                                    color = Color(0xFF1E293B),
+                                )
+                            }
+                        }
+
+                        // Save Changes Button
+                        val isEnabled = taskTitle.isNotBlank() && effectiveDuration > 0
+                        Surface(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(46.dp)
+                                .shadow(
+                                    elevation = if (isEnabled) 4.dp else 0.dp,
+                                    shape = RoundedCornerShape(14.dp),
+                                    ambientColor = Color(0x201B4E36),
+                                    spotColor = Color(0x351B4E36),
+                                )
+                                .clip(RoundedCornerShape(14.dp))
+                                .clickable(
+                                    enabled = isEnabled,
+                                    indication = ripple(bounded = true),
+                                    interactionSource = null,
+                                    onClick = {
+                                        if (isEnabled) {
+                                            onSave(taskTitle.trim(), effectiveDuration)
+                                        }
+                                    },
+                                ),
+                            shape = RoundedCornerShape(14.dp),
+                            color = if (isEnabled) FocusForestGreenDeep else Color(0xFFDCE6DF),
+                        ) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.tasks_dialog_btn_save),
+                                    fontFamily = FontFamily.Serif,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp,
+                                    color = if (isEnabled) Color.White else Color(0xFF8AA094),
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Confirmation dialog before permanently deleting a task.
+ */
+@Composable
+private fun DeleteTaskConfirmDialog(
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        CompositionLocalProvider(LocalContentColor provides FocusDarkText) {
+            Surface(
+                shape = RoundedCornerShape(22.dp),
+                color = Color.White,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .shadow(elevation = 16.dp, shape = RoundedCornerShape(22.dp)),
+            ) {
+                Column(
+                    modifier = Modifier.padding(22.dp),
+                ) {
+                    Text(
+                        text = stringResource(R.string.tasks_dialog_delete_confirm_title),
+                        fontFamily = FontFamily.Serif,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 19.sp,
+                        color = FocusDarkText,
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = stringResource(R.string.tasks_dialog_delete_confirm_message),
+                        fontFamily = OutfitFontFamily,
+                        fontSize = 13.5.sp,
+                        color = FocusMutedText,
+                        lineHeight = 19.sp,
+                    )
+                    Spacer(modifier = Modifier.height(20.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        Surface(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(44.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable(
+                                    indication = ripple(bounded = true),
+                                    interactionSource = null,
+                                    onClick = onDismiss,
+                                ),
+                            shape = RoundedCornerShape(12.dp),
+                            color = Color.White,
+                            border = BorderStroke(1.2.dp, Color(0xFFCBD5E1)),
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text(
+                                    text = stringResource(R.string.tasks_dialog_btn_cancel),
+                                    fontFamily = FontFamily.Serif,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 13.5.sp,
+                                    color = Color(0xFF1E293B),
+                                )
+                            }
+                        }
+                        Surface(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(44.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable(
+                                    indication = ripple(bounded = true),
+                                    interactionSource = null,
+                                    onClick = onConfirm,
+                                ),
+                            shape = RoundedCornerShape(12.dp),
+                            color = Color(0xFFDC2626),
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text(
+                                    text = stringResource(R.string.tasks_dialog_btn_delete_confirm),
+                                    fontFamily = FontFamily.Serif,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 13.5.sp,
+                                    color = Color.White,
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 @Preview(showBackground = true, backgroundColor = 0xFFF7FAF8)
 @Composable
 private fun TasksScreenPreview() {
@@ -1214,5 +1744,7 @@ private fun TasksScreenPreview() {
         onToggleTask = {},
         onStartFocus = {},
         onAddTask = { _, _ -> },
+        onUpdateTask = { _, _, _ -> },
+        onDeleteTask = {},
     )
 }

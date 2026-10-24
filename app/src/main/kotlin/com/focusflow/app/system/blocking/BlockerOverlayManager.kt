@@ -379,85 +379,115 @@ internal fun BlockerOverlayContent(
                 .fillMaxSize()
                 .statusBarsPadding()
                 .navigationBarsPadding()
-                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Spacer(modifier = Modifier.height(48.dp))
-
-            // ── App Icon with Radiating Accents & Red Minus Badge ──────────────
-            RadiantAppIcon(
-                iconBitmap = appIconBitmap,
+            BlockerHeroContent(
                 appName = appName,
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // ── Headline: "[AppName]\nis blocked" in elegant Serif ──────────────
-            Text(
-                text = buildAnnotatedString {
-                    withStyle(
-                        SpanStyle(
-                            color = HeadlineNameColor,
-                            fontFamily = FontFamily.Serif,
-                            fontWeight = FontWeight.Bold,
-                        ),
-                    ) {
-                        append(appName)
-                    }
-                    append("\n")
-                    withStyle(
-                        SpanStyle(
-                            color = ForestGreenPrimary,
-                            fontFamily = FontFamily.Serif,
-                            fontWeight = FontWeight.Bold,
-                        ),
-                    ) {
-                        append("is blocked")
-                    }
-                },
-                style = MaterialTheme.typography.headlineMedium.copy(
-                    fontSize = 28.sp,
-                    lineHeight = 35.sp,
-                    letterSpacing = (-0.3).sp,
-                ),
-                textAlign = TextAlign.Center,
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // ── Subtitle / Reason ──────────────────────────────────────────────
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontSize = 15.sp,
-                    lineHeight = 22.sp,
-                ),
-                color = SubtitleTextColor,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = 20.dp),
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // ── Session Countdown Pill ─────────────────────────────────────────
-            SessionCountdownPill(
+                appIconBitmap = appIconBitmap,
+                subtitle = subtitle,
                 reason = decision.reason,
-                remainingDurationMs = remainingSessionDurationMs,
+                remainingSessionDurationMs = remainingSessionDurationMs,
+                modifier = Modifier.weight(1f),
             )
 
-            Spacer(modifier = Modifier.height(48.dp))
-
-            // ── Action Buttons: "Back to Focus", "Not Now", Emergency Pass ─────
+            // ── Action Buttons: Anchored at the bottom (center) ───────────────
             BlockerActionButtons(
                 remainingEmergencyPasses = remainingEmergencyPasses,
                 onBackToFocus = onBackToFocus,
                 onNotNow = onNotNow,
                 onEmergencyPass = onEmergencyPass,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
             )
-
-            Spacer(modifier = Modifier.height(24.dp))
         }
+    }
+}
+
+/**
+ * Upper hero content for the blocked app overlay (icon, title, subtitle, countdown pill).
+ */
+@Composable
+private fun BlockerHeroContent(
+    appName: String,
+    appIconBitmap: ImageBitmap?,
+    subtitle: String,
+    reason: BlockReason,
+    remainingSessionDurationMs: Long?,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // ── App Icon with Radiating Accents & Red Minus Badge ──────────────
+        RadiantAppIcon(
+            iconBitmap = appIconBitmap,
+            appName = appName,
+        )
+
+        Spacer(modifier = Modifier.height(22.dp))
+
+        // ── Headline: "[AppName]\nis blocked" in elegant Serif ──────────────
+        Text(
+            text = buildAnnotatedString {
+                withStyle(
+                    SpanStyle(
+                        color = HeadlineNameColor,
+                        fontFamily = FontFamily.Serif,
+                        fontWeight = FontWeight.Bold,
+                    ),
+                ) {
+                    append(appName)
+                }
+                append("\n")
+                withStyle(
+                    SpanStyle(
+                        color = ForestGreenPrimary,
+                        fontFamily = FontFamily.Serif,
+                        fontWeight = FontWeight.Bold,
+                    ),
+                ) {
+                    append("is blocked")
+                }
+            },
+            style = MaterialTheme.typography.headlineMedium.copy(
+                fontSize = 28.sp,
+                lineHeight = 35.sp,
+                letterSpacing = (-0.3).sp,
+            ),
+            textAlign = TextAlign.Center,
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // ── Subtitle / Reason ──────────────────────────────────────────────
+        Text(
+            text = subtitle,
+            style = MaterialTheme.typography.bodyMedium.copy(
+                fontSize = 15.sp,
+                lineHeight = 22.sp,
+            ),
+            color = SubtitleTextColor,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(horizontal = 20.dp),
+        )
+
+        Spacer(modifier = Modifier.height(18.dp))
+
+        // ── Session Countdown Pill ─────────────────────────────────────────
+        SessionCountdownPill(
+            reason = reason,
+            remainingDurationMs = remainingSessionDurationMs,
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
     }
 }
 

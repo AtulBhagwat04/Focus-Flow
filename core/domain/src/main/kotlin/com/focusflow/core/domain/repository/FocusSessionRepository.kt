@@ -51,4 +51,24 @@ interface FocusSessionRepository {
      * Returns historical sessions ordered by start time descending.
      */
     fun getSessionHistory(limit: Int = 50): Flow<List<FocusSession>>
+
+    /**
+     * Observes total focus duration in milliseconds between two timestamps for completed sessions.
+     */
+    fun observeFocusDurationBetween(startEpochMs: Long, endEpochMs: Long): Flow<Long>
+
+    /**
+     * Observes completed focus sessions between two timestamps.
+     */
+    fun observeCompletedSessionsBetween(startEpochMs: Long, endEpochMs: Long): Flow<List<FocusSession>>
+
+    /**
+     * Observes the total number of completed focus sessions.
+     */
+    fun observeCompletedSessionCount(): Flow<Int>
+
+    /**
+     * Observes all completed sessions for streak and historical calculations.
+     */
+    fun observeAllCompletedSessions(): Flow<List<FocusSession>>
 }

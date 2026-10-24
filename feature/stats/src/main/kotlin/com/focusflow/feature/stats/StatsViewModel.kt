@@ -8,21 +8,27 @@ import com.focusflow.core.domain.permission.PermissionHealthRepository
 import com.focusflow.core.domain.usage.model.DailyUsageStats
 import com.focusflow.core.domain.usage.repository.UsageStatsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.temporal.TemporalAdjusters
 import javax.inject.Inject
 
 private const val MILLIS_PER_MINUTE = 60_000L
 private const val MINUTES_PER_HOUR = 60L
 private const val TOP_APPS_LIMIT = 5
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class StatsViewModel @Inject constructor(
     private val usageStatsRepository: UsageStatsRepository,
@@ -33,22 +39,20 @@ class StatsViewModel @Inject constructor(
     private val selectedRange = MutableStateFlow(StatsTimeRange.DAY)
     private val isRefreshing = MutableStateFlow(false)
 
-    private val todayEpochDay: Long
-        get() {
-            val instant = Instant.ofEpochMilli(clock.now())
-            return LocalDate.ofInstant(instant, ZoneId.systemDefault()).toEpochDay()
-        }
-
     val uiState: StateFlow<StatsUiState> = combine(
-        selectedRange,
-        usageStatsRepository.observeDailyUsage(todayEpochDay),
+        selectedRange.flatMapLatest { range ->
+            val (startDay, endDay) = calculateEpochDayRange(range)
+            usageStatsRepository.observeRangeUsage(startDay, endDay).map { stats ->
+                range to stats
+            }
+        },
         permissionHealthRepository.permissionHealth,
         isRefreshing,
-    ) { range, dailyStats, health, refreshing ->
+    ) { (range, stats), health, refreshing ->
         val hasUsage = health.stateOf(AppPermission.USAGE_ACCESS).isGranted
         buildUiState(
             range = range,
-            stats = dailyStats,
+            stats = stats,
             hasPermission = hasUsage,
             isLoading = refreshing,
         )
@@ -71,9 +75,29 @@ class StatsViewModel @Inject constructor(
             isRefreshing.value = true
             try {
                 permissionHealthRepository.refreshHealth()
-                usageStatsRepository.refreshUsageForDay(todayEpochDay)
+                val (startDay, endDay) = calculateEpochDayRange(selectedRange.value)
+                for (day in startDay..endDay) {
+                    usageStatsRepository.refreshUsageForDay(day)
+                }
             } finally {
                 isRefreshing.value = false
+            }
+        }
+    }
+
+    private fun calculateEpochDayRange(range: StatsTimeRange): Pair<Long, Long> {
+        val zoneId = ZoneId.systemDefault()
+        val today = LocalDate.ofInstant(Instant.ofEpochMilli(clock.now()), zoneId)
+        val todayEpochDay = today.toEpochDay()
+        return when (range) {
+            StatsTimeRange.DAY -> todayEpochDay to todayEpochDay
+            StatsTimeRange.WEEK -> {
+                val monday = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+                monday.toEpochDay() to todayEpochDay
+            }
+            StatsTimeRange.MONTH -> {
+                val firstOfMonth = today.withDayOfMonth(1)
+                firstOfMonth.toEpochDay() to todayEpochDay
             }
         }
     }

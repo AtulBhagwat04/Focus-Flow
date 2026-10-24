@@ -1,14 +1,19 @@
 package com.focusflow.feature.home
 
 import com.focusflow.core.common.time.Clock
+import com.focusflow.core.domain.auth.model.UserAccount
+import com.focusflow.core.domain.auth.model.UserProfile
+import com.focusflow.core.domain.auth.repository.AuthRepository
 import com.focusflow.core.domain.model.FocusSession
 import com.focusflow.core.domain.model.SessionMode
 import com.focusflow.core.domain.model.SessionState
 import com.focusflow.core.domain.repository.FocusSessionRepository
+import com.focusflow.core.domain.repository.UserPreferencesRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -23,6 +28,9 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModelTest {
@@ -31,6 +39,8 @@ class HomeViewModelTest {
 
     private class FakeFocusSessionRepository : FocusSessionRepository {
         val sessionFlow = MutableStateFlow<FocusSession?>(null)
+        val completedSessionsFlow = MutableStateFlow<List<FocusSession>>(emptyList())
+
         override val currentSession: Flow<FocusSession?> = sessionFlow
 
         override suspend fun startSession(
@@ -77,6 +87,7 @@ class HomeViewModelTest {
                 xpEarned = 25,
             )
             sessionFlow.value = null
+            completedSessionsFlow.value = completedSessionsFlow.value + completed
             return completed
         }
 
@@ -85,19 +96,62 @@ class HomeViewModelTest {
             return null
         }
 
-        override fun getSessionHistory(limit: Int): Flow<List<FocusSession>> = flowOf(emptyList())
+        override fun getSessionHistory(limit: Int): Flow<List<FocusSession>> = completedSessionsFlow
+
+        override fun observeFocusDurationBetween(startEpochMs: Long, endEpochMs: Long): Flow<Long> =
+            flowOf(0L)
+
+        override fun observeCompletedSessionsBetween(startEpochMs: Long, endEpochMs: Long): Flow<List<FocusSession>> =
+            completedSessionsFlow
+
+        override fun observeCompletedSessionCount(): Flow<Int> =
+            flowOf(completedSessionsFlow.value.size)
+
+        override fun observeAllCompletedSessions(): Flow<List<FocusSession>> =
+            completedSessionsFlow
     }
 
+    private class FakeUserPreferencesRepository : UserPreferencesRepository {
+        val weeklyGoalHoursFlow = MutableStateFlow(16)
+        val remindersFlow = MutableStateFlow(true)
+        val appearanceFlow = MutableStateFlow("Light")
+
+        override fun getWeeklyGoalHours(): Flow<Int> = weeklyGoalHoursFlow
+        override suspend fun setWeeklyGoalHours(hours: Int) { weeklyGoalHoursFlow.value = hours }
+        override fun getRemindersEnabled(): Flow<Boolean> = remindersFlow
+        override suspend fun setRemindersEnabled(enabled: Boolean) { remindersFlow.value = enabled }
+        override fun getAppearanceTheme(): Flow<String> = appearanceFlow
+        override suspend fun setAppearanceTheme(theme: String) { appearanceFlow.value = theme }
+    }
+
+    private class FakeAuthRepository : AuthRepository {
+        val userProfileFlow = MutableStateFlow<UserProfile?>(null)
+        val currentUserFlow = MutableStateFlow<UserAccount?>(null)
+
+        override val currentUser: StateFlow<UserAccount?> = currentUserFlow
+        override val userProfile: Flow<UserProfile?> = userProfileFlow
+        override suspend fun signInAnonymously(): Result<UserAccount> = Result.success(UserAccount("uid"))
+        override suspend fun signInWithGoogle(idToken: String): Result<UserAccount> = Result.success(UserAccount("uid"))
+        override suspend fun linkGoogleAccount(idToken: String): Result<UserAccount> = Result.success(UserAccount("uid"))
+        override suspend fun signOut(): Result<Unit> = Result.success(Unit)
+        override suspend fun deleteAccount(): Result<Unit> = Result.success(Unit)
+    }
+
+    // 1_700_000_000_000L is Tuesday, Nov 14, 2023 UTC
     private val fakeClock = object : Clock {
         override fun now(): Long = 1_700_000_000_000L
     }
 
     private lateinit var fakeRepo: FakeFocusSessionRepository
+    private lateinit var fakePrefsRepo: FakeUserPreferencesRepository
+    private lateinit var fakeAuthRepo: FakeAuthRepository
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         fakeRepo = FakeFocusSessionRepository()
+        fakePrefsRepo = FakeUserPreferencesRepository()
+        fakeAuthRepo = FakeAuthRepository()
     }
 
     @After
@@ -109,6 +163,8 @@ class HomeViewModelTest {
         return HomeViewModel(
             focusSessionRepository = fakeRepo,
             clock = fakeClock,
+            userPreferencesRepository = fakePrefsRepo,
+            authRepository = fakeAuthRepo,
         )
     }
 
@@ -124,7 +180,11 @@ class HomeViewModelTest {
         assertEquals(FocusMode.WORK, state.selectedMode)
         assertEquals(25, state.selectedDurationMinutes)
         assertEquals(listOf(25, 50, 90), state.availableDurations)
-        assertEquals(78, state.weeklyGoalPercent)
+        assertEquals(0, state.weeklyGoalPercent)
+        assertEquals("0m", state.weeklyFocusFormatted)
+        assertEquals(0, state.todayFocusTimeMinutes)
+        assertEquals(0, state.currentStreakDays)
+        assertEquals(7, state.weeklyDailyHours.size)
         assertFalse(state.isSessionActive)
         assertFalse(state.isSessionRunning)
         assertFalse(state.isSessionPaused)
@@ -205,7 +265,7 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun stopFocus_abortsSessionAndReturnsToIdle() = runTest {
+    fun stopFocus_finishesSessionAndPreservesWeeklyFocusTime() = runTest {
         val viewModel = createViewModel()
         viewModel.startFocus()
         assertTrue(viewModel.uiState.first().isSessionActive)
@@ -216,6 +276,8 @@ class HomeViewModelTest {
         assertFalse(state.isSessionRunning)
         assertFalse(state.isSessionPaused)
         assertNull(state.activeSession)
+        assertEquals("25m", state.weeklyFocusFormatted)
+        assertEquals(25, state.todayFocusTimeMinutes)
     }
 
     @Test
@@ -229,6 +291,36 @@ class HomeViewModelTest {
         assertFalse(state.isSessionActive)
         assertFalse(state.isSessionRunning)
         assertNull(state.activeSession)
+    }
+
+    @Test
+    fun completedSessions_dynamicallyUpdatesWeeklyFocusAndStreak() = runTest {
+        val now = 1_700_000_000_000L
+        val zoneId = ZoneId.systemDefault()
+        val today = LocalDate.ofInstant(Instant.ofEpochMilli(now), zoneId)
+        val todayStartMs = today.atStartOfDay(zoneId).toInstant().toEpochMilli()
+
+        // Completed 60m session today
+        val session1 = FocusSession(
+            id = "sess-1",
+            mode = SessionMode.Custom(60 * 60 * 1000L),
+            state = SessionState.COMPLETED,
+            targetDurationMs = 60 * 60 * 1000L,
+            startedAtEpochMs = todayStartMs + 1000L,
+            completedAtEpochMs = todayStartMs + 3600_000L,
+            totalPausedDurationMs = 0L,
+        )
+
+        fakeRepo.completedSessionsFlow.value = listOf(session1)
+
+        val viewModel = createViewModel()
+        val state = viewModel.uiState.first()
+
+        assertEquals("1h", state.weeklyFocusFormatted)
+        assertEquals(60, state.todayFocusTimeMinutes)
+        assertEquals(1, state.currentStreakDays)
+        // 1h out of 16h weekly goal = 6%
+        assertEquals(6, state.weeklyGoalPercent)
     }
 
     @Test

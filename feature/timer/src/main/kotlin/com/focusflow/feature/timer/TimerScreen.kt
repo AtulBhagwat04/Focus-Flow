@@ -40,6 +40,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -70,7 +71,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.focusflow.core.designsystem.R as DesignR
 import com.focusflow.core.designsystem.component.CustomDurationDialog
@@ -83,7 +84,10 @@ import com.focusflow.core.designsystem.theme.FocusForestGreen
 import com.focusflow.core.designsystem.theme.FocusForestGreenDeep
 import com.focusflow.core.designsystem.theme.FocusForestMintBg
 import com.focusflow.core.designsystem.theme.FocusMutedText
+import com.focusflow.core.designsystem.theme.OutfitFontFamily
+import com.focusflow.core.domain.model.AmbientSound
 import com.focusflow.feature.timer.components.ActiveTaskFocusCard
+import com.focusflow.feature.timer.components.AmbientSoundCard
 import com.focusflow.feature.timer.components.AmbientSoundDialog
 import com.focusflow.feature.timer.components.BlockAppsCard
 import com.focusflow.feature.timer.components.CompletionDialog
@@ -91,8 +95,8 @@ import com.focusflow.feature.timer.components.FocusDialDisplay
 import com.focusflow.feature.timer.components.ScenicQuoteCard
 import com.focusflow.feature.timer.components.TimerPresetChips
 
-private val START_BUTTON_HEIGHT = 56.dp
-private val BUTTON_CORNER_RADIUS = 28.dp
+private val START_BUTTON_HEIGHT = 52.dp
+private val BUTTON_CORNER_RADIUS = 26.dp
 
 @Composable
 fun TimerScreen(
@@ -151,17 +155,16 @@ fun TimerScreenContent(
             alignment = Alignment.BottomCenter,
         )
 
-        // ── 2. Ambient Gradient Scrim for Content Clarity ────────────────────
+        // ── 2. Soft Ambient Frost Overlay for Content Legibility ─────────────
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
-                        0.00f to Color.White.copy(alpha = 0.96f),
-                        0.35f to Color.White.copy(alpha = 0.92f),
-                        0.58f to Color(0xFFF7FAF8).copy(alpha = 0.72f),
-                        0.78f to Color(0xFFF7FAF8).copy(alpha = 0.25f),
-                        1.00f to Color.Transparent,
+                        0.0f to Color.White.copy(alpha = 0.20f),
+                        0.22f to Color(0xFFF7FAF8).copy(alpha = 0.65f),
+                        0.55f to Color(0xFFF7FAF8).copy(alpha = 0.88f),
+                        1.0f to Color(0xFFF7FAF8).copy(alpha = 0.95f),
                     )
                 )
         )
@@ -172,10 +175,13 @@ fun TimerScreenContent(
         ) {
             FocusFlowAppBar(
                 actions = {
+                    val isSoundActive = uiState.selectedSound != AmbientSound.NONE
                     FocusFlowActionButton(
                         icon = Icons.Outlined.Spa,
                         onClick = { showAmbientSoundDialog = true },
                         contentDescription = stringResource(R.string.timer_cd_ambient_sound),
+                        containerColor = if (isSoundActive) FocusForestGreenDeep else FocusForestMintBg,
+                        iconTint = if (isSoundActive) Color.White else FocusForestGreenDeep,
                     )
                     Box {
                         FocusFlowActionButton(
@@ -184,40 +190,125 @@ fun TimerScreenContent(
                             contentDescription = stringResource(R.string.timer_cd_more_options),
                         )
 
-                        // Dropdown menu from More Options button
+                        // Refined Dropdown Menu from More Options button
                         DropdownMenu(
                             expanded = showMenu,
                             onDismissRequest = { showMenu = false },
-                            shape = RoundedCornerShape(16.dp),
+                            shape = RoundedCornerShape(18.dp),
+                            containerColor = Color.White,
+                            shadowElevation = 8.dp,
+                            border = BorderStroke(1.2.dp, Color(0xFFCCE3D5)),
+                            modifier = Modifier.width(220.dp),
                         ) {
                             DropdownMenuItem(
-                                text = { Text("Ambient Sound") },
-                                leadingIcon = { Icon(Icons.Outlined.GraphicEq, contentDescription = null, tint = FocusForestGreen) },
+                                text = {
+                                    Column {
+                                        Text(
+                                            text = stringResource(R.string.timer_ambient_sound),
+                                            fontFamily = OutfitFontFamily,
+                                            fontSize = 14.5.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = Color(0xFF14291E),
+                                        )
+                                        Text(
+                                            text = if (uiState.selectedSound != AmbientSound.NONE) uiState.selectedSound.displayName else "Off",
+                                            fontFamily = OutfitFontFamily,
+                                            fontSize = 11.5.sp,
+                                            color = if (uiState.selectedSound != AmbientSound.NONE) FocusForestGreen else FocusMutedText,
+                                        )
+                                    }
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Outlined.GraphicEq,
+                                        contentDescription = null,
+                                        tint = FocusForestGreenDeep,
+                                        modifier = Modifier.size(20.dp),
+                                    )
+                                },
                                 onClick = {
                                     showMenu = false
                                     showAmbientSoundDialog = true
                                 },
                             )
                             DropdownMenuItem(
-                                text = { Text("Blocked Apps") },
-                                leadingIcon = { Icon(Icons.Outlined.Block, contentDescription = null, tint = FocusMutedText) },
+                                text = {
+                                    Column {
+                                        Text(
+                                            text = stringResource(R.string.timer_menu_blocked_apps),
+                                            fontFamily = OutfitFontFamily,
+                                            fontSize = 14.5.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = Color(0xFF14291E),
+                                        )
+                                        Text(
+                                            text = if (uiState.isBlockAppsEnabled) "Enabled" else "Off",
+                                            fontFamily = OutfitFontFamily,
+                                            fontSize = 11.5.sp,
+                                            color = if (uiState.isBlockAppsEnabled) FocusForestGreen else FocusMutedText,
+                                        )
+                                    }
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Block,
+                                        contentDescription = null,
+                                        tint = FocusForestGreenDeep,
+                                        modifier = Modifier.size(20.dp),
+                                    )
+                                },
                                 onClick = {
                                     showMenu = false
                                     onNavigateToLimits()
                                 },
                             )
                             DropdownMenuItem(
-                                text = { Text("Settings") },
-                                leadingIcon = { Icon(Icons.Outlined.Settings, contentDescription = null, tint = FocusMutedText) },
+                                text = {
+                                    Text(
+                                        text = stringResource(R.string.timer_menu_settings),
+                                        fontFamily = OutfitFontFamily,
+                                        fontSize = 14.5.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = Color(0xFF14291E),
+                                    )
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Settings,
+                                        contentDescription = null,
+                                        tint = FocusForestGreenDeep,
+                                        modifier = Modifier.size(20.dp),
+                                    )
+                                },
                                 onClick = {
                                     showMenu = false
                                     onNavigateToSettings()
                                 },
                             )
                             if (uiState.isActive) {
+                                HorizontalDivider(
+                                    color = Color(0xFFE2EBE5),
+                                    thickness = 0.8.dp,
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                                )
                                 DropdownMenuItem(
-                                    text = { Text("Reset Session") },
-                                    leadingIcon = { Icon(Icons.Outlined.Refresh, contentDescription = null, tint = FocusDarkText) },
+                                    text = {
+                                        Text(
+                                            text = stringResource(R.string.timer_menu_reset),
+                                            fontFamily = OutfitFontFamily,
+                                            fontSize = 14.5.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = Color(0xFFDC2626),
+                                        )
+                                    },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Outlined.Refresh,
+                                            contentDescription = null,
+                                            tint = Color(0xFFDC2626),
+                                            modifier = Modifier.size(20.dp),
+                                        )
+                                    },
                                     onClick = {
                                         showMenu = false
                                         callbacks.onAbortClicked()
@@ -325,11 +416,20 @@ fun TimerScreenContent(
                     modifier = Modifier.fillMaxWidth(),
                 )
 
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // ── Refined Ambient Sound Card ───────────────────────────────────
+                AmbientSoundCard(
+                    selectedSound = uiState.selectedSound,
+                    onCardClick = { showAmbientSoundDialog = true },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+
                 // ── Bottom Spacing for navigation ───────────────────────────────
                 Spacer(
                     modifier = Modifier
                         .navigationBarsPadding()
-                        .height(if (uiState.activeTask != null) 24.dp else 88.dp)
+                        .height(if (uiState.activeTask != null) 32.dp else 96.dp)
                 )
             }
         }
@@ -414,12 +514,13 @@ private fun TimerActionButtons(
                             imageVector = Icons.Filled.PlayArrow,
                             contentDescription = null,
                             tint = Color.White,
-                            modifier = Modifier.size(22.dp),
+                            modifier = Modifier.size(20.dp),
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = stringResource(R.string.timer_start_focus),
-                            fontSize = 17.sp,
+                            fontFamily = OutfitFontFamily,
+                            fontSize = 16.5.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White,
                         )
@@ -428,66 +529,182 @@ private fun TimerActionButtons(
             }
 
             uiState.isRunning -> {
-                // Pause and Finish buttons
-                OutlinedButton(
-                    onClick = callbacks.onPauseClicked,
-                    shape = RoundedCornerShape(BUTTON_CORNER_RADIUS),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = FocusDarkText),
-                    border = BorderStroke(1.2.dp, Color(0xFFCBD5E1)),
+                // Pause (Solid White Pill) and Finish (Solid Green Pill)
+                Surface(
                     modifier = Modifier
                         .weight(1f)
-                        .height(START_BUTTON_HEIGHT),
+                        .height(START_BUTTON_HEIGHT)
+                        .shadow(
+                            elevation = 4.dp,
+                            shape = RoundedCornerShape(BUTTON_CORNER_RADIUS),
+                            ambientColor = Color(0x18000000),
+                            spotColor = Color(0x20000000),
+                        )
+                        .clip(RoundedCornerShape(BUTTON_CORNER_RADIUS))
+                        .clickable(
+                            indication = ripple(bounded = true),
+                            interactionSource = null,
+                            onClick = callbacks.onPauseClicked,
+                        )
+                        .semantics { role = Role.Button },
+                    shape = RoundedCornerShape(BUTTON_CORNER_RADIUS),
+                    color = Color.White,
+                    border = BorderStroke(1.5.dp, Color(0xFFCCE3D5)),
                 ) {
-                    Icon(Icons.Filled.Pause, contentDescription = null, modifier = Modifier.size(20.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(stringResource(R.string.timer_pause), fontWeight = FontWeight.Bold)
+                    Row(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Pause,
+                            contentDescription = null,
+                            tint = FocusForestGreenDeep,
+                            modifier = Modifier.size(20.dp),
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = stringResource(R.string.timer_pause),
+                            fontFamily = OutfitFontFamily,
+                            fontSize = 15.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = FocusForestGreenDeep,
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.width(14.dp))
 
-                Button(
-                    onClick = callbacks.onCompleteClicked,
-                    shape = RoundedCornerShape(BUTTON_CORNER_RADIUS),
-                    colors = ButtonDefaults.buttonColors(containerColor = FocusForestGreenDeep),
+                Surface(
                     modifier = Modifier
                         .weight(1f)
-                        .height(START_BUTTON_HEIGHT),
+                        .height(START_BUTTON_HEIGHT)
+                        .shadow(
+                            elevation = 6.dp,
+                            shape = RoundedCornerShape(BUTTON_CORNER_RADIUS),
+                            ambientColor = Color(0x301B4E36),
+                            spotColor = Color(0x401B4E36),
+                        )
+                        .clip(RoundedCornerShape(BUTTON_CORNER_RADIUS))
+                        .clickable(
+                            indication = ripple(bounded = true),
+                            interactionSource = null,
+                            onClick = callbacks.onCompleteClicked,
+                        )
+                        .semantics { role = Role.Button },
+                    shape = RoundedCornerShape(BUTTON_CORNER_RADIUS),
+                    color = FocusForestGreenDeep,
                 ) {
-                    Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(20.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(stringResource(R.string.timer_finish), fontWeight = FontWeight.Bold)
+                    Row(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Check,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp),
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = stringResource(R.string.timer_finish),
+                            fontFamily = OutfitFontFamily,
+                            fontSize = 15.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                        )
+                    }
                 }
             }
 
             uiState.isPaused -> {
-                // Resume and Finish buttons
-                Button(
-                    onClick = callbacks.onResumeClicked,
-                    shape = RoundedCornerShape(BUTTON_CORNER_RADIUS),
-                    colors = ButtonDefaults.buttonColors(containerColor = FocusForestGreenDeep),
+                // Resume (Solid Green Pill) and Finish (Solid White Pill)
+                Surface(
                     modifier = Modifier
                         .weight(1f)
-                        .height(START_BUTTON_HEIGHT),
+                        .height(START_BUTTON_HEIGHT)
+                        .shadow(
+                            elevation = 6.dp,
+                            shape = RoundedCornerShape(BUTTON_CORNER_RADIUS),
+                            ambientColor = Color(0x301B4E36),
+                            spotColor = Color(0x401B4E36),
+                        )
+                        .clip(RoundedCornerShape(BUTTON_CORNER_RADIUS))
+                        .clickable(
+                            indication = ripple(bounded = true),
+                            interactionSource = null,
+                            onClick = callbacks.onResumeClicked,
+                        )
+                        .semantics { role = Role.Button },
+                    shape = RoundedCornerShape(BUTTON_CORNER_RADIUS),
+                    color = FocusForestGreenDeep,
                 ) {
-                    Icon(Icons.Filled.PlayArrow, contentDescription = null, modifier = Modifier.size(20.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(stringResource(R.string.timer_resume), fontWeight = FontWeight.Bold)
+                    Row(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.PlayArrow,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp),
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = stringResource(R.string.timer_resume),
+                            fontFamily = OutfitFontFamily,
+                            fontSize = 15.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.width(14.dp))
 
-                OutlinedButton(
-                    onClick = callbacks.onCompleteClicked,
-                    shape = RoundedCornerShape(BUTTON_CORNER_RADIUS),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = FocusDarkText),
-                    border = BorderStroke(1.2.dp, Color(0xFFCBD5E1)),
+                Surface(
                     modifier = Modifier
                         .weight(1f)
-                        .height(START_BUTTON_HEIGHT),
+                        .height(START_BUTTON_HEIGHT)
+                        .shadow(
+                            elevation = 4.dp,
+                            shape = RoundedCornerShape(BUTTON_CORNER_RADIUS),
+                            ambientColor = Color(0x18000000),
+                            spotColor = Color(0x20000000),
+                        )
+                        .clip(RoundedCornerShape(BUTTON_CORNER_RADIUS))
+                        .clickable(
+                            indication = ripple(bounded = true),
+                            interactionSource = null,
+                            onClick = callbacks.onCompleteClicked,
+                        )
+                        .semantics { role = Role.Button },
+                    shape = RoundedCornerShape(BUTTON_CORNER_RADIUS),
+                    color = Color.White,
+                    border = BorderStroke(1.5.dp, Color(0xFFCCE3D5)),
                 ) {
-                    Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(20.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(stringResource(R.string.timer_finish), fontWeight = FontWeight.Bold)
+                    Row(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Check,
+                            contentDescription = null,
+                            tint = FocusForestGreenDeep,
+                            modifier = Modifier.size(20.dp),
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = stringResource(R.string.timer_finish),
+                            fontFamily = OutfitFontFamily,
+                            fontSize = 15.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = FocusForestGreenDeep,
+                        )
+                    }
                 }
             }
         }

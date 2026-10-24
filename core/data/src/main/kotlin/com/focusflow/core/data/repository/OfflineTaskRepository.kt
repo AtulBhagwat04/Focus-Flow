@@ -141,6 +141,24 @@ class OfflineTaskRepository @Inject constructor(
         }
     }
 
+    override suspend fun updateTask(taskId: String, title: String, durationMinutes: Int): FocusTask? {
+        val current = taskDao.getTaskById(taskId) ?: return null
+        val newDuration = durationMinutes.coerceIn(1, 360)
+        val maxSec = newDuration * 60
+        val newCompletedSec = current.completedSeconds.coerceAtMost(maxSec)
+        val isDone = current.isCompleted && newCompletedSec >= maxSec
+        val updated = current.copy(
+            title = title.trim(),
+            durationMinutes = newDuration,
+            completedSeconds = newCompletedSec,
+            isCompleted = isDone,
+            updatedAtEpochMs = System.currentTimeMillis(),
+        )
+        taskDao.upsertTask(updated)
+        syncTaskToFirestore(updated)
+        return updated.asDomainModel()
+    }
+
     override suspend fun deleteTask(taskId: String) {
         taskDao.deleteTask(taskId)
         deleteTaskFromFirestore(taskId)

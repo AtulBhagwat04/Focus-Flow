@@ -57,6 +57,7 @@ import com.focusflow.core.designsystem.theme.FocusDarkText
 import com.focusflow.core.designsystem.theme.FocusForestGreen
 import com.focusflow.core.designsystem.theme.FocusForestGreenDeep
 import com.focusflow.core.designsystem.theme.FocusMutedText
+import com.focusflow.core.designsystem.theme.OutfitFontFamily
 import com.focusflow.core.designsystem.theme.TimerFontFamily
 import java.util.Locale
 import kotlin.math.cos
@@ -350,12 +351,23 @@ fun FocusDialDisplay(
             )
 
             if (!isActive && isCustomTimeEnabled) {
-                Spacer(modifier = Modifier.height(2.dp))
+                Spacer(modifier = Modifier.height(3.dp))
                 Text(
                     text = "Tap to customize",
+                    fontFamily = OutfitFontFamily,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
-                    color = FocusMutedText,
+                    color = Color(0xFF4A5D52),
+                    textAlign = TextAlign.Center,
+                )
+            } else if (isActive && statusLabel.isNotBlank()) {
+                Spacer(modifier = Modifier.height(3.dp))
+                Text(
+                    text = statusLabel,
+                    fontFamily = OutfitFontFamily,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (statusLabel.contains("Paused", ignoreCase = true)) Color(0xFFD97706) else FocusForestGreenDeep,
                     textAlign = TextAlign.Center,
                 )
             }

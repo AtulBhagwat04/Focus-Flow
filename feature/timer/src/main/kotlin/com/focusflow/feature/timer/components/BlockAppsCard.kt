@@ -32,6 +32,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -55,31 +56,31 @@ fun BlockAppsCard(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp)),
-        shape = RoundedCornerShape(20.dp),
-        color = Color.White.copy(alpha = 0.96f),
-        border = BorderStroke(1.dp, if (isEnabled) Color(0xFFCCE3D5) else Color(0xFFE2EBE5)),
-        shadowElevation = 2.dp,
+            .clip(RoundedCornerShape(22.dp)),
+        shape = RoundedCornerShape(22.dp),
+        color = Color.White,
+        border = BorderStroke(1.2.dp, if (isEnabled) Color(0xFFCCE3D5) else Color(0xFFE2EBE5)),
+        shadowElevation = 3.dp,
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
+                .padding(horizontal = 16.dp, vertical = 13.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             // Icon Badge
             Box(
                 modifier = Modifier
-                    .size(42.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(if (isEnabled) Color(0xFFE3F3EA) else Color(0xFFEFF3F0)),
+                    .size(44.dp)
+                    .clip(RoundedCornerShape(13.dp))
+                    .background(if (isEnabled) Color(0xFFDCEFE3) else Color(0xFFEAF1EC)),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     imageVector = Icons.Outlined.Block,
                     contentDescription = null,
-                    tint = if (isEnabled) FocusForestGreenDeep else Color(0xFF6C8075),
-                    modifier = Modifier.size(20.dp),
+                    tint = if (isEnabled) FocusForestGreenDeep else Color(0xFF3B5D4B),
+                    modifier = Modifier.size(22.dp),
                 )
             }
 
@@ -97,16 +98,18 @@ fun BlockAppsCard(
             ) {
                 Text(
                     text = "Block Apps",
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = FocusDarkText,
+                    fontFamily = FontFamily.Serif,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF14291E),
                 )
-                Spacer(modifier = Modifier.height(1.dp))
+                Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = if (isEnabled) "Strict blocking enabled" else "Keep distractions away",
-                    fontSize = 12.sp,
+                    fontFamily = FontFamily.Serif,
+                    fontSize = 12.5.sp,
                     fontWeight = FontWeight.Normal,
-                    color = FocusMutedText,
+                    color = if (isEnabled) FocusForestGreen else FocusMutedText,
                 )
             }
 
@@ -119,7 +122,7 @@ fun BlockAppsCard(
                     checkedTrackColor = FocusForestGreenDeep,
                     checkedBorderColor = Color.Transparent,
                     uncheckedThumbColor = Color.White,
-                    uncheckedTrackColor = Color(0xFFD3DDD7),
+                    uncheckedTrackColor = Color(0xFFD4E0D9),
                     uncheckedBorderColor = Color.Transparent,
                 ),
             )
@@ -141,7 +144,7 @@ fun BlockAppsCard(
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                     contentDescription = "Configure blocked apps",
-                    tint = Color(0xFF8FA196),
+                    tint = FocusForestGreenDeep,
                     modifier = Modifier.size(20.dp),
                 )
             }
