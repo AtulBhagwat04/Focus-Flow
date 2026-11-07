@@ -163,6 +163,16 @@ class LimitsViewModelTest {
 
         val insta = state.apps.first { it.packageName == "com.instagram.android" }
         assertFalse(insta.isSafeListed)
+        assertFalse(insta.blockDuringFocus)
+    }
+
+    @Test
+    fun onToggleBlockDuringFocus_enable_updatesRepositoryRule() = runTest {
+        viewModel.onToggleBlockDuringFocus("com.instagram.android", true)
+        val rules = blockRuleRepo.rulesFlow.first { it.isNotEmpty() }
+
+        val rule = rules.first { it.packageName == "com.instagram.android" }
+        assertTrue(rule.blockDuringFocus)
     }
 
     @Test

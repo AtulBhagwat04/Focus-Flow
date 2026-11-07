@@ -1,4 +1,4 @@
-package com.focusflow.feature.home
+﻿package com.focusflow.feature.home
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -280,7 +280,7 @@ fun HomeScreenContent(
                 Spacer(
                     modifier = Modifier
                         .navigationBarsPadding()
-                        .height(80.dp)
+                        .height(96.dp)
                 )
             }
         }

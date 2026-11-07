@@ -51,13 +51,25 @@ object BlockingRulesEngine {
         }
 
         // Priority 4: Active Focus Session
-        val shouldBlockInFocus = signals.blockRule?.blockDuringFocus ?: true
-        if (signals.sessionState == SessionState.RUNNING && shouldBlockInFocus) {
-            return BlockingDecision.Block(
-                reason = BlockReason.IN_FOCUS_SESSION,
-                remainingSessionMs = signals.remainingSessionDurationMs,
-                message = "You have an active focus session in progress.",
-            )
+        if (signals.sessionState == SessionState.RUNNING) {
+            if (signals.isStrictFocusMode) {
+                // Strict mode: every non-safe-listed app is blocked — user must stay in FocusFlow.
+                return BlockingDecision.Block(
+                    reason = BlockReason.STRICT_FOCUS_MODE,
+                    remainingSessionMs = signals.remainingSessionDurationMs,
+                    message = "Strict Focus Mode is on. Stay in FocusFlow to keep your streak.",
+                )
+            } else {
+                // Selective mode: only apps the user has explicitly opted to block are blocked.
+                val shouldBlockInFocus = signals.blockRule?.blockDuringFocus == true
+                if (shouldBlockInFocus) {
+                    return BlockingDecision.Block(
+                        reason = BlockReason.IN_FOCUS_SESSION,
+                        remainingSessionMs = signals.remainingSessionDurationMs,
+                        message = "You have an active focus session in progress.",
+                    )
+                }
+            }
         }
 
         // Priority 5: Active Schedule

@@ -5,6 +5,7 @@ import android.content.Intent
 import android.graphics.PixelFormat
 import android.os.Build
 import android.provider.Settings
+import android.util.Log
 import android.view.Gravity
 import android.view.WindowManager
 import androidx.compose.foundation.BorderStroke
@@ -134,7 +135,14 @@ class BlockerOverlayManager @Inject constructor(
         onEmergencyPass: suspend () -> Unit,
     ) = withContext(Dispatchers.Main) {
         if (isShowing) return@withContext
-        if (!Settings.canDrawOverlays(context) || windowManager == null) return@withContext
+        if (!Settings.canDrawOverlays(context)) {
+            Log.w("BlockerOverlayManager", "Cannot show overlay: Settings.canDrawOverlays is false! User must grant overlay permission.")
+            return@withContext
+        }
+        if (windowManager == null) {
+            Log.w("BlockerOverlayManager", "Cannot show overlay: WindowManager is null!")
+            return@withContext
+        }
 
         val layoutParams = WindowManager.LayoutParams(
             WindowManager.LayoutParams.MATCH_PARENT,
@@ -232,6 +240,7 @@ class BlockerOverlayManager @Inject constructor(
             overlayView = composeView
             isShowing = true
         } catch (_: Exception) {
+
             dummyLifecycleOwner.destroy()
             currentLifecycleOwner = null
             overlayView = null
@@ -244,6 +253,7 @@ class BlockerOverlayManager @Inject constructor(
         try {
             windowManager.removeView(overlayView)
         } catch (_: Exception) {
+
             // Degrades safely
         } finally {
             currentLifecycleOwner?.destroy()
@@ -309,6 +319,7 @@ internal fun BlockerOverlayContent(
         try {
             packageManager.getApplicationInfo(packageName, 0)
         } catch (_: Exception) {
+
             null
         }
     }
@@ -318,6 +329,7 @@ internal fun BlockerOverlayContent(
             try {
                 packageManager.getApplicationLabel(appInfo).toString()
             } catch (_: Exception) {
+
                 packageName
             }
         } else {
@@ -337,6 +349,7 @@ internal fun BlockerOverlayContent(
                 val height = if (drawable.intrinsicHeight > 0) drawable.intrinsicHeight else 192
                 drawable.toBitmap(width = width, height = height).asImageBitmap()
             } catch (_: Exception) {
+
                 null
             }
         } else {
@@ -353,6 +366,7 @@ internal fun BlockerOverlayContent(
             BlockReason.ALWAYS_BLOCKED -> "This app is configured as always blocked."
             BlockReason.SHORT_FORM_FEED -> "Short-form feeds are blocked to protect your focus."
             BlockReason.STUDY_MODE_CHANNEL_NOT_ALLOWLISTED -> "This channel is blocked during study mode."
+            BlockReason.STRICT_FOCUS_MODE -> "Strict Focus Mode is on. Stay in FocusFlow."
         }
     }
 
@@ -659,6 +673,8 @@ private fun SessionCountdownPill(
                 Icons.Outlined.School to "Study Mode active"
             BlockReason.ALWAYS_BLOCKED ->
                 Icons.Outlined.Lock to "Always blocked"
+            BlockReason.STRICT_FOCUS_MODE ->
+                Icons.Outlined.Lock to "Strict Focus Mode active"
         }
     }
 

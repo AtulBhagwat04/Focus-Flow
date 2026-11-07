@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Screen Header -->
+    <string name="stats_screen_title">Your focus</string>
+    <string name="stats_subtitle_day">How you\'re doing today</string>
+    <string name="stats_subtitle_week">How you\'re doing this week</string>
+    <string name="stats_subtitle_month">How you\'re doing this month</string>
+    <string name="stats_cd_calendar">Select date or jump to today</string>
+    <string name="stats_cd_refresh">Refresh statistics</string>
+
+    <!-- Period Tabs -->
+    <string name="stats_tab_day">Day</string>
+    <string name="stats_tab_week">Week</string>
+    <string name="stats_tab_month">Month</string>
+
+    <!-- Date Navigation -->
+    <string name="stats_cd_previous_period">Previous period</string>
+    <string name="stats_cd_next_period">Next period</string>
+
+    <!-- Summary Hero Card -->
+    <string name="stats_hero_label_day">Focused today</string>
+    <string name="stats_hero_label_week">Focused this week</string>
+    <string name="stats_hero_label_month">Focused this month</string>
+    <string name="stats_trend_more">%1$d%% more than last %2$s. Great progress!</string>
+    <string name="stats_trend_less">%1$d%% less than last %2$s</string>
+    <string name="stats_trend_steady">Consistent with your usual focus routine.</string>
+    <string name="stats_trend_fresh_start">Great start! Keep the momentum going.</string>
+    <string name="stats_trend_no_focus">Start a session to build your focus momentum.</string>
+    <string name="stats_period_day">day</string>
+    <string name="stats_period_week">week</string>
+    <string name="stats_period_month">month</string>
+    <string name="stats_goal_day_label">Daily goal: %1$s</string>
+    <string name="stats_goal_week_label">Weekly goal: %1$s</string>
+    <string name="stats_goal_month_label">Monthly goal: %1$s</string>
+    <string name="stats_goal_remaining">%1$s to go</string>
+    <string name="stats_goal_reached">Goal reached!</string>
+
+    <!-- Bar Chart Card -->
+    <string name="stats_chart_title_week">Focus each day</string>
+    <string name="stats_chart_title_day">Focus by hour</string>
+    <string name="stats_chart_title_month">Focus each week</string>
+    <string name="stats_chart_legend_goal_reached">Goal reached</string>
+    <string name="stats_chart_legend_daily_goal">Daily goal %1$s</string>
+
+    <!-- Highlights Grid -->
+    <string name="stats_highlights_title">Highlights</string>
+    <string name="stats_highlight_best_day_caption">Best day · %1$s</string>
+    <string name="stats_highlight_best_day_empty">Complete sessions to see</string>
+    <string name="stats_highlight_best_time_caption">Best time to focus</string>
+    <string name="stats_highlight_avg_session_caption">Avg session length</string>
+    <string name="stats_highlight_streak_caption">Goal days met</string>
+    <string name="stats_highlight_streak_value">%1$d days</string>
+
+    <!-- Screen Time & Unlocks Section -->
+    <string name="stats_overview_title">Screen &amp; Unlocks</string>
+    <string name="stats_total_screen_time">Total Screen Time</string>
+    <string name="stats_device_unlocks">Device Unlocks</string>
+    <string name="stats_unlocks_times">%1$d times</string>
+    <string name="stats_productive_focus_ratio">%1$d%% productive focus</string>
+
+    <!-- Most Used Apps Card -->
+    <string name="stats_top_apps_title">Most Used Apps</string>
+    <string name="stats_top_apps_empty">No app usage recorded yet for this period.</string>
+    <string name="stats_app_safelisted">Safe listed</string>
+    <string name="stats_app_opens">%1$d opens</string>
+
+    <!-- Permission Banner -->
+    <string name="stats_permission_required_title">Usage Access Required</string>
+    <string name="stats_permission_required_desc">To show accurate screen time and top used apps, FocusFlow needs Usage Access permission.</string>
+    <string name="stats_permission_grant_btn">Grant in Settings</string>
+</resources>

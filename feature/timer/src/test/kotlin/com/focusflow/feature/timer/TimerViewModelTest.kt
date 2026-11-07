@@ -2,6 +2,9 @@ package com.focusflow.feature.timer
 
 import com.focusflow.core.common.time.Clock
 import com.focusflow.core.domain.audio.AmbientAudioPlayer
+import com.focusflow.core.domain.blocking.model.AppBlockRule
+import com.focusflow.core.domain.blocking.model.BlockSchedule
+import com.focusflow.core.domain.blocking.repository.BlockRuleRepository
 import com.focusflow.core.domain.model.AmbientSound
 import com.focusflow.core.domain.model.FocusSession
 import com.focusflow.core.domain.model.SessionMode
@@ -9,6 +12,7 @@ import com.focusflow.core.domain.model.SessionState
 import com.focusflow.core.domain.model.SubjectTag
 import com.focusflow.core.domain.repository.FocusSessionRepository
 import com.focusflow.core.domain.repository.SubjectTagRepository
+import com.focusflow.core.domain.repository.UserPreferencesRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -131,7 +135,8 @@ class TimerViewModelTest {
     }
 
     private class FakeClock : Clock {
-        override fun now(): Long = 1_000_000L
+        var currentTime: Long = 1_000_000L
+        override fun now(): Long = currentTime
     }
 
     private class FakeTaskRepository : com.focusflow.core.domain.repository.TaskRepository {
@@ -211,10 +216,40 @@ class TimerViewModelTest {
         }
     }
 
+    private class FakeUserPreferencesRepository : UserPreferencesRepository {
+        val strictModeFlow = MutableStateFlow(false)
+        override fun getWeeklyGoalHours(): Flow<Int> = flowOf(16)
+        override suspend fun setWeeklyGoalHours(hours: Int) {}
+        override fun getRemindersEnabled(): Flow<Boolean> = flowOf(true)
+        override suspend fun setRemindersEnabled(enabled: Boolean) {}
+        override fun getStrictFocusModeEnabled(): Flow<Boolean> = strictModeFlow
+        override suspend fun setStrictFocusModeEnabled(enabled: Boolean) { strictModeFlow.value = enabled }
+        override fun getAppearanceTheme(): Flow<String> = flowOf("Light")
+        override suspend fun setAppearanceTheme(theme: String) {}
+    }
+
+    private class FakeBlockRuleRepository : BlockRuleRepository {
+        val rulesFlow = MutableStateFlow<List<AppBlockRule>>(emptyList())
+        override fun observeAllRules(): Flow<List<AppBlockRule>> = rulesFlow
+        override fun observeRuleForPackage(packageName: String): Flow<AppBlockRule?> =
+            flowOf(rulesFlow.value.find { it.packageName == packageName })
+        override suspend fun setRule(rule: AppBlockRule) {
+            rulesFlow.value = rulesFlow.value.filterNot { it.packageName == rule.packageName } + rule
+        }
+        override suspend fun removeRule(packageName: String) {
+            rulesFlow.value = rulesFlow.value.filterNot { it.packageName == packageName }
+        }
+        override fun observeAllSchedules(): Flow<List<BlockSchedule>> = flowOf(emptyList())
+        override suspend fun upsertSchedule(schedule: BlockSchedule) {}
+        override suspend fun deleteSchedule(scheduleId: String) {}
+    }
+
     private lateinit var sessionRepository: FakeFocusSessionRepository
     private lateinit var tagRepository: FakeSubjectTagRepository
     private lateinit var audioPlayer: FakeAudioPlayer
     private lateinit var taskRepository: FakeTaskRepository
+    private lateinit var prefsRepository: FakeUserPreferencesRepository
+    private lateinit var blockRuleRepository: FakeBlockRuleRepository
     private lateinit var clock: FakeClock
     private lateinit var viewModel: TimerViewModel
 
@@ -225,12 +260,15 @@ class TimerViewModelTest {
         tagRepository = FakeSubjectTagRepository()
         audioPlayer = FakeAudioPlayer()
         taskRepository = FakeTaskRepository()
+        prefsRepository = FakeUserPreferencesRepository()
+        blockRuleRepository = FakeBlockRuleRepository()
         clock = FakeClock()
-        viewModel = TimerViewModel(sessionRepository, tagRepository, audioPlayer, clock, taskRepository)
+        viewModel = TimerViewModel(sessionRepository, tagRepository, audioPlayer, clock, taskRepository, prefsRepository, blockRuleRepository)
     }
 
     @After
     fun tearDown() {
+        prefsRepository.strictModeFlow.value = false
         viewModel.onAbortClicked()
         Dispatchers.resetMain()
     }
@@ -244,6 +282,21 @@ class TimerViewModelTest {
         assertEquals("Deep Work", state.selectedTag?.name)
         assertFalse(state.isActive)
         assertEquals(25 * 60 * 1000L, state.remainingMs)
+    }
+
+    @Test
+    fun blockedAppsCount_updatesFromRepository() = runTest {
+        runCurrent()
+        assertEquals(0, viewModel.uiState.value.blockedAppsCount)
+
+        blockRuleRepository.rulesFlow.value = listOf(
+            AppBlockRule(packageName = "com.instagram.android", blockDuringFocus = true),
+            AppBlockRule(packageName = "com.google.android.youtube", blockDuringFocus = true),
+            AppBlockRule(packageName = "com.whatsapp", blockDuringFocus = false),
+        )
+        runCurrent()
+
+        assertEquals(2, viewModel.uiState.value.blockedAppsCount)
     }
 
     @Test
@@ -319,15 +372,58 @@ class TimerViewModelTest {
     @Test
     fun toggleBlockApps_updatesBlockAppsFlag() = runTest {
         runCurrent()
-        assertTrue(viewModel.uiState.value.isBlockAppsEnabled)
-
-        viewModel.onToggleBlockApps(false)
-        runCurrent()
-        assertFalse(viewModel.uiState.value.isBlockAppsEnabled)
+        assertFalse(viewModel.uiState.value.isStrictFocusModeEnabled)
 
         viewModel.onToggleBlockApps(true)
         runCurrent()
-        assertTrue(viewModel.uiState.value.isBlockAppsEnabled)
+        assertTrue(viewModel.uiState.value.isStrictFocusModeEnabled)
+
+        viewModel.onToggleBlockApps(false)
+        runCurrent()
+        assertFalse(viewModel.uiState.value.isStrictFocusModeEnabled)
+    }
+
+    @Test
+    fun strictFocusMode_preventsStoppingOrPausingUntilTimerCompleted() = runTest {
+        runCurrent()
+        viewModel.onToggleBlockApps(true)
+        runCurrent()
+        assertTrue(viewModel.uiState.value.isStrictFocusModeEnabled)
+
+        viewModel.onStartClicked()
+        runCurrent()
+        assertTrue(viewModel.uiState.value.isActive)
+        assertTrue(viewModel.uiState.value.isRunning)
+
+        // 1. Attempting to complete early before completion is blocked
+        viewModel.onCompleteClicked()
+        runCurrent()
+        assertTrue(viewModel.uiState.value.isActive)
+        assertFalse(viewModel.uiState.value.showCelebrationDialog)
+
+        // 2. Attempting to pause in strict mode is blocked
+        viewModel.onPauseClicked()
+        runCurrent()
+        assertTrue(viewModel.uiState.value.isRunning)
+        assertFalse(viewModel.uiState.value.isPaused)
+
+        // 3. Attempting to abort/reset in strict mode is blocked
+        viewModel.onAbortClicked()
+        runCurrent()
+        assertTrue(viewModel.uiState.value.isActive)
+
+        // 4. Attempting to turn off strict mode mid-session is blocked
+        viewModel.onToggleBlockApps(false)
+        runCurrent()
+        assertTrue(viewModel.uiState.value.isStrictFocusModeEnabled)
+
+        // 5. When target is reached, completion succeeds
+        clock.currentTime = 1_000_000L + 25 * 60 * 1000L
+        viewModel.onCompleteClicked()
+        runCurrent()
+        assertFalse(viewModel.uiState.value.isActive)
+        assertTrue(viewModel.uiState.value.showCelebrationDialog)
+        assertEquals(25, viewModel.uiState.value.completedXpEarned)
     }
 
     @Test
@@ -385,4 +481,3 @@ class TimerViewModelTest {
         assertTrue(completedTask.isCompleted)
     }
 }
-

@@ -1,4 +1,4 @@
-package com.focusflow.app.system.permission
+﻿package com.focusflow.app.system.permission
 
 import android.app.AppOpsManager
 import android.content.Context
@@ -76,8 +76,13 @@ class AndroidPermissionChecker @Inject constructor(
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK
                 }
             }
-            AppPermission.ACCESSIBILITY -> Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            AppPermission.ACCESSIBILITY -> {
+                // Deep-link directly to this service's row in the Accessibility settings list
+                val component = "/.system.accessibility.FocusAccessibilityService"
+                Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).apply {
+                    putExtra("extra_accessibility_service", component)
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                }
             }
         }
     }

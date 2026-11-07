@@ -46,8 +46,10 @@ class BlockingRulesEngineTest {
         assertEquals(BlockingDecision.Allow, decision)
     }
 
+    // ── Selective Mode (isStrictFocusMode = false, the default) ──────────────
+
     @Test
-    fun `active focus session blocks unconfigured apps by default`() {
+    fun `selective mode - app with blockDuringFocus=true is blocked during session`() {
         val signals = BlockingSignals(
             packageName = testPackage,
             nowEpochMs = nowMs,
@@ -55,7 +57,8 @@ class BlockingRulesEngineTest {
             minuteOfDay = 600,
             sessionState = SessionState.RUNNING,
             remainingSessionDurationMs = 1500L,
-            blockRule = null, // No explicit rule saved
+            blockRule = AppBlockRule(packageName = testPackage, blockDuringFocus = true),
+            isStrictFocusMode = false,
         )
 
         val decision = BlockingRulesEngine.evaluate(signals)
@@ -65,7 +68,23 @@ class BlockingRulesEngineTest {
     }
 
     @Test
-    fun `active focus session allows apps explicitly unblocked during focus`() {
+    fun `selective mode - unconfigured app is allowed during session`() {
+        val signals = BlockingSignals(
+            packageName = testPackage,
+            nowEpochMs = nowMs,
+            dayOfWeek = 1,
+            minuteOfDay = 600,
+            sessionState = SessionState.RUNNING,
+            blockRule = null,
+            isStrictFocusMode = false,
+        )
+
+        val decision = BlockingRulesEngine.evaluate(signals)
+        assertEquals(BlockingDecision.Allow, decision)
+    }
+
+    @Test
+    fun `selective mode - app with blockDuringFocus=false is allowed during session`() {
         val signals = BlockingSignals(
             packageName = testPackage,
             nowEpochMs = nowMs,
@@ -76,11 +95,68 @@ class BlockingRulesEngineTest {
                 packageName = testPackage,
                 blockDuringFocus = false,
             ),
+            isStrictFocusMode = false,
         )
 
         val decision = BlockingRulesEngine.evaluate(signals)
         assertEquals(BlockingDecision.Allow, decision)
     }
+
+    // ── Strict Focus Mode ─────────────────────────────────────────────────────
+
+    @Test
+    fun `strict mode - any non-safe-listed app is blocked during session`() {
+        val signals = BlockingSignals(
+            packageName = testPackage,
+            nowEpochMs = nowMs,
+            dayOfWeek = 1,
+            minuteOfDay = 600,
+            sessionState = SessionState.RUNNING,
+            remainingSessionDurationMs = 1500L,
+            blockRule = null, // No explicit rule — still blocked in strict mode
+            isStrictFocusMode = true,
+        )
+
+        val decision = BlockingRulesEngine.evaluate(signals)
+        assertTrue(decision is BlockingDecision.Block)
+        val block = decision as BlockingDecision.Block
+        assertEquals(BlockReason.STRICT_FOCUS_MODE, block.reason)
+    }
+
+    @Test
+    fun `strict mode - safe listed package still allowed even in strict mode`() {
+        val signals = BlockingSignals(
+            packageName = "com.android.dialer",
+            nowEpochMs = nowMs,
+            dayOfWeek = 1,
+            minuteOfDay = 600,
+            sessionState = SessionState.RUNNING,
+            isDefaultDialer = true,
+            isStrictFocusMode = true,
+        )
+
+        val decision = BlockingRulesEngine.evaluate(signals)
+        assertEquals(BlockingDecision.Allow, decision)
+    }
+
+    @Test
+    fun `strict mode - launcher is allowed when marked as default launcher`() {
+        val signals = BlockingSignals(
+            packageName = "com.android.launcher3",
+            nowEpochMs = nowMs,
+            dayOfWeek = 1,
+            minuteOfDay = 600,
+            sessionState = SessionState.RUNNING,
+            isDefaultLauncher = true, // Launcher is in safe list
+            isStrictFocusMode = true,
+        )
+
+        // Launcher is safe-listed, so it must always be allowed (AGENTS.md hard constraint)
+        val decision = BlockingRulesEngine.evaluate(signals)
+        assertEquals(BlockingDecision.Allow, decision)
+    }
+
+    // ── Shared invariants ─────────────────────────────────────────────────────
 
     @Test
     fun `emergency pass bypasses focus session blocking`() {

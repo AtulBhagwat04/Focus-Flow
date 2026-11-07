@@ -79,7 +79,6 @@ fun RoomsScreen(
         topBar = {
             FocusFlowAppBar(
                 title = "Focus Rooms",
-                subtitle = "Shared presence & standings",
                 actions = {
                     FocusFlowActionButton(
                         icon = if (uiState.isIncognito) Icons.Default.VisibilityOff else Icons.Default.Visibility,

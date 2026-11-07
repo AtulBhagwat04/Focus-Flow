@@ -12,6 +12,7 @@ import com.focusflow.core.domain.audio.AmbientAudioPlayer
 import com.focusflow.core.domain.model.FocusSession
 import com.focusflow.core.domain.model.SessionState
 import com.focusflow.core.domain.repository.FocusSessionRepository
+import com.focusflow.core.domain.repository.UserPreferencesRepository
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -20,6 +21,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -31,6 +33,7 @@ import javax.inject.Inject
  * - Owns live monitoring and persistent notifications during active sessions.
  * - Complies with Android 14+ foreground service type declarations (specialUse + mediaPlayback).
  * - Complies with Android 17 background audio restrictions by managing ambient sound playback.
+ * - Enforces strict focus mode: timer cannot be stopped or paused until target is reached.
  */
 @AndroidEntryPoint
 class FocusSessionService : Service() {
@@ -40,6 +43,7 @@ class FocusSessionService : Service() {
     @Inject lateinit var notificationManager: FocusNotificationManager
     @Inject lateinit var ambientAudioPlayer: AmbientAudioPlayer
     @Inject lateinit var foregroundAppDetector: com.focusflow.app.system.blocking.ForegroundAppDetector
+    @Inject lateinit var userPreferencesRepository: UserPreferencesRepository
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var tickerJob: Job? = null
@@ -52,9 +56,21 @@ class FocusSessionService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
-            ACTION_PAUSE -> serviceScope.launch { focusSessionRepository.pauseSession() }
+            ACTION_PAUSE -> serviceScope.launch {
+                val isStrict = userPreferencesRepository.getStrictFocusModeEnabled().first()
+                if (!isStrict) {
+                    focusSessionRepository.pauseSession()
+                }
+            }
             ACTION_RESUME -> serviceScope.launch { focusSessionRepository.resumeSession() }
-            ACTION_STOP -> serviceScope.launch { focusSessionRepository.completeSession() }
+            ACTION_STOP -> serviceScope.launch {
+                val isStrict = userPreferencesRepository.getStrictFocusModeEnabled().first()
+                val session = focusSessionRepository.currentSession.first()
+                val isTargetReached = session?.isTargetReached(clock.now()) == true
+                if (!isStrict || isTargetReached) {
+                    focusSessionRepository.completeSession()
+                }
+            }
         }
         return START_NOT_STICKY
     }
@@ -74,33 +90,36 @@ class FocusSessionService : Service() {
     }
 
     private fun handleActiveSession(session: FocusSession) {
-        val notification = notificationManager.buildNotification(session, clock.now())
-        if (!isForegroundActive) {
-            val serviceType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE or
-                    ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
+        serviceScope.launch {
+            val isStrict = userPreferencesRepository.getStrictFocusModeEnabled().first()
+            val notification = notificationManager.buildNotification(session, clock.now(), isStrict)
+            if (!isForegroundActive) {
+                val serviceType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE or
+                        ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
+                } else {
+                    0
+                }
+                ServiceCompat.startForeground(
+                    this@FocusSessionService,
+                    FocusNotificationManager.NOTIFICATION_ID,
+                    notification,
+                    serviceType,
+                )
+                isForegroundActive = true
             } else {
-                0
+                val systemNotificationManager = getSystemService(NOTIFICATION_SERVICE) as android.app.NotificationManager
+                systemNotificationManager.notify(FocusNotificationManager.NOTIFICATION_ID, notification)
             }
-            ServiceCompat.startForeground(
-                this,
-                FocusNotificationManager.NOTIFICATION_ID,
-                notification,
-                serviceType,
-            )
-            isForegroundActive = true
-        } else {
-            val systemNotificationManager = getSystemService(NOTIFICATION_SERVICE) as android.app.NotificationManager
-            systemNotificationManager.notify(FocusNotificationManager.NOTIFICATION_ID, notification)
-        }
 
-        if (session.state == SessionState.RUNNING) {
-            startTicker(session)
-            foregroundAppDetector.startMonitoring()
-        } else {
-            stopTicker()
-            ambientAudioPlayer.pause()
-            foregroundAppDetector.stopMonitoring()
+            if (session.state == SessionState.RUNNING) {
+                startTicker(session)
+                foregroundAppDetector.startMonitoring()
+            } else {
+                stopTicker()
+                ambientAudioPlayer.pause()
+                foregroundAppDetector.stopMonitoring()
+            }
         }
     }
 
@@ -119,6 +138,7 @@ class FocusSessionService : Service() {
         tickerJob?.cancel()
         tickerJob = serviceScope.launch {
             val systemNotificationManager = getSystemService(NOTIFICATION_SERVICE) as android.app.NotificationManager
+            val isStrict = userPreferencesRepository.getStrictFocusModeEnabled().first()
             while (isActive) {
                 delay(TICK_INTERVAL_MS)
                 val currentNow = clock.now()
@@ -127,7 +147,7 @@ class FocusSessionService : Service() {
                     focusSessionRepository.completeSession()
                     break
                 }
-                val updatedNotification = notificationManager.buildNotification(session, currentNow)
+                val updatedNotification = notificationManager.buildNotification(session, currentNow, isStrict)
                 systemNotificationManager.notify(FocusNotificationManager.NOTIFICATION_ID, updatedNotification)
             }
         }

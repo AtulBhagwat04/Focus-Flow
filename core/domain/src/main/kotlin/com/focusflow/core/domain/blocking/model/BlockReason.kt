@@ -24,4 +24,10 @@ enum class BlockReason {
 
     /** Blocked in Study Mode because the channel is not on the educational allowlist. */
     STUDY_MODE_CHANNEL_NOT_ALLOWLISTED,
+
+    /**
+     * Strict Focus Mode is active. Only FocusFlow itself is accessible;
+     * all other apps trigger a redirect back to the focus screen.
+     */
+    STRICT_FOCUS_MODE,
 }

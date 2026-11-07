@@ -32,4 +32,10 @@ data class BlockingSignals(
     val detectedChannelName: String? = null,
     val advancedBlockingConfig: AdvancedBlockingConfig? = null,
     val studyModeConfig: StudyModeConfig? = null,
+    /**
+     * When true, ALL apps except FocusFlow itself are blocked during a focus session.
+     * When false, only apps explicitly configured with [AppBlockRule.blockDuringFocus] = true
+     * are blocked.
+     */
+    val isStrictFocusMode: Boolean = false,
 )

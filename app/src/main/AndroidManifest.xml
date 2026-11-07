@@ -12,6 +12,9 @@
 
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
+    <!-- Needed to show the battery optimisation exemption dialog directly (Android 6+) -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
     <uses-permission
         android:name="android.permission.PACKAGE_USAGE_STATS"
         tools:ignore="ProtectedPermissions" />
@@ -52,6 +55,7 @@
         <service
             android:name=".system.accessibility.FocusAccessibilityService"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+            android:enabled="true"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.accessibilityservice.AccessibilityService" />

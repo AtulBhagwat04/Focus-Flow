@@ -75,7 +75,7 @@ class LimitsViewModel @Inject constructor(
                     appName = app.label,
                     isSafeListed = app.isSafeListed,
                     isEssential = app.isEssential,
-                    blockDuringFocus = rule?.blockDuringFocus ?: true,
+                    blockDuringFocus = rule?.blockDuringFocus ?: false,
                     dailyTimeLimitMinutes = limitMinutes,
                     dailyLaunchLimit = limit?.dailyLaunchLimit,
                 )

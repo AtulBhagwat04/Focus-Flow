@@ -1,4 +1,4 @@
-package com.focusflow.feature.limits
+﻿package com.focusflow.feature.limits
 
 import android.content.Intent
 import android.provider.Settings
@@ -251,13 +251,7 @@ private fun LimitsTopBar(
                         letterSpacing = (-0.3).sp,
                         maxLines = 1,
                     )
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = "Distraction control & screen limits",
-                        fontSize = 12.5.sp,
-                        color = FocusMutedText,
-                        maxLines = 1,
-                    )
+
                 }
             },
             actions = {

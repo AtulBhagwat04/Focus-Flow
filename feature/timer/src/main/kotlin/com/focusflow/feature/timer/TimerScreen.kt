@@ -1,5 +1,11 @@
 package com.focusflow.feature.timer
 
+import android.app.AppOpsManager
+import android.net.Uri
+import android.os.Build
+import android.os.Process
+import android.provider.Settings
+import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -32,10 +38,13 @@ import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.outlined.Block
 import androidx.compose.material.icons.outlined.GraphicEq
+import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Spa
 import androidx.compose.material.icons.outlined.Tune
+import androidx.compose.material.icons.outlined.Warning
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
@@ -46,6 +55,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -59,6 +69,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -72,6 +83,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.focusflow.core.designsystem.R as DesignR
 import com.focusflow.core.designsystem.component.CustomDurationDialog
@@ -87,7 +100,6 @@ import com.focusflow.core.designsystem.theme.FocusMutedText
 import com.focusflow.core.designsystem.theme.OutfitFontFamily
 import com.focusflow.core.domain.model.AmbientSound
 import com.focusflow.feature.timer.components.ActiveTaskFocusCard
-import com.focusflow.feature.timer.components.AmbientSoundCard
 import com.focusflow.feature.timer.components.AmbientSoundDialog
 import com.focusflow.feature.timer.components.BlockAppsCard
 import com.focusflow.feature.timer.components.CompletionDialog
@@ -106,6 +118,7 @@ fun TimerScreen(
     onNavigateToSettings: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
 
     TimerScreenContent(
         uiState = uiState,
@@ -122,6 +135,13 @@ fun TimerScreen(
             onToggleBlockApps = viewModel::onToggleBlockApps,
             onAbortClicked = viewModel::onAbortClicked,
             onClearActiveTask = viewModel::onClearActiveTask,
+            onStrictStopAttempted = {
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.timer_strict_mode_cannot_stop_toast),
+                    Toast.LENGTH_SHORT,
+                ).show()
+            },
         ),
         onNavigateToLimits = onNavigateToLimits,
         onNavigateToSettings = onNavigateToSettings,
@@ -137,14 +157,85 @@ fun TimerScreenContent(
     onNavigateToLimits: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
 ) {
+    val context = LocalContext.current
     var showCustomDurationDialog by remember { mutableStateOf(false) }
     var showAmbientSoundDialog by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
+    var showPermissionDialog by remember { mutableStateOf(false) }
+    var showNoAppsSelectedDialog by remember { mutableStateOf(false) }
+
+    // Reactive permission state: re-evaluated every time the screen comes back to the foreground
+    // (e.g. user returns from system Settings after granting a permission).
+    var canDrawOverlay by remember { mutableStateOf(checkOverlayPermission(context)) }
+    var hasUsageAccess by remember { mutableStateOf(checkUsageAccessPermission(context)) }
+    val hasBlockingPermissions = canDrawOverlay && hasUsageAccess
+
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        canDrawOverlay = checkOverlayPermission(context)
+        hasUsageAccess = checkUsageAccessPermission(context)
+    }
+
+    // Helper: open the system "Display over other apps" settings for this app.
+    val openOverlaySettings = {
+        try {
+            context.startActivity(
+                android.content.Intent(
+                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    android.net.Uri.parse("package:${context.packageName}"),
+                ).apply { flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK }
+            )
+        } catch (_: Exception) {
+            context.startActivity(
+                android.content.Intent(
+                    Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    android.net.Uri.parse("package:${context.packageName}"),
+                ).apply { flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK }
+            )
+        }
+    }
+
+    // Helper: open the system "Usage access" settings.
+    val openUsageSettings = {
+        try {
+            context.startActivity(
+                android.content.Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS).apply {
+                    flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+                }
+            )
+        } catch (_: Exception) {
+            context.startActivity(
+                android.content.Intent(
+                    Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    android.net.Uri.parse("package:${context.packageName}"),
+                ).apply { flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK }
+            )
+        }
+    }
+
+    val onStartWithChecks = {
+        if (!hasBlockingPermissions) {
+            showPermissionDialog = true
+        } else if (!uiState.isStrictFocusModeEnabled && uiState.blockedAppsCount == 0) {
+            showNoAppsSelectedDialog = true
+        } else {
+            callbacks.onStartClicked()
+        }
+    }
+
+    // When the user enables the Block Apps toggle but permissions are missing, intercept the toggle
+    // and show the permission dialog first. The toggle will only proceed once permissions are granted.
+    val onToggleBlockAppsWithPermissionCheck: (Boolean) -> Unit = { enabled ->
+        if (enabled && !hasBlockingPermissions) {
+            showPermissionDialog = true
+        } else {
+            callbacks.onToggleBlockApps(enabled)
+        }
+    }
 
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xFFF9FBF9)),
+            .background(Color.White),
     ) {
         // ── 1. Full Screen Scenic Nature Background ──────────────────────────
         Image(
@@ -152,7 +243,6 @@ fun TimerScreenContent(
             contentDescription = null,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop,
-            alignment = Alignment.BottomCenter,
         )
 
         // ── 2. Soft Ambient Frost Overlay for Content Legibility ─────────────
@@ -235,19 +325,49 @@ fun TimerScreenContent(
                                 text = {
                                     Column {
                                         Text(
-                                            text = stringResource(R.string.timer_menu_blocked_apps),
+                                            text = stringResource(R.string.timer_menu_strict_mode),
                                             fontFamily = OutfitFontFamily,
                                             fontSize = 14.5.sp,
                                             fontWeight = FontWeight.SemiBold,
                                             color = Color(0xFF14291E),
                                         )
                                         Text(
-                                            text = if (uiState.isBlockAppsEnabled) "Enabled" else "Off",
+                                            text = if (uiState.isStrictFocusModeEnabled) {
+                                                stringResource(R.string.timer_strict_mode_desc_on)
+                                            } else {
+                                                stringResource(R.string.timer_strict_mode_desc_off)
+                                            },
                                             fontFamily = OutfitFontFamily,
                                             fontSize = 11.5.sp,
-                                            color = if (uiState.isBlockAppsEnabled) FocusForestGreen else FocusMutedText,
+                                            color = if (uiState.isStrictFocusModeEnabled) FocusForestGreen else FocusMutedText,
                                         )
                                     }
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Lock,
+                                        contentDescription = null,
+                                        tint = FocusForestGreenDeep,
+                                        modifier = Modifier.size(20.dp),
+                                    )
+                                },
+                                enabled = !uiState.isActive,
+                                onClick = {
+                                    showMenu = false
+                                    if (!uiState.isActive) {
+                                        callbacks.onToggleBlockApps(!uiState.isStrictFocusModeEnabled)
+                                    }
+                                },
+                            )
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        text = stringResource(R.string.timer_menu_blocked_apps),
+                                        fontFamily = OutfitFontFamily,
+                                        fontSize = 14.5.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = Color(0xFF14291E),
+                                    )
                                 },
                                 leadingIcon = {
                                     Icon(
@@ -285,7 +405,7 @@ fun TimerScreenContent(
                                     onNavigateToSettings()
                                 },
                             )
-                            if (uiState.isActive) {
+                            if (uiState.isActive && !uiState.isStrictFocusModeEnabled) {
                                 HorizontalDivider(
                                     color = Color(0xFFE2EBE5),
                                     thickness = 0.8.dp,
@@ -402,34 +522,41 @@ fun TimerScreenContent(
                 // ── Primary Action Button ("Start Focus" / Pause / Resume / Finish)
                 TimerActionButtons(
                     uiState = uiState,
-                    callbacks = callbacks,
+                    callbacks = callbacks.copy(onStartClicked = onStartWithChecks),
                     modifier = Modifier.fillMaxWidth(),
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // ── Refined Block Apps Card ──────────────────────────────────────
+                // ── Strict Focus Mode Card (Compact, aligned below Start Focus button) ──
                 BlockAppsCard(
-                    isEnabled = uiState.isBlockAppsEnabled,
-                    onToggle = callbacks.onToggleBlockApps,
+                    isEnabled = uiState.isStrictFocusModeEnabled,
+                    isSessionActive = uiState.isActive,
+                    blockedAppsCount = uiState.blockedAppsCount,
+                    onToggle = onToggleBlockAppsWithPermissionCheck,
                     onNavigateToLimits = onNavigateToLimits,
                     modifier = Modifier.fillMaxWidth(),
                 )
 
-                Spacer(modifier = Modifier.height(10.dp))
-
-                // ── Refined Ambient Sound Card ───────────────────────────────────
-                AmbientSoundCard(
-                    selectedSound = uiState.selectedSound,
-                    onCardClick = { showAmbientSoundDialog = true },
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                // ── Permission warning banner (shown when blocking permissions are missing) ──
+                AnimatedVisibility(
+                    visible = !hasBlockingPermissions && !uiState.isActive,
+                    enter = fadeIn(),
+                    exit = fadeOut(),
+                ) {
+                    PermissionWarningBanner(
+                        onClick = { showPermissionDialog = true },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp),
+                    )
+                }
 
                 // ── Bottom Spacing for navigation ───────────────────────────────
                 Spacer(
                     modifier = Modifier
                         .navigationBarsPadding()
-                        .height(if (uiState.activeTask != null) 32.dp else 96.dp)
+                        .height(96.dp)
                 )
             }
         }
@@ -461,11 +588,277 @@ fun TimerScreenContent(
             onDismiss = callbacks.onDismissCelebration,
         )
     }
+
+    if (showPermissionDialog) {
+        BlockingPermissionDialog(
+            missingOverlay = !canDrawOverlay,
+            missingUsageAccess = !hasUsageAccess,
+            onGrantOverlay = {
+                showPermissionDialog = false
+                openOverlaySettings()
+            },
+            onGrantUsageAccess = {
+                showPermissionDialog = false
+                openUsageSettings()
+            },
+            onStartWithoutBlocking = {
+                showPermissionDialog = false
+                callbacks.onStartClicked()
+            },
+            onDismiss = { showPermissionDialog = false },
+        )
+    }
+
+    if (showNoAppsSelectedDialog) {
+        AlertDialog(
+            onDismissRequest = { showNoAppsSelectedDialog = false },
+            title = {
+                Text(
+                    text = stringResource(R.string.timer_no_apps_dialog_title),
+                    fontFamily = OutfitFontFamily,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF14291E),
+                )
+            },
+            text = {
+                Text(
+                    text = stringResource(R.string.timer_no_apps_dialog_message),
+                    fontFamily = OutfitFontFamily,
+                    fontSize = 13.5.sp,
+                    color = FocusMutedText,
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showNoAppsSelectedDialog = false
+                        callbacks.onToggleBlockApps(true)
+                        callbacks.onStartClicked()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = FocusForestGreenDeep),
+                    shape = RoundedCornerShape(10.dp),
+                ) {
+                    Text(stringResource(R.string.timer_no_apps_dialog_strict))
+                }
+            },
+            dismissButton = {
+                Row {
+                    TextButton(
+                        onClick = {
+                            showNoAppsSelectedDialog = false
+                            onNavigateToLimits()
+                        },
+                    ) {
+                        Text(stringResource(R.string.timer_no_apps_dialog_choose), color = FocusForestGreenDeep)
+                    }
+                    TextButton(
+                        onClick = {
+                            showNoAppsSelectedDialog = false
+                            callbacks.onStartClicked()
+                        },
+                    ) {
+                        Text(stringResource(R.string.timer_no_apps_dialog_skip), color = FocusMutedText)
+                    }
+                }
+            },
+            containerColor = Color.White,
+            shape = RoundedCornerShape(18.dp),
+        )
+    }
+}
+
+private fun checkOverlayPermission(context: android.content.Context): Boolean =
+    Settings.canDrawOverlays(context)
+
+private fun checkUsageAccessPermission(context: android.content.Context): Boolean {
+    val appOps = context.getSystemService(android.content.Context.APP_OPS_SERVICE) as? AppOpsManager
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        appOps?.unsafeCheckOpNoThrow(
+            AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), context.packageName
+        ) == AppOpsManager.MODE_ALLOWED
+    } else {
+        @Suppress("DEPRECATION")
+        appOps?.checkOpNoThrow(
+            AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), context.packageName
+        ) == AppOpsManager.MODE_ALLOWED
+    }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Subcomponents
 // ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Clean, compact warning banner shown when blocking permissions are missing.
+ * Tapping anywhere opens the quick-grant dialog.
+ */
+@Composable
+private fun PermissionWarningBanner(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .clickable(
+                indication = ripple(bounded = true),
+                interactionSource = null,
+                onClick = onClick,
+            ),
+        shape = RoundedCornerShape(14.dp),
+        color = Color(0xFFFFF8E7),
+        border = BorderStroke(1.dp, Color(0xFFF0DDAC)),
+        shadowElevation = 1.dp,
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 9.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Warning,
+                contentDescription = null,
+                tint = Color(0xFFB45309),
+                modifier = Modifier.size(18.dp),
+            )
+            Spacer(modifier = Modifier.width(10.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.timer_permission_banner_title),
+                    fontFamily = OutfitFontFamily,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color(0xFF78350F),
+                )
+                Text(
+                    text = stringResource(R.string.timer_permission_banner_subtitle),
+                    fontFamily = OutfitFontFamily,
+                    fontSize = 11.5.sp,
+                    color = Color(0xFF92400E),
+                )
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            Surface(
+                shape = RoundedCornerShape(8.dp),
+                color = Color(0xFFB45309),
+            ) {
+                Text(
+                    text = stringResource(R.string.timer_permission_banner_action),
+                    fontFamily = OutfitFontFamily,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp),
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Concise, friendly dialog allowing users to grant required blocking permissions with 1 tap.
+ */
+@Composable
+private fun BlockingPermissionDialog(
+    missingOverlay: Boolean,
+    missingUsageAccess: Boolean,
+    onGrantOverlay: () -> Unit,
+    onGrantUsageAccess: () -> Unit,
+    onStartWithoutBlocking: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = stringResource(R.string.timer_permission_dialog_title),
+                fontFamily = OutfitFontFamily,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF14291E),
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(
+                    text = stringResource(R.string.timer_permission_dialog_message),
+                    fontFamily = OutfitFontFamily,
+                    fontSize = 13.sp,
+                    color = FocusMutedText,
+                )
+                if (missingOverlay) {
+                    PermissionDialogRow(
+                        label = stringResource(R.string.timer_permission_overlay_title),
+                        onGrant = onGrantOverlay,
+                    )
+                }
+                if (missingUsageAccess) {
+                    PermissionDialogRow(
+                        label = stringResource(R.string.timer_permission_usage_title),
+                        onGrant = onGrantUsageAccess,
+                    )
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onStartWithoutBlocking) {
+                Text(
+                    text = stringResource(R.string.timer_permission_skip),
+                    color = FocusMutedText,
+                    fontFamily = OutfitFontFamily,
+                    fontSize = 13.sp,
+                )
+            }
+        },
+        containerColor = Color.White,
+        shape = RoundedCornerShape(18.dp),
+    )
+}
+
+@Composable
+private fun PermissionDialogRow(
+    label: String,
+    onGrant: () -> Unit,
+) {
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = Color(0xFFF6F9F7),
+        border = BorderStroke(1.dp, Color(0xFFCCE3D5)),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = label,
+                fontFamily = OutfitFontFamily,
+                fontSize = 13.5.sp,
+                fontWeight = FontWeight.Medium,
+                color = FocusDarkText,
+                modifier = Modifier.weight(1f),
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Button(
+                onClick = onGrant,
+                colors = ButtonDefaults.buttonColors(containerColor = FocusForestGreenDeep),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 14.dp, vertical = 6.dp),
+                shape = RoundedCornerShape(8.dp),
+            ) {
+                Text(
+                    text = stringResource(R.string.timer_permission_grant),
+                    fontFamily = OutfitFontFamily,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                )
+            }
+        }
+    }
+}
 
 @Composable
 private fun TimerActionButtons(
@@ -473,6 +866,8 @@ private fun TimerActionButtons(
     callbacks: TimerUiCallbacks,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
+
     Row(
         modifier = modifier,
         horizontalArrangement = Arrangement.Center,
@@ -544,7 +939,18 @@ private fun TimerActionButtons(
                         .clickable(
                             indication = ripple(bounded = true),
                             interactionSource = null,
-                            onClick = callbacks.onPauseClicked,
+                            onClick = {
+                                if (uiState.isStrictFocusModeEnabled) {
+                                    Toast.makeText(
+                                        context,
+                                        context.getString(R.string.timer_strict_mode_cannot_stop_toast),
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
+                                    callbacks.onStrictStopAttempted()
+                                } else {
+                                    callbacks.onPauseClicked()
+                                }
+                            },
                         )
                         .semantics { role = Role.Button },
                     shape = RoundedCornerShape(BUTTON_CORNER_RADIUS),
@@ -589,7 +995,18 @@ private fun TimerActionButtons(
                         .clickable(
                             indication = ripple(bounded = true),
                             interactionSource = null,
-                            onClick = callbacks.onCompleteClicked,
+                            onClick = {
+                                if (uiState.isStrictFocusModeEnabled) {
+                                    Toast.makeText(
+                                        context,
+                                        context.getString(R.string.timer_strict_mode_cannot_stop_toast),
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
+                                    callbacks.onStrictStopAttempted()
+                                } else {
+                                    callbacks.onCompleteClicked()
+                                }
+                            },
                         )
                         .semantics { role = Role.Button },
                     shape = RoundedCornerShape(BUTTON_CORNER_RADIUS),
@@ -678,7 +1095,18 @@ private fun TimerActionButtons(
                         .clickable(
                             indication = ripple(bounded = true),
                             interactionSource = null,
-                            onClick = callbacks.onCompleteClicked,
+                            onClick = {
+                                if (uiState.isStrictFocusModeEnabled) {
+                                    Toast.makeText(
+                                        context,
+                                        context.getString(R.string.timer_strict_mode_cannot_stop_toast),
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
+                                    callbacks.onStrictStopAttempted()
+                                } else {
+                                    callbacks.onCompleteClicked()
+                                }
+                            },
                         )
                         .semantics { role = Role.Button },
                     shape = RoundedCornerShape(BUTTON_CORNER_RADIUS),

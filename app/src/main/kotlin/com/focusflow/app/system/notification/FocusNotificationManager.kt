@@ -44,10 +44,18 @@ class FocusNotificationManager @Inject constructor(
         }
     }
 
-    fun buildNotification(session: FocusSession, currentEpochMs: Long): Notification {
+    fun buildNotification(
+        session: FocusSession,
+        currentEpochMs: Long,
+        isStrictFocusMode: Boolean = false,
+    ): Notification {
         val contentPendingIntent = buildContentIntent()
-        val title = if (session.state == SessionState.PAUSED) "Focus Session Paused" else "Focus Session Active"
-        val text = buildStatusText(session, currentEpochMs)
+        val title = when {
+            isStrictFocusMode -> "Strict Focus Session Active 🔒"
+            session.state == SessionState.PAUSED -> "Focus Session Paused"
+            else -> "Focus Session Active"
+        }
+        val text = buildStatusText(session, currentEpochMs, isStrictFocusMode)
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
@@ -59,7 +67,9 @@ class FocusNotificationManager @Inject constructor(
             .setCategory(NotificationCompat.CATEGORY_PROGRESS)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
 
-        addSessionActions(builder, session)
+        if (!isStrictFocusMode) {
+            addSessionActions(builder, session)
+        }
         return builder.build()
     }
 
@@ -75,12 +85,23 @@ class FocusNotificationManager @Inject constructor(
         )
     }
 
-    private fun buildStatusText(session: FocusSession, currentEpochMs: Long): String =
-        if (session.mode is SessionMode.Stopwatch) {
+    private fun buildStatusText(
+        session: FocusSession,
+        currentEpochMs: Long,
+        isStrictFocusMode: Boolean = false,
+    ): String {
+        val baseDuration = if (session.mode is SessionMode.Stopwatch) {
             "${formatDuration(session.elapsedDurationMs(currentEpochMs))} focused"
         } else {
             "${formatDuration(session.remainingDurationMs(currentEpochMs))} remaining"
         }
+
+        return if (isStrictFocusMode) {
+            "$baseDuration • Timer Locked"
+        } else {
+            baseDuration
+        }
+    }
 
     private fun addSessionActions(builder: NotificationCompat.Builder, session: FocusSession) {
         when (session.state) {

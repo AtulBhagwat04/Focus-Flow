@@ -10,9 +10,11 @@ import com.focusflow.core.domain.model.FocusTask
 import com.focusflow.core.domain.model.SessionMode
 import com.focusflow.core.domain.model.SessionState
 import com.focusflow.core.domain.model.SubjectTag
+import com.focusflow.core.domain.blocking.repository.BlockRuleRepository
 import com.focusflow.core.domain.repository.FocusSessionRepository
 import com.focusflow.core.domain.repository.SubjectTagRepository
 import com.focusflow.core.domain.repository.TaskRepository
+import com.focusflow.core.domain.repository.UserPreferencesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -34,6 +36,8 @@ class TimerViewModel @Inject constructor(
     private val ambientAudioPlayer: AmbientAudioPlayer,
     private val clock: Clock,
     private val taskRepository: TaskRepository,
+    private val userPreferencesRepository: UserPreferencesRepository,
+    private val blockRuleRepository: BlockRuleRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TimerUiState())
@@ -43,6 +47,8 @@ class TimerViewModel @Inject constructor(
 
     init {
         observeData()
+        observeStrictFocusMode()
+        observeBlockedApps()
     }
 
     private data class ObservedTimerData(
@@ -169,6 +175,10 @@ class TimerViewModel @Inject constructor(
     }
 
     fun onPauseClicked() {
+        // In strict focus mode, users cannot pause/stop the timer until completed
+        if (_uiState.value.isStrictFocusModeEnabled && _uiState.value.isActive) {
+            return
+        }
         viewModelScope.launch {
             focusSessionRepository.pauseSession()
             ambientAudioPlayer.pause()
@@ -185,6 +195,15 @@ class TimerViewModel @Inject constructor(
     }
 
     fun onCompleteClicked() {
+        val session = _uiState.value.session
+        val isStrict = _uiState.value.isStrictFocusModeEnabled
+        val now = clock.now()
+
+        // In strict focus mode, users cannot stop or complete early before the timer has elapsed
+        if (isStrict && session != null && !session.isTargetReached(now)) {
+            return
+        }
+
         viewModelScope.launch {
             val activeTaskId = _uiState.value.activeTask?.id
             if (activeTaskId != null) {
@@ -212,6 +231,10 @@ class TimerViewModel @Inject constructor(
     }
 
     fun onAbortClicked() {
+        // In strict focus mode, users cannot stop or abort the timer until completed
+        if (_uiState.value.isStrictFocusModeEnabled && _uiState.value.isActive) {
+            return
+        }
         viewModelScope.launch {
             focusSessionRepository.abortSession()
             ambientAudioPlayer.stop()
@@ -231,7 +254,30 @@ class TimerViewModel @Inject constructor(
     }
 
     fun onToggleBlockApps(enabled: Boolean) {
-        _uiState.update { it.copy(isBlockAppsEnabled = enabled) }
+        // Prevent disabling strict focus mode while a session is actively running
+        if (_uiState.value.isStrictFocusModeEnabled && _uiState.value.isActive && !enabled) {
+            return
+        }
+        viewModelScope.launch {
+            userPreferencesRepository.setStrictFocusModeEnabled(enabled)
+        }
+    }
+
+    private fun observeStrictFocusMode() {
+        userPreferencesRepository.getStrictFocusModeEnabled()
+            .onEach { isStrict ->
+                _uiState.update { it.copy(isStrictFocusModeEnabled = isStrict) }
+            }
+            .launchIn(viewModelScope)
+    }
+
+    private fun observeBlockedApps() {
+        blockRuleRepository.observeAllRules()
+            .onEach { rules ->
+                val count = rules.count { it.blockDuringFocus }
+                _uiState.update { it.copy(blockedAppsCount = count) }
+            }
+            .launchIn(viewModelScope)
     }
 
     fun onSelectMode(mode: SessionMode) {

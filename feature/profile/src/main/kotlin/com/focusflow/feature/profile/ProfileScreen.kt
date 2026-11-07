@@ -173,7 +173,7 @@ fun ProfileScreenContent(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(FallbackScreenBg),
+            .background(Color.White),
     ) {
         Image(
             painter = painterResource(id = com.focusflow.core.designsystem.R.drawable.bg_home_screen),

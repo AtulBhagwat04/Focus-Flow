@@ -18,6 +18,7 @@ private val Context.userPreferencesDataStore by preferencesDataStore(name = "use
 private const val DEFAULT_WEEKLY_GOAL_HOURS = 16
 private const val DEFAULT_REMINDERS_ENABLED = true
 private const val DEFAULT_APPEARANCE_THEME = "Light"
+private const val DEFAULT_STRICT_FOCUS_MODE = false
 
 @Singleton
 class OfflineUserPreferencesRepository @Inject constructor(
@@ -27,6 +28,7 @@ class OfflineUserPreferencesRepository @Inject constructor(
     private val KEY_WEEKLY_GOAL_HOURS = intPreferencesKey("weekly_goal_hours")
     private val KEY_REMINDERS_ENABLED = booleanPreferencesKey("reminders_enabled")
     private val KEY_APPEARANCE_THEME = stringPreferencesKey("appearance_theme")
+    private val KEY_STRICT_FOCUS_MODE = booleanPreferencesKey("strict_focus_mode_enabled")
 
     override fun getWeeklyGoalHours(): Flow<Int> =
         context.userPreferencesDataStore.data.map { prefs ->
@@ -47,6 +49,17 @@ class OfflineUserPreferencesRepository @Inject constructor(
     override suspend fun setRemindersEnabled(enabled: Boolean) {
         context.userPreferencesDataStore.edit { prefs ->
             prefs[KEY_REMINDERS_ENABLED] = enabled
+        }
+    }
+
+    override fun getStrictFocusModeEnabled(): Flow<Boolean> =
+        context.userPreferencesDataStore.data.map { prefs ->
+            prefs[KEY_STRICT_FOCUS_MODE] ?: DEFAULT_STRICT_FOCUS_MODE
+        }
+
+    override suspend fun setStrictFocusModeEnabled(enabled: Boolean) {
+        context.userPreferencesDataStore.edit { prefs ->
+            prefs[KEY_STRICT_FOCUS_MODE] = enabled
         }
     }
 

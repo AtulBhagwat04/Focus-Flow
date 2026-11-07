@@ -90,11 +90,14 @@ class ProfileViewModelTest {
         val goalFlow = MutableStateFlow(20)
         val remindersFlow = MutableStateFlow(true)
         val appearanceFlow = MutableStateFlow("Dark")
+        val strictModeFlow = MutableStateFlow(false)
 
         override fun getWeeklyGoalHours(): Flow<Int> = goalFlow
         override suspend fun setWeeklyGoalHours(hours: Int) { goalFlow.value = hours }
         override fun getRemindersEnabled(): Flow<Boolean> = remindersFlow
         override suspend fun setRemindersEnabled(enabled: Boolean) { remindersFlow.value = enabled }
+        override fun getStrictFocusModeEnabled(): Flow<Boolean> = strictModeFlow
+        override suspend fun setStrictFocusModeEnabled(enabled: Boolean) { strictModeFlow.value = enabled }
         override fun getAppearanceTheme(): Flow<String> = appearanceFlow
         override suspend fun setAppearanceTheme(theme: String) { appearanceFlow.value = theme }
     }

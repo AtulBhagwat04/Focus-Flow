@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
@@ -364,6 +365,8 @@ class HomeViewModel @Inject constructor(
 
     fun pauseFocus() {
         viewModelScope.launch {
+            val isStrict = userPreferencesRepository.getStrictFocusModeEnabled().first()
+            if (isStrict) return@launch
             focusSessionRepository.pauseSession()
         }
     }
@@ -376,6 +379,11 @@ class HomeViewModel @Inject constructor(
 
     fun stopFocus() {
         viewModelScope.launch {
+            val isStrict = userPreferencesRepository.getStrictFocusModeEnabled().first()
+            val session = focusSessionRepository.currentSession.first()
+            if (isStrict && session != null && !session.isTargetReached(clock.now())) {
+                return@launch
+            }
             focusSessionRepository.completeSession() ?: focusSessionRepository.abortSession()
             stopTicker()
         }

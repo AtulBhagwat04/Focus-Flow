@@ -21,7 +21,9 @@ data class TimerUiState(
     val isPaused: Boolean = false,
     val showCelebrationDialog: Boolean = false,
     val completedXpEarned: Int = 0,
-    val isBlockAppsEnabled: Boolean = true,
+    /** True = Strict Focus Mode (stay only in FocusFlow). False = Selective (only chosen apps blocked). */
+    val isStrictFocusModeEnabled: Boolean = false,
+    val blockedAppsCount: Int = 0,
     val quote: String = "A focused mind\nbuilds a better tomorrow.",
 ) {
     val isActive: Boolean
@@ -54,7 +56,8 @@ data class TimerUiState(
         const val MILLIS_PER_SECOND = 1000L
         const val SECONDS_PER_MINUTE = 60L
         const val MINUTES_PER_HOUR = 60L
-        // 25 * 60 * 1000 = 1_500_000 ms
+
+                // 25 * 60 * 1000 = 1_500_000 ms
         const val DEFAULT_POMODORO_DURATION_MS = 1_500_000L
     }
 }

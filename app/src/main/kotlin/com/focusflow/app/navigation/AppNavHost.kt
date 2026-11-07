@@ -1,4 +1,4 @@
-package com.focusflow.app.navigation
+﻿package com.focusflow.app.navigation
 
 import android.app.Activity
 import androidx.activity.compose.BackHandler
@@ -188,13 +188,22 @@ fun AppNavHost(
     val currentDestination = navBackStackEntry?.destination
     val currentRoute = currentDestination?.route
     val isFullscreenRoute = currentRoute == ROUTE_LOGIN || currentRoute == ROUTE_ONBOARDING
-    val isScenicEdgeToEdgeRoute =
-        isFullscreenRoute || currentRoute == ROUTE_HOME || currentRoute == ROUTE_FOCUS || currentRoute == ROUTE_PROFILE
     val isFocusingByTask = currentRoute == ROUTE_FOCUS && activeTask != null
+    // Show bottom bar only on the four top-level tab destinations
     val showBottomBar = !isFullscreenRoute &&
-        currentRoute != ROUTE_LIMITS &&
-        currentRoute != ROUTE_PROFILE &&
+        (currentRoute == ROUTE_HOME ||
+            currentRoute == ROUTE_FOCUS ||
+            currentRoute == ROUTE_TASKS ||
+            currentRoute == ROUTE_STATS) &&
         !isFocusingByTask
+    val isScenicEdgeToEdgeRoute =
+        isFullscreenRoute ||
+            showBottomBar ||
+            currentRoute == ROUTE_HOME ||
+            currentRoute == ROUTE_FOCUS ||
+            currentRoute == ROUTE_TASKS ||
+            currentRoute == ROUTE_STATS ||
+            currentRoute == ROUTE_PROFILE
 
     Scaffold(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),

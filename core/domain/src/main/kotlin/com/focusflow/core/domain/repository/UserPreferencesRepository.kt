@@ -31,6 +31,20 @@ interface UserPreferencesRepository {
     suspend fun setRemindersEnabled(enabled: Boolean)
 
     /**
+     * Observes whether Strict Focus Mode is enabled.
+     *
+     * When enabled, the user can only stay inside FocusFlow during an active focus session.
+     * All other apps are blocked.
+     * When disabled (selective mode), only explicitly selected apps are blocked.
+     */
+    fun getStrictFocusModeEnabled(): Flow<Boolean>
+
+    /**
+     * Enables or disables Strict Focus Mode.
+     */
+    suspend fun setStrictFocusModeEnabled(enabled: Boolean)
+
+    /**
      * Observes the active appearance theme name.
      */
     fun getAppearanceTheme(): Flow<String>

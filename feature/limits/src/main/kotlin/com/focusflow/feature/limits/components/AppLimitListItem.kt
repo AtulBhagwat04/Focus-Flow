@@ -225,7 +225,7 @@ private fun BlockToggleSwitch(
 
     Switch(
         checked = checked,
-        onCheckedChange = { onToggle(!checked) },
+        onCheckedChange = { onToggle(it) },
         enabled = !item.isSafeListed,
         colors = SwitchDefaults.colors(
             checkedThumbColor = Color.White,
